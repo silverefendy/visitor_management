@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>VMS Security Scanner</title>
+</head>
+<body>
+    <div id="security-scanner-wrapper">
+        <div id="scanner-header">
+            <h2>Visitor Security Scanner</h2>
+            <p>Scan QR Code tamu untuk Check In / Check Out</p>
+        </div>
+
+        <div id="mode-selector">
+            <button id="btn-checkin"  class="mode-btn active" onclick="setMode('checkin')">
+                ▶ CHECK IN
+            </button>
+            <button id="btn-checkout" class="mode-btn" onclick="setMode('checkout')">
+                ◀ CHECK OUT
+            </button>
+        </div>
+
+        <div id="scanner-area">
+            <div id="qr-reader"></div>
+            <div id="manual-input-area">
+                <p>— atau input manual —</p>
+                <input type="text" id="manual-visitor-id"
+                       placeholder="Ketik Visitor ID (mis: VIS-2024-01-0001)"
+                       onkeydown="if(event.key==='Enter') processManualInput()">
+                <button onclick="processManualInput()">Proses</button>
+            </div>
+        </div>
+
+        <div id="visitor-card" style="display:none;">
+            <div id="visitor-card-content"></div>
+            <div id="visitor-actions">
+                <button id="btn-confirm"  onclick="confirmAction()">✓ Konfirmasi</button>
+                <button id="btn-cancel"   onclick="resetScanner()">✗ Batal</button>
+            </div>
+        </div>
+
+        <div id="result-message" style="display:none;"></div>
+
+        <div id="active-visitors">
+            <h3>Tamu Aktif Saat Ini</h3>
+            <div id="active-list">Memuat...</div>
+        </div>
+    </div>
+</body>
+</html>
