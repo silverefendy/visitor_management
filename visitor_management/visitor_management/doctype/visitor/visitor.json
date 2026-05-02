@@ -1,0 +1,249 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:VIS-{YYYY}-{MM}-{#####}",
+ "creation": "2026-05-02 15:45:29.377539",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "visitor_name",
+  "visitor_phone",
+  "visitor_email",
+  "visitor_company",
+  "id_type",
+  "id_number",
+  "sec_visit",
+  "visit_purpose",
+  "host_employee",
+  "host_employee_name",
+  "department",
+  "sec_status",
+  "status",
+  "check_in_time",
+  "check_out_time",
+  "approved_by",
+  "approved_at",
+  "rejected_reason",
+  "sec_qr",
+  "qr_code",
+  "qr_code_image",
+  "sec_extra",
+  "visitor_photo",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "visitor_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Nama Tamu",
+   "reqd": 1
+  },
+  {
+   "fieldname": "visitor_phone",
+   "fieldtype": "Data",
+   "label": "No. Telepon",
+   "reqd": 1
+  },
+  {
+   "fieldname": "visitor_email",
+   "fieldtype": "Data",
+   "label": "Email",
+   "options": "Email"
+  },
+  {
+   "fieldname": "visitor_company",
+   "fieldtype": "Data",
+   "label": "Perusahaan"
+  },
+  {
+   "fieldname": "id_type",
+   "fieldtype": "Select",
+   "label": "Jenis ID",
+   "options": "\nKTP\nSIM\nPaspor\nKartu Pelajar\nLainnya",
+   "reqd": 1
+  },
+  {
+   "fieldname": "id_number",
+   "fieldtype": "Data",
+   "label": "Nomor ID",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sec_visit",
+   "fieldtype": "Section Break",
+   "label": "Tujuan Kunjungan"
+  },
+  {
+   "fieldname": "visit_purpose",
+   "fieldtype": "Small Text",
+   "label": "Keperluan",
+   "reqd": 1
+  },
+  {
+   "fieldname": "host_employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Karyawan Dituju",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "host_employee.employee_name",
+   "fieldname": "host_employee_name",
+   "fieldtype": "Data",
+   "label": "Nama Karyawan",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "host_employee.department",
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Departemen",
+   "options": "Department",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sec_status",
+   "fieldtype": "Section Break",
+   "label": "Status"
+  },
+  {
+   "default": "Registered",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Registered\nAwaiting Approval\nApproved\nCompleted\nChecked Out\nRejected\nCancelled",
+   "read_only": 1
+  },
+  {
+   "fieldname": "check_in_time",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Waktu Check In",
+   "read_only": 1
+  },
+  {
+   "fieldname": "check_out_time",
+   "fieldtype": "Datetime",
+   "label": "Waktu Check Out",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Disetujui Oleh",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_at",
+   "fieldtype": "Datetime",
+   "label": "Waktu Persetujuan",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rejected_reason",
+   "fieldtype": "Small Text",
+   "label": "Alasan Penolakan",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sec_qr",
+   "fieldtype": "Section Break",
+   "label": "QR Code"
+  },
+  {
+   "fieldname": "qr_code",
+   "fieldtype": "Data",
+   "label": "QR Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "qr_code_image",
+   "fieldtype": "Attach Image",
+   "label": "Gambar QR",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sec_extra",
+   "fieldtype": "Section Break",
+   "label": "Info Tambahan"
+  },
+  {
+   "fieldname": "visitor_photo",
+   "fieldtype": "Attach Image",
+   "label": "Foto Tamu"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Catatan"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-05-02 15:45:29.377539",
+ "modified_by": "Administrator",
+ "module": "Visitor Management",
+ "name": "Visitor",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Visitor Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Visitor Security",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Employee",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "visitor_name",
+ "track_changes": 1
+}

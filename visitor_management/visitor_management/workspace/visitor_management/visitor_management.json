@@ -1,0 +1,88 @@
+{
+ "app": "visitor_management",
+ "charts": [],
+ "content": "[]",
+ "creation": "2026-05-02 15:55:00.088354",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "hide_custom": 0,
+ "icon": "users",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Visitor Management",
+ "link_type": "DocType",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Master",
+   "link_count": 0,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Visitor",
+   "link_count": 0,
+   "link_to": "Visitor",
+   "link_type": "DocType",
+   "onboard": 1,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Visitor Log",
+   "link_count": 0,
+   "link_to": "Visitor Log",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-05-02 15:55:00.088354",
+ "modified_by": "Administrator",
+ "module": "Visitor Management",
+ "name": "Visitor Management",
+ "number_cards": [],
+ "owner": "Administrator",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Visitor Manager"
+  },
+  {
+   "role": "Visitor Security"
+  },
+  {
+   "role": "Employee"
+  }
+ ],
+ "sequence_id": 0.0,
+ "shortcuts": [
+  {
+   "color": "blue",
+   "doc_view": "",
+   "label": "Visitor",
+   "link_to": "Visitor",
+   "type": "DocType"
+  },
+  {
+   "color": "green",
+   "doc_view": "",
+   "label": "Visitor Log",
+   "link_to": "Visitor Log",
+   "type": "DocType"
+  }
+ ],
+ "title": "Visitor Management",
+ "type": "Workspace"
+}
