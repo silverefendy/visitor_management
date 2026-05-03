@@ -4,12 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>VMS Security Scanner</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Arial,sans-serif;background:#f0f2f5;min-height:100vh}
 .header{background:#2e4057;color:white;padding:16px 24px}
-.header h1{font-size:20px}
+.header h1{font-size:20px;margin-bottom:4px}
 .container{max-width:900px;margin:24px auto;padding:0 16px}
 .mode-bar{display:flex;gap:12px;margin-bottom:20px}
 .mode-btn{flex:1;padding:16px;font-size:16px;font-weight:bold;border:none;border-radius:10px;cursor:pointer;background:#ddd;color:#555}
@@ -17,134 +16,257 @@ body{font-family:Arial,sans-serif;background:#f0f2f5;min-height:100vh}
 .mode-btn.active-out{background:#2980b9;color:white}
 .card{background:white;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
 .card h2{font-size:16px;color:#2e4057;margin-bottom:16px;border-bottom:1px solid #eee;padding-bottom:10px}
-.manual-row{display:flex;gap:8px;margin-top:16px}
-.manual-row input{flex:1;padding:12px;border:2px solid #ddd;border-radius:8px;font-size:15px}
+.input-area{display:flex;gap:8px;margin-bottom:12px}
+.input-area input{flex:1;padding:14px;border:2px solid #ddd;border-radius:8px;font-size:16px;outline:none}
+.input-area input:focus{border-color:#2e4057}
 .btn{padding:12px 20px;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:bold}
-.btn-primary{background:#2e4057;color:white}
-.btn-success{background:#27ae60;color:white;flex:2;padding:16px;font-size:16px}
-.btn-danger{background:#e74c3c;color:white;flex:1;padding:16px;font-size:16px}
-.visitor-info{display:none}
-.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
-.info-item label{font-size:11px;color:#888;display:block;margin-bottom:2px}
-.info-item span{font-size:14px;font-weight:500}
-.status-badge{display:inline-block;padding:4px 14px;border-radius:20px;font-size:12px;font-weight:bold;margin-bottom:12px}
+.btn-dark{background:#2e4057;color:white;padding:14px 24px;font-size:15px}
+.btn-success{background:#27ae60;color:white;flex:2;padding:16px;font-size:16px;border:none;border-radius:8px;cursor:pointer;font-weight:bold}
+.btn-danger{background:#e74c3c;color:white;flex:1;padding:16px;font-size:16px;border:none;border-radius:8px;cursor:pointer;font-weight:bold}
+.visitor-card{display:none}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+.info-item label{font-size:11px;color:#888;display:block;margin-bottom:3px;text-transform:uppercase}
+.info-item span{font-size:14px;font-weight:500;color:#333}
+.status-badge{display:inline-block;padding:6px 16px;border-radius:20px;font-size:13px;font-weight:bold;margin-bottom:16px}
 .action-row{display:flex;gap:10px;margin-top:16px}
-.alert{padding:14px;border-radius:8px;font-size:15px;font-weight:bold;text-align:center;margin-bottom:16px;display:none}
-.alert-success{background:#d5f4e6;color:#1a7a4a}
-.alert-error{background:#fde8e8;color:#c0392b}
-.active-table{width:100%;border-collapse:collapse}
-.active-table th{background:#2e4057;color:white;padding:10px 12px;text-align:left;font-size:13px}
-.active-table td{padding:10px 12px;border-bottom:1px solid #f0f0f0;font-size:13px}
+.alert{padding:16px;border-radius:8px;font-size:15px;font-weight:bold;text-align:center;margin-bottom:16px;display:none}
+.alert-success{background:#d5f4e6;color:#1a7a4a;border:1px solid #a3e4c1}
+.alert-error{background:#fde8e8;color:#c0392b;border:1px solid #f5b7b7}
+.alert-warning{background:#fff3cd;color:#856404;border:1px solid #ffc107}
+table{width:100%;border-collapse:collapse}
+table th{background:#2e4057;color:white;padding:10px 12px;text-align:left;font-size:13px}
+table td{padding:10px 12px;border-bottom:1px solid #f0f0f0;font-size:13px;vertical-align:middle}
+table tr:hover{background:#f8f9fa}
+.hint{font-size:13px;color:#888;padding:10px;background:#f8f9fa;border-radius:8px;margin-top:8px}
 </style>
 </head>
 <body>
+
 <div class="header">
   <h1>VMS Security Scanner</h1>
   <div style="font-size:13px;opacity:0.8">Visitor Management System</div>
 </div>
+
 <div class="container">
+
   <div class="mode-bar">
-    <button class="mode-btn active-in" id="btn-in" onclick="setMode('checkin')">CHECK IN</button>
-    <button class="mode-btn" id="btn-out" onclick="setMode('checkout')">CHECK OUT</button>
+    <button class="mode-btn active-in" id="btn-in"  onclick="setMode('checkin')">▶ CHECK IN</button>
+    <button class="mode-btn"           id="btn-out" onclick="setMode('checkout')">◀ CHECK OUT</button>
   </div>
+
   <div class="alert" id="alert-box"></div>
+
   <div class="card">
-    <h2>Scan QR Code Tamu</h2>
-    <div id="qr-reader"></div>
-    <div class="manual-row">
-      <input type="text" id="manual-id" placeholder="Ketik Visitor ID (VIS-2025-05-00001)" onkeydown="if(event.key==='Enter')processManual()">
-      <button class="btn btn-primary" onclick="processManual()">Proses</button>
+    <h2 id="mode-title">Check In Tamu</h2>
+    <div class="input-area">
+      <input type="text" id="vid-input"
+        placeholder="Ketik Visitor ID  (VIS-2026-05-00001)"
+        onkeydown="if(event.key==='Enter') cari()"
+        autofocus>
+      <button class="btn btn-dark" onclick="cari()">🔍 Cari</button>
+    </div>
+    <div class="hint">
+      💡 Ketik Visitor ID dari badge tamu lalu tekan Enter atau klik Cari.
+      Atau klik tombol <strong>Pilih</strong> dari tabel tamu aktif di bawah.
     </div>
   </div>
-  <div class="card visitor-info" id="visitor-card">
-    <h2>Data Tamu</h2>
-    <div id="visitor-status-badge"></div>
-    <div class="info-grid" id="visitor-info-grid"></div>
+
+  <div class="card visitor-card" id="visitor-card">
+    <h2>Data Tamu Ditemukan</h2>
+    <div id="status-area"></div>
+    <div class="info-grid" id="info-grid"></div>
     <div class="action-row">
-      <button class="btn btn-success" id="btn-confirm" onclick="confirmAction()">KONFIRMASI</button>
-      <button class="btn btn-danger" onclick="resetCard()">Batal</button>
+      <button class="btn-success" id="btn-ok" onclick="proses()">✓ KONFIRMASI</button>
+      <button class="btn-danger"  onclick="reset()">✗ Batal</button>
     </div>
   </div>
+
   <div class="card">
-    <h2>Tamu Aktif &nbsp;<button class="btn btn-primary" style="font-size:12px;padding:4px 12px" onclick="loadActive()">Refresh</button></h2>
-    <div id="active-list"><p style="color:#aaa;text-align:center;padding:20px">Memuat...</p></div>
+    <h2>
+      Tamu Aktif Saat Ini
+      <button class="btn btn-dark" style="font-size:12px;padding:5px 12px;margin-left:10px"
+              onclick="muatAktif()">↻ Refresh</button>
+    </h2>
+    <div id="tabel-aktif">
+      <p style="color:#aaa;text-align:center;padding:20px">Memuat data...</p>
+    </div>
   </div>
+
 </div>
+
 <script>
-var mode='checkin',pendingQR=null,scanning=false;
-function getCookie(n){var v=document.cookie.match('(^|;)\\s*'+n+'\\s*=\\s*([^;]+)');return v?decodeURIComponent(v.pop()):'';}
-function apiCall(method,args,cb,errcb){
-  var params=new URLSearchParams();
-  for(var k in args)params.append(k,typeof args[k]==='object'?JSON.stringify(args[k]):args[k]);
-  fetch('/api/method/'+method,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','X-Frappe-CSRF-Token':getCookie('csrf_token')},body:params})
-  .then(r=>r.json()).then(data=>{if(data.exc){if(errcb)errcb(data.exc);return;}if(cb)cb(data.message);})
-  .catch(e=>{if(errcb)errcb(e.toString());});
+var mode = 'checkin';
+var visitor = null;
+
+function csrf() { return '{{ csrf_token }}'; } function csrf_unused() {
+  var m = document.cookie.match('(^|;)\\s*csrf_token\\s*=\\s*([^;]+)');
+  return m ? decodeURIComponent(m.pop()) : '';
 }
-function setMode(m){
-  mode=m;
-  document.getElementById('btn-in').className='mode-btn'+(m==='checkin'?' active-in':'');
-  document.getElementById('btn-out').className='mode-btn'+(m==='checkout'?' active-out':'');
-  resetCard();
+
+function api(method, args, ok, fail) {
+  var p = new URLSearchParams();
+  for (var k in args) p.append(k, typeof args[k]==='object' ? JSON.stringify(args[k]) : args[k]);
+  fetch('/api/method/' + method, {
+    method: 'POST',
+    headers: {'Content-Type':'application/x-www-form-urlencoded','X-Frappe-CSRF-Token': csrf()},
+    body: p
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    if (d.exc || d._server_messages) {
+      var msg = d._server_messages ? JSON.parse(JSON.parse(d._server_messages)[0]).message : d.exc;
+      if (fail) fail(msg);
+      return;
+    }
+    if (ok) ok(d.message);
+  })
+  .catch(function(e){ if (fail) fail(e.toString()); });
 }
-window.onload=function(){
-  new Html5QrcodeScanner('qr-reader',{fps:10,qrbox:280}).render(function(decoded){
-    if(scanning)return;scanning=true;loadVisitor(decoded);
-  },function(){});
-  loadActive();
-};
-function processManual(){
-  var val=document.getElementById('manual-id').value.trim();
-  if(!val)return;
-  scanning=true;
-  loadVisitor(val.startsWith('{')?val:JSON.stringify({visitor_id:val}));
+
+function setMode(m) {
+  mode = m;
+  document.getElementById('btn-in').className  = 'mode-btn' + (m==='checkin'  ? ' active-in'  : '');
+  document.getElementById('btn-out').className = 'mode-btn' + (m==='checkout' ? ' active-out' : '');
+  document.getElementById('mode-title').textContent = m==='checkin' ? 'Check In Tamu' : 'Check Out Tamu';
+  reset();
 }
-function loadVisitor(qrData){
-  pendingQR=qrData;
-  apiCall('visitor_management.visitor_management.api.get_visitor_by_qr',{qr_data:qrData},function(v){
-    if(!v||v.error){showAlert('error',v?v.error:'Visitor tidak ditemukan');scanning=false;return;}
-    showVisitorCard(v);
-  },function(e){showAlert('error','Error: '+e);scanning=false;});
+
+function cari() {
+  var val = document.getElementById('vid-input').value.trim().toUpperCase();
+  if (!val) { alert2('warning','Masukkan Visitor ID'); return; }
+
+  var qr = JSON.stringify({visitor_id: val});
+  api(
+    'visitor_management.visitor_management.api.get_visitor_by_qr',
+    {qr_data: qr},
+    function(v) {
+      if (!v || v.error) { alert2('error', v ? v.error : 'Visitor ID tidak ditemukan'); return; }
+      visitor = v;
+      tampil(v);
+    },
+    function(e) { alert2('error', 'Error: ' + e); }
+  );
 }
-function showVisitorCard(v){
-  var colors={'Registered':'#95a5a6','Awaiting Approval':'#f39c12','Approved':'#3498db','Completed':'#9b59b6','Checked Out':'#1abc9c','Rejected':'#e74c3c'};
-  var c=colors[v.status]||'#888';
-  document.getElementById('visitor-status-badge').innerHTML='<span class="status-badge" style="background:'+c+'22;color:'+c+';border:1px solid '+c+'">'+v.status+'</span>';
-  document.getElementById('visitor-info-grid').innerHTML=
-    '<div class="info-item"><label>Nama Tamu</label><span>'+(v.visitor_name||'-')+'</span></div>'+
-    '<div class="info-item"><label>Perusahaan</label><span>'+(v.visitor_company||'-')+'</span></div>'+
-    '<div class="info-item"><label>Karyawan Dituju</label><span>'+(v.host_employee_name||'-')+'</span></div>'+
-    '<div class="info-item"><label>Departemen</label><span>'+(v.department||'-')+'</span></div>'+
-    '<div class="info-item"><label>Keperluan</label><span>'+(v.visit_purpose||'-')+'</span></div>'+
-    '<div class="info-item"><label>ID</label><span>'+(v.id_type||'')+': '+(v.id_number||'-')+'</span></div>'+
-    '<div class="info-item"><label>Check In</label><span>'+(v.check_in_time||'-')+'</span></div>'+
-    '<div class="info-item"><label>Visitor ID</label><span style="font-size:12px;color:#888">'+(v.name||'-')+'</span></div>';
-  var canGo=mode==='checkin'?['Registered','Approved'].includes(v.status):v.status==='Completed';
-  var btn=document.getElementById('btn-confirm');
-  btn.disabled=!canGo;btn.style.opacity=canGo?'1':'0.4';
-  btn.textContent=canGo?(mode==='checkin'?'KONFIRMASI CHECK IN':'KONFIRMASI CHECK OUT'):'Tidak bisa (Status: '+v.status+')';
-  document.getElementById('visitor-card').style.display='block';
+
+function tampil(v) {
+  var warna = {
+    'Registered':'#6c757d','Awaiting Approval':'#f39c12',
+    'Approved':'#3498db','Completed':'#9b59b6',
+    'Checked Out':'#1abc9c','Rejected':'#e74c3c'
+  };
+  var c = warna[v.status] || '#888';
+
+  document.getElementById('status-area').innerHTML =
+    '<span class="status-badge" style="background:'+c+'22;color:'+c+';border:1px solid '+c+'">'+v.status+'</span>';
+
+  document.getElementById('info-grid').innerHTML = [
+    ['Nama Tamu',       v.visitor_name],
+    ['Perusahaan',      v.visitor_company || '-'],
+    ['Karyawan Dituju', v.host_employee_name],
+    ['Departemen',      v.department || '-'],
+    ['Keperluan',       v.visit_purpose],
+    ['Identitas',       (v.id_type||'') + ': ' + (v.id_number||'-')],
+    ['Check In',        v.check_in_time || 'Belum'],
+    ['Visitor ID',      v.name],
+  ].map(function(r){
+    return '<div class="info-item"><label>'+r[0]+'</label><span>'+r[1]+'</span></div>';
+  }).join('');
+
+  var bisaIn  = ['Registered','Approved'].includes(v.status);
+  var bisaOut = v.status === 'Completed';
+  var bisa    = mode==='checkin' ? bisaIn : bisaOut;
+  var label   = mode==='checkin' ? '✓ KONFIRMASI CHECK IN' : '✓ KONFIRMASI CHECK OUT';
+  var btnOk   = document.getElementById('btn-ok');
+
+  if (bisa) {
+    btnOk.textContent = label;
+    btnOk.disabled = false;
+    btnOk.style.opacity = '1';
+  } else {
+    btnOk.textContent = '⚠ Tidak bisa proses — Status: ' + v.status;
+    btnOk.disabled = true;
+    btnOk.style.opacity = '0.5';
+  }
+
+  document.getElementById('visitor-card').style.display = 'block';
   document.getElementById('visitor-card').scrollIntoView({behavior:'smooth'});
 }
-function confirmAction(){
-  if(!pendingQR)return;
-  apiCall('visitor_management.visitor_management.api.scan_qr_action',{qr_data:pendingQR,action:mode},function(r){
-    if(r&&r.status==='success'){showAlert('success',r.message);loadActive();setTimeout(resetAll,4000);}
-    else showAlert('error',(r&&r.message)||'Gagal');
-  },function(e){showAlert('error','Error: '+e);});
+
+function proses() {
+  if (!visitor) return;
+  var qr = JSON.stringify({visitor_id: visitor.name});
+  api(
+    'visitor_management.visitor_management.api.scan_qr_action',
+    {qr_data: qr, action: mode},
+    function(r) {
+      if (r && r.status === 'success') {
+        alert2('success', r.message);
+        muatAktif();
+        setTimeout(reset, 3000);
+      } else {
+        alert2('error', (r && r.message) || 'Gagal');
+      }
+    },
+    function(e) { alert2('error', 'Gagal: ' + e); }
+  );
 }
-function resetCard(){pendingQR=null;scanning=false;document.getElementById('visitor-card').style.display='none';document.getElementById('manual-id').value='';}
-function resetAll(){resetCard();document.getElementById('alert-box').style.display='none';}
-function showAlert(type,msg){var el=document.getElementById('alert-box');el.className='alert alert-'+type;el.textContent=msg;el.style.display='block';setTimeout(function(){el.style.display='none';},6000);}
-function loadActive(){
-  apiCall('visitor_management.visitor_management.api.get_dashboard_data',{},function(data){
-    var el=document.getElementById('active-list');
-    if(!data||!data.active_visitors||!data.active_visitors.length){el.innerHTML='<p style="color:#aaa;text-align:center;padding:20px">Tidak ada tamu aktif</p>';return;}
-    var rows=data.active_visitors.map(function(v){
-      return '<tr><td><strong>'+v.visitor_name+'</strong><br><small>'+( v.visitor_company||'-')+'</small></td><td>'+v.host_employee_name+'</td><td>'+(v.check_in_time||'-')+'</td><td>'+v.status+'</td></tr>';
-    }).join('');
-    el.innerHTML='<table class="active-table"><thead><tr><th>Tamu</th><th>Host</th><th>Check In</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>';
-  },function(){document.getElementById('active-list').innerHTML='<p style="color:red;text-align:center">Gagal memuat</p>';});
+
+function reset() {
+  visitor = null;
+  document.getElementById('visitor-card').style.display = 'none';
+  document.getElementById('vid-input').value = '';
+  document.getElementById('vid-input').focus();
 }
+
+function alert2(t, m) {
+  var el = document.getElementById('alert-box');
+  el.className = 'alert alert-' + t;
+  el.textContent = m;
+  el.style.display = 'block';
+  setTimeout(function(){ el.style.display='none'; }, 6000);
+}
+
+function muatAktif() {
+  api(
+    'visitor_management.visitor_management.api.get_dashboard_data',
+    {},
+    function(d) {
+      var el = document.getElementById('tabel-aktif');
+      if (!d || !d.active_visitors || !d.active_visitors.length) {
+        el.innerHTML = '<p style="color:#aaa;text-align:center;padding:20px">Tidak ada tamu aktif</p>';
+        return;
+      }
+      var rows = d.active_visitors.map(function(v) {
+        var s = v.status;
+        var bc = s==='Awaiting Approval' ? '#fff3cd' : '#d5f4e6';
+        var tc = s==='Awaiting Approval' ? '#856404' : '#1a7a4a';
+        return '<tr>'+
+          '<td><strong>'+v.visitor_name+'</strong><br><small style="color:#888">'+(v.visitor_company||'-')+'</small></td>'+
+          '<td>'+v.host_employee_name+'</td>'+
+          '<td>'+(v.check_in_time ? v.check_in_time.substring(11,16) : '-')+'</td>'+
+          '<td><span style="background:'+bc+';color:'+tc+';padding:2px 8px;border-radius:10px;font-size:11px">'+s+'</span></td>'+
+          '<td><button onclick="pilih(\''+v.name+'\')" class="btn btn-dark" style="font-size:11px;padding:4px 10px">Pilih</button></td>'+
+          '</tr>';
+      }).join('');
+      el.innerHTML =
+        '<table><thead><tr><th>Tamu</th><th>Host</th><th>Masuk</th><th>Status</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>'+
+        '<p style="font-size:12px;color:#aaa;text-align:right;margin-top:8px">'+
+        'Hari ini: '+d.stats.total_today+' tamu | Aktif: '+d.stats.checked_in+' | Keluar: '+d.stats.checked_out+'</p>';
+    },
+    function() {
+      document.getElementById('tabel-aktif').innerHTML =
+        '<p style="color:#e74c3c;text-align:center;padding:20px">Gagal memuat data</p>';
+    }
+  );
+}
+
+function pilih(id) {
+  document.getElementById('vid-input').value = id;
+  cari();
+}
+
+window.onload = muatAktif;
+setInterval(muatAktif, 30000);
 </script>
 </body>
 </html>
