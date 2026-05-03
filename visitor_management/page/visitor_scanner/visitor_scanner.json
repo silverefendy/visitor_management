@@ -1,0 +1,14 @@
+{
+ "creation": "2024-01-01 00:00:00",
+ "doctype": "Page",
+ "module": "Visitor Management",
+ "name": "visitor-scanner",
+ "page_name": "visitor-scanner",
+ "roles": [
+  { "role": "Visitor Security" },
+  { "role": "Visitor Manager" },
+  { "role": "System Manager" }
+ ],
+ "standard": "Yes",
+ "title": "VMS Security Scanner"
+}

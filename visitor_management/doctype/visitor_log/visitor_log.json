@@ -1,0 +1,81 @@
+{
+ "actions": [],
+ "autoname": "VL-.YYYY.-.MM.-.####",
+ "creation": "2024-01-01 00:00:00",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "visitor",
+  "action",
+  "action_time",
+  "action_by",
+  "remarks"
+ ],
+ "fields": [
+  {
+   "fieldname": "visitor",
+   "fieldtype": "Link",
+   "label": "Visitor",
+   "options": "Visitor",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "action",
+   "fieldtype": "Select",
+   "label": "Action",
+   "options": "Check In\nApproved\nRejected\nCompleted\nCheck Out\nCancelled",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "action_time",
+   "fieldtype": "Datetime",
+   "label": "Action Time",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "action_by",
+   "fieldtype": "Link",
+   "label": "Action By",
+   "options": "User",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  }
+ ],
+ "in_create": 1,
+ "links": [],
+ "modified": "2024-01-01 00:00:00",
+ "modified_by": "Administrator",
+ "module": "Visitor Management",
+ "name": "Visitor Log",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager"
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "Visitor Manager"
+  },
+  {
+   "read": 1,
+   "role": "Visitor Security"
+  }
+ ],
+ "sort_field": "action_time",
+ "sort_order": "DESC",
+ "title_field": "visitor",
+ "track_changes": 0
+}

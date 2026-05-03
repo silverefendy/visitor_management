@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VMS Security Scanner</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f0f2f5;min-height:100vh}
+.header{background:#2e4057;color:white;padding:16px 24px}
+.header h1{font-size:20px}
+.container{max-width:900px;margin:24px auto;padding:0 16px}
+.mode-bar{display:flex;gap:12px;margin-bottom:20px}
+.mode-btn{flex:1;padding:16px;font-size:16px;font-weight:bold;border:none;border-radius:10px;cursor:pointer;background:#ddd;color:#555}
+.mode-btn.active-in{background:#27ae60;color:white}
+.mode-btn.active-out{background:#2980b9;color:white}
+.card{background:white;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+.card h2{font-size:16px;color:#2e4057;margin-bottom:16px;border-bottom:1px solid #eee;padding-bottom:10px}
+.manual-row{display:flex;gap:8px;margin-top:16px}
+.manual-row input{flex:1;padding:12px;border:2px solid #ddd;border-radius:8px;font-size:15px}
+.btn{padding:12px 20px;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:bold}
+.btn-primary{background:#2e4057;color:white}
+.btn-success{background:#27ae60;color:white;flex:2;padding:16px;font-size:16px}
+.btn-danger{background:#e74c3c;color:white;flex:1;padding:16px;font-size:16px}
+.visitor-info{display:none}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
+.info-item label{font-size:11px;color:#888;display:block;margin-bottom:2px}
+.info-item span{font-size:14px;font-weight:500}
+.status-badge{display:inline-block;padding:4px 14px;border-radius:20px;font-size:12px;font-weight:bold;margin-bottom:12px}
+.action-row{display:flex;gap:10px;margin-top:16px}
+.alert{padding:14px;border-radius:8px;font-size:15px;font-weight:bold;text-align:center;margin-bottom:16px;display:none}
+.alert-success{background:#d5f4e6;color:#1a7a4a}
+.alert-error{background:#fde8e8;color:#c0392b}
+.active-table{width:100%;border-collapse:collapse}
+.active-table th{background:#2e4057;color:white;padding:10px 12px;text-align:left;font-size:13px}
+.active-table td{padding:10px 12px;border-bottom:1px solid #f0f0f0;font-size:13px}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>VMS Security Scanner</h1>
+  <div style="font-size:13px;opacity:0.8">Visitor Management System</div>
+</div>
+<div class="container">
+  <div class="mode-bar">
+    <button class="mode-btn active-in" id="btn-in" onclick="setMode('checkin')">CHECK IN</button>
+    <button class="mode-btn" id="btn-out" onclick="setMode('checkout')">CHECK OUT</button>
+  </div>
+  <div class="alert" id="alert-box"></div>
+  <div class="card">
+    <h2>Scan QR Code Tamu</h2>
+    <div id="qr-reader"></div>
+    <div class="manual-row">
+      <input type="text" id="manual-id" placeholder="Ketik Visitor ID (VIS-2025-05-00001)" onkeydown="if(event.key==='Enter')processManual()">
+      <button class="btn btn-primary" onclick="processManual()">Proses</button>
+    </div>
+  </div>
+  <div class="card visitor-info" id="visitor-card">
+    <h2>Data Tamu</h2>
+    <div id="visitor-status-badge"></div>
+    <div class="info-grid" id="visitor-info-grid"></div>
+    <div class="action-row">
+      <button class="btn btn-success" id="btn-confirm" onclick="confirmAction()">KONFIRMASI</button>
+      <button class="btn btn-danger" onclick="resetCard()">Batal</button>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Tamu Aktif &nbsp;<button class="btn btn-primary" style="font-size:12px;padding:4px 12px" onclick="loadActive()">Refresh</button></h2>
+    <div id="active-list"><p style="color:#aaa;text-align:center;padding:20px">Memuat...</p></div>
+  </div>
+</div>
+<script>
+var mode='checkin',pendingQR=null,scanning=false;
+function getCookie(n){var v=document.cookie.match('(^|;)\\s*'+n+'\\s*=\\s*([^;]+)');return v?decodeURIComponent(v.pop()):'';}
+function apiCall(method,args,cb,errcb){
+  var params=new URLSearchParams();
+  for(var k in args)params.append(k,typeof args[k]==='object'?JSON.stringify(args[k]):args[k]);
+  fetch('/api/method/'+method,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','X-Frappe-CSRF-Token':getCookie('csrf_token')},body:params})
+  .then(r=>r.json()).then(data=>{if(data.exc){if(errcb)errcb(data.exc);return;}if(cb)cb(data.message);})
+  .catch(e=>{if(errcb)errcb(e.toString());});
+}
+function setMode(m){
+  mode=m;
+  document.getElementById('btn-in').className='mode-btn'+(m==='checkin'?' active-in':'');
+  document.getElementById('btn-out').className='mode-btn'+(m==='checkout'?' active-out':'');
+  resetCard();
+}
+window.onload=function(){
+  new Html5QrcodeScanner('qr-reader',{fps:10,qrbox:280}).render(function(decoded){
+    if(scanning)return;scanning=true;loadVisitor(decoded);
+  },function(){});
+  loadActive();
+};
+function processManual(){
+  var val=document.getElementById('manual-id').value.trim();
+  if(!val)return;
+  scanning=true;
+  loadVisitor(val.startsWith('{')?val:JSON.stringify({visitor_id:val}));
+}
+function loadVisitor(qrData){
+  pendingQR=qrData;
+  apiCall('visitor_management.visitor_management.api.get_visitor_by_qr',{qr_data:qrData},function(v){
+    if(!v||v.error){showAlert('error',v?v.error:'Visitor tidak ditemukan');scanning=false;return;}
+    showVisitorCard(v);
+  },function(e){showAlert('error','Error: '+e);scanning=false;});
+}
+function showVisitorCard(v){
+  var colors={'Registered':'#95a5a6','Awaiting Approval':'#f39c12','Approved':'#3498db','Completed':'#9b59b6','Checked Out':'#1abc9c','Rejected':'#e74c3c'};
+  var c=colors[v.status]||'#888';
+  document.getElementById('visitor-status-badge').innerHTML='<span class="status-badge" style="background:'+c+'22;color:'+c+';border:1px solid '+c+'">'+v.status+'</span>';
+  document.getElementById('visitor-info-grid').innerHTML=
+    '<div class="info-item"><label>Nama Tamu</label><span>'+(v.visitor_name||'-')+'</span></div>'+
+    '<div class="info-item"><label>Perusahaan</label><span>'+(v.visitor_company||'-')+'</span></div>'+
+    '<div class="info-item"><label>Karyawan Dituju</label><span>'+(v.host_employee_name||'-')+'</span></div>'+
+    '<div class="info-item"><label>Departemen</label><span>'+(v.department||'-')+'</span></div>'+
+    '<div class="info-item"><label>Keperluan</label><span>'+(v.visit_purpose||'-')+'</span></div>'+
+    '<div class="info-item"><label>ID</label><span>'+(v.id_type||'')+': '+(v.id_number||'-')+'</span></div>'+
+    '<div class="info-item"><label>Check In</label><span>'+(v.check_in_time||'-')+'</span></div>'+
+    '<div class="info-item"><label>Visitor ID</label><span style="font-size:12px;color:#888">'+(v.name||'-')+'</span></div>';
+  var canGo=mode==='checkin'?['Registered','Approved'].includes(v.status):v.status==='Completed';
+  var btn=document.getElementById('btn-confirm');
+  btn.disabled=!canGo;btn.style.opacity=canGo?'1':'0.4';
+  btn.textContent=canGo?(mode==='checkin'?'KONFIRMASI CHECK IN':'KONFIRMASI CHECK OUT'):'Tidak bisa (Status: '+v.status+')';
+  document.getElementById('visitor-card').style.display='block';
+  document.getElementById('visitor-card').scrollIntoView({behavior:'smooth'});
+}
+function confirmAction(){
+  if(!pendingQR)return;
+  apiCall('visitor_management.visitor_management.api.scan_qr_action',{qr_data:pendingQR,action:mode},function(r){
+    if(r&&r.status==='success'){showAlert('success',r.message);loadActive();setTimeout(resetAll,4000);}
+    else showAlert('error',(r&&r.message)||'Gagal');
+  },function(e){showAlert('error','Error: '+e);});
+}
+function resetCard(){pendingQR=null;scanning=false;document.getElementById('visitor-card').style.display='none';document.getElementById('manual-id').value='';}
+function resetAll(){resetCard();document.getElementById('alert-box').style.display='none';}
+function showAlert(type,msg){var el=document.getElementById('alert-box');el.className='alert alert-'+type;el.textContent=msg;el.style.display='block';setTimeout(function(){el.style.display='none';},6000);}
+function loadActive(){
+  apiCall('visitor_management.visitor_management.api.get_dashboard_data',{},function(data){
+    var el=document.getElementById('active-list');
+    if(!data||!data.active_visitors||!data.active_visitors.length){el.innerHTML='<p style="color:#aaa;text-align:center;padding:20px">Tidak ada tamu aktif</p>';return;}
+    var rows=data.active_visitors.map(function(v){
+      return '<tr><td><strong>'+v.visitor_name+'</strong><br><small>'+( v.visitor_company||'-')+'</small></td><td>'+v.host_employee_name+'</td><td>'+(v.check_in_time||'-')+'</td><td>'+v.status+'</td></tr>';
+    }).join('');
+    el.innerHTML='<table class="active-table"><thead><tr><th>Tamu</th><th>Host</th><th>Check In</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  },function(){document.getElementById('active-list').innerHTML='<p style="color:red;text-align:center">Gagal memuat</p>';});
+}
+</script>
+</body>
+</html>
