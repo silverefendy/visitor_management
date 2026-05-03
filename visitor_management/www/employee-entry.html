@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Employee Entry Request</title>
+<link rel="stylesheet" href="/assets/visitor_management/css/employee-entry.css">
+</head>
+<body>
+<div class="header">
+  <h1>Employee Entry Request</h1>
+  <div>Login: {{ user }}</div>
+</div>
+
+<main class="wrap">
+  <div class="notice" id="notice"></div>
+
+  <section class="section">
+    <div class="section-title">
+      <h2>Check In Internal</h2>
+      <button class="btn btn-primary" onclick="loadData()">Refresh</button>
+    </div>
+    <div class="entry-form">
+      <textarea id="purpose" rows="3" placeholder="Tulis keperluan / keterangan masuk area internal"></textarea>
+      <button class="btn btn-success" onclick="createEntry()">Ajukan Check In</button>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-title">
+      <h2>Pengajuan Saya</h2>
+      <span class="count" id="mine-count">0</span>
+    </div>
+    <div id="mine-list"></div>
+  </section>
+
+  <section class="section manager-only" id="manager-panel">
+    <div class="section-title">
+      <h2>Approval HRD / Manager</h2>
+      <div class="bulk-actions">
+        <button class="btn btn-success" onclick="bulkAction('approve')">Approve Selected</button>
+        <button class="btn btn-danger" onclick="bulkReject()">Reject Selected</button>
+      </div>
+    </div>
+    <div id="pending-list"></div>
+  </section>
+
+  <section class="section manager-only" id="active-panel">
+    <div class="section-title">
+      <h2>Karyawan Approved</h2>
+      <button class="btn btn-primary" onclick="bulkAction('complete', 'active-list')">Complete Selected</button>
+    </div>
+    <div id="active-list"></div>
+  </section>
+
+  <section class="section manager-only" id="completed-panel">
+    <div class="section-title">
+      <h2>Selesai Belum Check Out</h2>
+      <button class="btn btn-primary" onclick="bulkAction('checkout', 'completed-list')">Check Out Selected</button>
+    </div>
+    <div id="completed-list"></div>
+  </section>
+</main>
+
+<script>
+window.csrf_token = '{{ csrf_token }}';
+</script>
+<script src="/assets/visitor_management/js/employee-entry.js"></script>
+</body>
+</html>

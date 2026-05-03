@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VMS Employee Approval</title>
+<link rel="stylesheet" href="/assets/visitor_management/css/vms-approval.css">
+</head>
+<body>
+<div class="header">
+  <h1>VMS Employee Approval</h1>
+  <div>Login: {{ user }}</div>
+</div>
+
+<main class="wrap">
+  <div class="toolbar">
+    <h2>Approval Kunjungan</h2>
+    <button class="btn btn-primary" onclick="loadData()">Refresh</button>
+  </div>
+
+  <div id="notice" class="notice"></div>
+
+  <section class="section">
+    <div class="section-title">
+      <h3>Menunggu Approval</h3>
+      <span class="count" id="pending-count">0</span>
+    </div>
+    <div id="pending-list" class="grid"></div>
+  </section>
+
+  <section class="section">
+    <div class="section-title">
+      <h3>Kunjungan Sedang Berjalan</h3>
+      <span class="count" id="active-count">0</span>
+    </div>
+    <div id="active-list" class="grid"></div>
+  </section>
+</main>
+
+<script>
+window.csrf_token = '{{ csrf_token }}';
+</script>
+<script src="/assets/visitor_management/js/vms-approval.js"></script>
+</body>
+</html>

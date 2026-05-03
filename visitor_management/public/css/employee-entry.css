@@ -1,0 +1,35 @@
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#eef1f4;color:#14213d;min-height:100vh}
+.header{background:#23405d;color:white;padding:16px 24px}
+.header h1{font-size:20px;margin-bottom:4px}
+.header div{font-size:13px;opacity:.85}
+.wrap{max-width:1100px;margin:22px auto;padding:0 16px}
+.section{background:white;border-radius:8px;padding:18px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.07)}
+.section-title{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #e5e8ed;padding-bottom:10px;margin-bottom:14px}
+.section-title h2{font-size:17px}
+.entry-form{display:flex;gap:10px;align-items:stretch}
+.entry-form textarea{flex:1;border:1px solid #cfd6df;border-radius:8px;padding:12px;font-size:14px;resize:vertical}
+.btn{border:0;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:700;cursor:pointer}
+.btn-primary{background:#23405d;color:white}
+.btn-success{background:#1f9d55;color:white}
+.btn-danger{background:#df3f32;color:white}
+.notice{display:none;margin-bottom:16px;padding:14px;border-radius:8px;font-weight:700;font-size:14px}
+.notice-success{display:block;background:#dff5e8;color:#126c3a;border:1px solid #9bd9b4}
+.notice-error{display:block;background:#fde8e6;color:#a7281e;border:1px solid #f0ada7}
+.notice-warning{display:block;background:#fff4d6;color:#8a5d00;border:1px solid #f0d27a}
+.count{background:#edf1f7;color:#23405d;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700}
+.bulk-actions{display:flex;gap:8px}
+table{width:100%;border-collapse:collapse}
+th{background:#23405d;color:white;padding:10px;text-align:left;font-size:13px}
+td{padding:10px;border-bottom:1px solid #eef1f4;font-size:13px;vertical-align:top}
+.empty{text-align:center;color:#8a95a3;background:#f8fafc;border-radius:8px;padding:20px}
+.status{display:inline-block;border-radius:999px;padding:3px 9px;font-size:11px;font-weight:700}
+.pending{background:#fff3cd;color:#856404}
+.approved{background:#d5f4e6;color:#1a7a4a}
+.rejected{background:#fde8e8;color:#c0392b}
+.completed{background:#efe7f7;color:#6f3fa0}
+.checkout{background:#d8f5f0;color:#087767}
+@media(max-width:720px){
+  .entry-form,.section-title,.bulk-actions{flex-direction:column;align-items:stretch}
+  table{display:block;overflow-x:auto}
+}

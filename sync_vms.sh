@@ -1,15 +1,11 @@
 #!/bin/bash
-# Script untuk sync file VMS setelah edit
-# Jalankan dari: /home/frappe/frappe-bench-v16/apps/visitor_management/
+# Script untuk refresh VMS setelah edit.
+# Source aktif ada di visitor_management/visitor_management/.
+# Folder duplicate visitor_management/doctype sudah dihapus agar tidak saling menimpa.
 
 BASE="/home/frappe/frappe-bench-v16/apps/visitor_management"
-SRC="$BASE/visitor_management"
-DST="$BASE/visitor_management/visitor_management"
 
-echo "=== Syncing VMS files ==="
-cp $SRC/doctype/visitor/visitor.py        $DST/doctype/visitor/visitor.py
-cp $SRC/doctype/visitor_log/visitor_log.py $DST/doctype/visitor_log/visitor_log.py
-cp $SRC/api.py                             $DST/api.py
+echo "=== Refreshing VMS ==="
 
 echo "Menghapus cache..."
 find $BASE -name "*.pyc" -delete

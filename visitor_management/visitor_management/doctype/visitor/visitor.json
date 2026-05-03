@@ -130,6 +130,7 @@
   {
    "fieldname": "check_out_time",
    "fieldtype": "Datetime",
+   "in_list_view": 1,
    "label": "Waktu Check Out",
    "read_only": 1
   },

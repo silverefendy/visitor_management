@@ -83,7 +83,7 @@ class Visitor(Document):
 
     @frappe.whitelist()
     def do_checkin(self):
-        if self.status not in ["Registered", "Approved"]:
+        if self.status != "Registered":
             frappe.throw(_("Tidak bisa check-in. Status: {0}").format(self.status))
         self.status = "Awaiting Approval"
         self.check_in_time = now_datetime()

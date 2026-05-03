@@ -4,6 +4,79 @@ from frappe.utils import today, now_datetime
 import json
 
 
+def _get_employee_for_user(user=None):
+    user = user or frappe.session.user
+    return frappe.db.get_value("Employee", {"user_id": user}, "name")
+
+
+def _can_manage_visitor(visitor):
+    user = frappe.session.user
+    roles = frappe.get_roles(user)
+    if "System Manager" in roles or "Visitor Manager" in roles:
+        return True
+
+    employee = _get_employee_for_user(user)
+    return bool(employee and visitor.host_employee == employee)
+
+
+def _get_manageable_visitor(visitor_id):
+    if not visitor_id or not frappe.db.exists("Visitor", visitor_id):
+        frappe.throw(_("Visitor tidak ditemukan"))
+
+    visitor = frappe.get_doc("Visitor", visitor_id)
+    if not _can_manage_visitor(visitor):
+        frappe.throw(_("Anda tidak memiliki akses untuk visitor ini"))
+
+    return visitor
+
+
+def _is_employee_entry_manager(user=None):
+    roles = frappe.get_roles(user or frappe.session.user)
+    return bool({"System Manager", "HR Manager", "Visitor Manager"} & set(roles))
+
+
+def _get_employee_entry_fields():
+    return [
+        "name",
+        "employee",
+        "employee_name",
+        "department",
+        "purpose",
+        "status",
+        "check_in_time",
+        "approved_by",
+        "approved_at",
+        "completed_at",
+        "check_out_time",
+        "rejected_reason",
+        "modified",
+    ]
+
+
+def _get_manageable_employee_entry(entry_id):
+    if not entry_id or not frappe.db.exists("Employee Entry Request", entry_id):
+        frappe.throw(_("Employee Entry Request tidak ditemukan"))
+
+    doc = frappe.get_doc("Employee Entry Request", entry_id)
+    if _is_employee_entry_manager():
+        return doc
+
+    employee = _get_employee_for_user()
+    if employee and doc.employee == employee:
+        return doc
+
+    frappe.throw(_("Anda tidak memiliki akses untuk pengajuan ini"))
+
+
+def _parse_names(names):
+    if isinstance(names, str):
+        try:
+            names = json.loads(names)
+        except (json.JSONDecodeError, TypeError):
+            names = [n.strip() for n in names.split(",") if n.strip()]
+    return names or []
+
+
 @frappe.whitelist(allow_guest=False)
 def scan_qr_action(qr_data, action):
     """
@@ -69,23 +142,48 @@ def get_visitor_by_qr(qr_data):
 @frappe.whitelist(allow_guest=False)
 def get_dashboard_data():
     """Data untuk dashboard VMS hari ini"""
-    base_filters = [["creation", ">=", today()]]
-
-    total     = frappe.db.count("Visitor", filters=base_filters)
-    checked_in = frappe.db.count("Visitor", filters=base_filters + [["status", "in", ["Checked In", "Approved"]]])
-    completed  = frappe.db.count("Visitor", filters=base_filters + [["status", "=", "Completed"]])
-    checked_out = frappe.db.count("Visitor", filters=base_filters + [["status", "=", "Checked Out"]])
-    waiting    = frappe.db.count("Visitor", filters=base_filters + [["status", "=", "Awaiting Approval"]])
-    rejected   = frappe.db.count("Visitor", filters=base_filters + [["status", "=", "Rejected"]])
+    activity_filters = [["modified", ">=", today()]]
+    dashboard_fields = [
+        "name",
+        "visitor_name",
+        "visitor_company",
+        "host_employee_name",
+        "department",
+        "status",
+        "check_in_time",
+        "check_out_time",
+        "rejected_reason",
+        "modified",
+    ]
 
     # Visitor aktif saat ini (masih di dalam gedung)
     active_visitors = frappe.get_all(
         "Visitor",
         filters=[["status", "in", ["Checked In", "Approved", "Awaiting Approval"]]],
-        fields=["name", "visitor_name", "visitor_company", "host_employee_name",
-                "department", "status", "check_in_time"],
+        fields=dashboard_fields,
         order_by="check_in_time asc",
     )
+
+    pending_checkout = frappe.get_all(
+        "Visitor",
+        filters=[["status", "=", "Completed"]],
+        fields=dashboard_fields,
+        order_by="modified asc",
+    )
+
+    rejected_visitors = frappe.get_all(
+        "Visitor",
+        filters=activity_filters + [["status", "=", "Rejected"]],
+        fields=dashboard_fields,
+        order_by="modified desc",
+    )
+
+    waiting = len([v for v in active_visitors if v.status == "Awaiting Approval"])
+    checked_in = len([v for v in active_visitors if v.status in ["Checked In", "Approved"]])
+    completed = len(pending_checkout)
+    rejected = len(rejected_visitors)
+    checked_out = frappe.db.count("Visitor", filters=activity_filters + [["status", "=", "Checked Out"]])
+    total = waiting + checked_in + completed + checked_out + rejected
 
     return {
         "stats": {
@@ -97,6 +195,8 @@ def get_dashboard_data():
             "rejected": rejected,
         },
         "active_visitors": active_visitors,
+        "pending_checkout": pending_checkout,
+        "rejected_visitors": rejected_visitors,
     }
 
 
@@ -119,6 +219,205 @@ def employee_pending_approvals():
                 "check_in_time", "id_type", "id_number"],
         order_by="check_in_time asc",
     )
+
+
+@frappe.whitelist(allow_guest=False)
+def employee_approval_data():
+    """Data approval untuk employee yang sedang login."""
+    user = frappe.session.user
+    roles = frappe.get_roles(user)
+    is_manager = "System Manager" in roles or "Visitor Manager" in roles
+    employee = _get_employee_for_user(user)
+
+    if not is_manager and not employee:
+        return {
+            "user": user,
+            "employee": None,
+            "pending": [],
+            "active": [],
+            "message": "User login belum terhubung ke Employee.",
+        }
+
+    base_filters = {}
+    if not is_manager:
+        base_filters["host_employee"] = employee
+
+    fields = [
+        "name",
+        "visitor_name",
+        "visitor_company",
+        "visitor_phone",
+        "visit_purpose",
+        "host_employee_name",
+        "department",
+        "status",
+        "check_in_time",
+        "approved_at",
+        "id_type",
+        "id_number",
+    ]
+
+    pending_filters = dict(base_filters)
+    pending_filters["status"] = "Awaiting Approval"
+
+    active_filters = dict(base_filters)
+    active_filters["status"] = "Approved"
+
+    return {
+        "user": user,
+        "employee": employee,
+        "is_manager": is_manager,
+        "pending": frappe.get_all(
+            "Visitor",
+            filters=pending_filters,
+            fields=fields,
+            order_by="check_in_time asc",
+        ),
+        "active": frappe.get_all(
+            "Visitor",
+            filters=active_filters,
+            fields=fields,
+            order_by="approved_at asc, check_in_time asc",
+        ),
+    }
+
+
+@frappe.whitelist(allow_guest=False)
+def approve_visitor(visitor_id):
+    visitor = _get_manageable_visitor(visitor_id)
+    result = visitor.approve_visit()
+    frappe.publish_realtime(
+        "vms_visitor_approved",
+        {"visitor": visitor.name, "visitor_name": visitor.visitor_name},
+        after_commit=True,
+    )
+    return result
+
+
+@frappe.whitelist(allow_guest=False)
+def reject_visitor(visitor_id, reason=""):
+    visitor = _get_manageable_visitor(visitor_id)
+    result = visitor.reject_visit(reason)
+    frappe.publish_realtime(
+        "vms_visitor_rejected",
+        {"visitor": visitor.name, "visitor_name": visitor.visitor_name, "reason": reason},
+        after_commit=True,
+    )
+    return result
+
+
+@frappe.whitelist(allow_guest=False)
+def complete_visit(visitor_id):
+    visitor = _get_manageable_visitor(visitor_id)
+    return visitor.end_visit()
+
+
+@frappe.whitelist(allow_guest=False)
+def create_employee_entry(purpose):
+    employee = _get_employee_for_user()
+    if not employee:
+        frappe.throw(_("User login belum terhubung ke Employee"))
+    if not purpose:
+        frappe.throw(_("Keperluan / keterangan wajib diisi"))
+
+    doc = frappe.get_doc({
+        "doctype": "Employee Entry Request",
+        "employee": employee,
+        "purpose": purpose,
+    })
+    doc.insert(ignore_permissions=True)
+    frappe.db.commit()
+    return {"status": "success", "message": "Pengajuan check-in karyawan dibuat.", "name": doc.name}
+
+
+@frappe.whitelist(allow_guest=False)
+def get_employee_entry_data():
+    employee = _get_employee_for_user()
+    is_manager = _is_employee_entry_manager()
+    fields = _get_employee_entry_fields()
+
+    if not is_manager and not employee:
+        return {
+            "employee": None,
+            "is_manager": False,
+            "mine": [],
+            "pending": [],
+            "active": [],
+            "completed": [],
+            "message": "User login belum terhubung ke Employee.",
+        }
+
+    mine = []
+    if employee:
+        mine = frappe.get_all(
+            "Employee Entry Request",
+            filters={"employee": employee},
+            fields=fields,
+            order_by="modified desc",
+            limit_page_length=20,
+        )
+
+    pending = []
+    active = []
+    completed = []
+    if is_manager:
+        pending = frappe.get_all(
+            "Employee Entry Request",
+            filters={"status": "Pending Approval"},
+            fields=fields,
+            order_by="check_in_time asc",
+        )
+        active = frappe.get_all(
+            "Employee Entry Request",
+            filters={"status": "Approved"},
+            fields=fields,
+            order_by="approved_at asc, check_in_time asc",
+        )
+        completed = frappe.get_all(
+            "Employee Entry Request",
+            filters={"status": "Completed"},
+            fields=fields,
+            order_by="completed_at asc, modified asc",
+        )
+
+    return {
+        "employee": employee,
+        "is_manager": is_manager,
+        "mine": mine,
+        "pending": pending,
+        "active": active,
+        "completed": completed,
+    }
+
+
+@frappe.whitelist(allow_guest=False)
+def employee_entry_action(entry_id, action, reason=""):
+    doc = _get_manageable_employee_entry(entry_id)
+    if action == "approve":
+        return doc.approve()
+    if action == "reject":
+        return doc.reject(reason)
+    if action == "complete":
+        return doc.complete()
+    if action == "checkout":
+        return doc.checkout()
+    frappe.throw(_("Aksi tidak dikenali"))
+
+
+@frappe.whitelist(allow_guest=False)
+def bulk_employee_entry_action(entry_ids, action, reason=""):
+    if not _is_employee_entry_manager():
+        frappe.throw(_("Hanya HR Manager, Visitor Manager, atau System Manager yang dapat memproses bulk action"))
+
+    results = []
+    for entry_id in _parse_names(entry_ids):
+        try:
+            result = employee_entry_action(entry_id, action, reason)
+            results.append({"name": entry_id, "status": "success", "message": result.get("message")})
+        except Exception as exc:
+            results.append({"name": entry_id, "status": "error", "message": str(exc)})
+
+    return {"status": "success", "results": results}
 
 
 @frappe.whitelist()
