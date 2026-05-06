@@ -171,6 +171,22 @@ function createEntry() {
   });
 }
 
+function loadBarcode() {
+  api("visitor_management.visitor_management.api.get_my_employee_barcode", {}, function(data) {
+    if (!data) return;
+    document.getElementById("barcode-panel").style.display = "block";
+    document.getElementById("barcode-wrap").innerHTML =
+      (data.qr_image ? "<img class=\"barcode-img\" src=\"" + esc(data.qr_image) + "\" alt=\"QR Karyawan\">" : "") +
+      "<div class=\"barcode-info\">" +
+        "<strong>" + esc(data.employee_name) + "</strong>" +
+        "<span>Employee ID: " + esc(data.employee) + "</span>" +
+        "<span>Departemen: " + esc(data.department) + "</span>" +
+        "<code>" + esc(data.barcode_text) + "</code>" +
+        "<small>Security dapat scan QR ini atau ketik kode barcode di atas.</small>" +
+      "</div>";
+  });
+}
+
 function loadData() {
   api("visitor_management.visitor_management.api.get_employee_entry_data", {}, function(data) {
     data = data || {};
@@ -194,7 +210,6 @@ function renderTable(id, rows, selectable) {
     el.innerHTML = "<div class=\"empty\">Tidak ada data.</div>";
     return;
   }
-
   var checkboxHeader = selectable ? "<th><input type=\"checkbox\" onchange=\"toggleAll('" + id + "', this.checked)\"></th>" : "";
   var actionHeader = selectable ? "<th>Aksi</th>" : "";
   var body = rows.map(function(row) {
@@ -299,6 +314,9 @@ function timeText(value) {
   return value ? String(value).substring(0, 16) : "-";
 }
 
-window.onload = loadData;
+window.onload = function() {
+  loadBarcode();
+  loadData();
+};
 setInterval(loadData, 30000);
 

@@ -7,10 +7,15 @@
 #   bench clear-cache && bench restart
 # =============================================================================
 
+import base64
+import io
+import json
+
 import frappe
+import qrcode
 from frappe import _
 from frappe.utils import today, now_datetime
-import json
+
 
 
 # =============================================================================
@@ -22,6 +27,93 @@ import json
 def get_csrf_token():
     """Return a fresh CSRF token for custom web pages."""
     return frappe.sessions.get_csrf_token()
+
+
+def _employee_barcode_payload(employee):
+    return json.dumps({"type": "employee_entry", "employee": employee})
+
+
+def _qr_data_uri(data):
+    try:
+        qr = qrcode.QRCode(version=1, box_size=8, border=3)
+        qr.add_data(data)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="black", back_color="white")
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        return "data:image/png;base64,{0}".format(base64.b64encode(buf.getvalue()).decode())
+    except Exception:
+        frappe.log_error(message=frappe.get_traceback(), title="Employee Barcode Generate Error")
+        return None
+
+
+def _parse_employee_barcode(qr_data):
+    if not qr_data:
+        frappe.throw(_("Barcode karyawan tidak boleh kosong"))
+
+    value = str(qr_data).strip()
+    employee_code = value
+    try:
+        data = json.loads(value)
+        if isinstance(data, dict):
+            employee_code = data.get("employee") or data.get("employee_id") or data.get("name") or data.get("code")
+    except (json.JSONDecodeError, TypeError):
+        employee_code = value
+
+    if str(employee_code).upper().startswith("EMP:"):
+        employee_code = str(employee_code).split(":", 1)[1].strip()
+
+    if not employee_code:
+        frappe.throw(_("Barcode karyawan tidak valid"))
+
+    return employee_code
+
+
+def _employee_has_field(fieldname):
+    return frappe.get_meta("Employee").has_field(fieldname)
+
+
+def _get_employee_from_barcode(qr_data):
+    employee_code = _parse_employee_barcode(qr_data)
+
+    if frappe.db.exists("Employee", employee_code):
+        return employee_code
+
+    lookup_filters = []
+    if _employee_has_field("attendance_device_id"):
+        lookup_filters.append({"attendance_device_id": employee_code})
+    if _employee_has_field("user_id"):
+        lookup_filters.append({"user_id": employee_code})
+    if _employee_has_field("employee_number"):
+        lookup_filters.append({"employee_number": employee_code})
+
+    for filters in lookup_filters:
+        employee = frappe.db.get_value("Employee", filters, "name")
+        if employee:
+            return employee
+
+    frappe.throw(_("Karyawan dengan kode {0} tidak ditemukan").format(employee_code))
+
+
+def _get_open_employee_entry(employee):
+    open_statuses = ["Pending Approval", "Approved", "Completed"]
+    rows = frappe.get_all(
+        "Employee Entry Request",
+        filters={"employee": employee, "status": ["in", open_statuses]},
+        pluck="name",
+        order_by="modified desc",
+        limit_page_length=1,
+    )
+    return frappe.get_doc("Employee Entry Request", rows[0]) if rows else None
+
+
+def _employee_entry_response(doc, message=None):
+    return {
+        "status": "success",
+        "message": message,
+        "entry": doc.name if doc else None,
+        "entry_status": doc.status if doc else None,
+    }
 
 
 def _get_employee_for_user(user=None):
@@ -358,6 +450,88 @@ def complete_visit(visitor_id):
     """Tandai kunjungan selesai. Dipanggil dari /vms-approval."""
     visitor = _get_manageable_visitor(visitor_id)
     return visitor.end_visit()
+	
+@frappe.whitelist(allow_guest=False)
+def get_my_employee_barcode():
+    employee = _get_employee_for_user()
+    if not employee:
+        frappe.throw(_("User login belum terhubung ke Employee"))
+
+    emp = frappe.db.get_value("Employee", employee, ["name", "employee_name", "department"], as_dict=True)
+    qr_data = _employee_barcode_payload(emp.name)
+    return {
+        "employee": emp.name,
+        "employee_name": emp.employee_name,
+        "department": emp.department,
+        "barcode_text": "EMP:{0}".format(emp.name),
+        "qr_data": qr_data,
+        "qr_image": _qr_data_uri(qr_data),
+    }
+
+
+@frappe.whitelist(allow_guest=False)
+def get_employee_by_barcode(qr_data):
+    employee = _get_employee_from_barcode(qr_data)
+    emp = frappe.db.get_value(
+        "Employee",
+        employee,
+        ["name", "employee_name", "department", "status"],
+        as_dict=True,
+    )
+    if not emp:
+        return {"error": "Karyawan tidak ditemukan"}
+
+    open_entry = _get_open_employee_entry(employee)
+    return {
+        "name": emp.name,
+        "employee_name": emp.employee_name,
+        "department": emp.department,
+        "employee_status": emp.status,
+        "barcode_text": "EMP:{0}".format(emp.name),
+        "entry": open_entry.name if open_entry else None,
+        "entry_status": open_entry.status if open_entry else None,
+        "purpose": open_entry.purpose if open_entry else None,
+        "check_in_time": str(open_entry.check_in_time) if open_entry and open_entry.check_in_time else None,
+        "approved_at": str(open_entry.approved_at) if open_entry and open_entry.approved_at else None,
+        "completed_at": str(open_entry.completed_at) if open_entry and open_entry.completed_at else None,
+    }
+
+
+@frappe.whitelist(allow_guest=False)
+def scan_employee_entry_barcode(qr_data, action):
+    employee = _get_employee_from_barcode(qr_data)
+    emp_status = frappe.db.get_value("Employee", employee, "status")
+    if emp_status != "Active":
+        frappe.throw(_("Employee {0} tidak aktif").format(employee))
+
+    open_entry = _get_open_employee_entry(employee)
+    if action == "checkin":
+        if open_entry:
+            if open_entry.status == "Completed":
+                frappe.throw(_("Karyawan sudah Completed. Gunakan mode Check Out untuk scan pulang."))
+            return _employee_entry_response(
+                open_entry,
+                _("Pengajuan masuk sudah ada dengan status {0}.").format(open_entry.status),
+            )
+
+        doc = frappe.get_doc({
+            "doctype": "Employee Entry Request",
+            "employee": employee,
+            "purpose": "Scan barcode security",
+        })
+        doc.insert(ignore_permissions=True)
+        frappe.db.commit()
+        return _employee_entry_response(doc, _("Pengajuan check-in karyawan dibuat. Menunggu approval."))
+
+    if action == "checkout":
+        if not open_entry:
+            frappe.throw(_("Tidak ada pengajuan karyawan yang menunggu check-out."))
+        if open_entry.status != "Completed":
+            frappe.throw(_("Belum bisa check-out. Status saat ini: {0}").format(open_entry.status))
+        return open_entry.checkout()
+
+    frappe.throw(_("Aksi tidak dikenali"))
+	
 
 
 # =============================================================================

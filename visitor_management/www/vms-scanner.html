@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>VMS Security Scanner</title>
-<link rel="stylesheet" href="/assets/visitor_management/css/vms-scanner.css">
+<link rel="stylesheet" href="/assets/visitor_management/css/vms-scanner.css?v={{ asset_version }}">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 </head>
 <body>
@@ -14,6 +14,10 @@
 </div>
 
 <main class="container">
+  <div class="target-bar">
+    <button class="target-btn active" id="target-visitor" onclick="setScanTarget('visitor')">Scan Tamu</button>
+    <button class="target-btn" id="target-employee" onclick="setScanTarget('employee')">Scan Karyawan</button>
+  </div>
   <div class="mode-bar">
     <button class="mode-btn active-in" id="btn-in" onclick="setMode('checkin')">CHECK IN</button>
     <button class="mode-btn" id="btn-out" onclick="setMode('checkout')">CHECK OUT</button>
@@ -22,14 +26,14 @@
   <div class="alert" id="alert-box"></div>
 
   <section class="card">
-    <h2>Scan QR / Barcode</h2>
+    <h2 id="scan-title">Scan QR / Barcode Tamu</h2>
     <div id="qr-reader"></div>
     <div class="scanner-actions">
       <button class="btn btn-dark" onclick="mulaiScanner()">Buka Kamera</button>
       <button class="btn" onclick="stopScanner()">Stop Kamera</button>
     </div>
     <div class="camera-status" id="camera-status">
-      Klik Buka Kamera, lalu arahkan ke QR code pada badge visitor.
+       Klik Buka Kamera, lalu arahkan ke QR code visitor atau barcode karyawan sesuai pilihan scan.
     </div>
   </section>
 
@@ -40,12 +44,12 @@
       <button class="btn btn-dark" onclick="cari()">Cari</button>
     </div>
     <div class="hint">
-      Ketik Visitor ID dari badge tamu lalu tekan Enter atau klik Cari. Atau klik tombol <strong>Pilih</strong> dari tabel tamu aktif di bawah.
+      Untuk tamu: ketik Visitor ID. Untuk karyawan: scan barcode / QR karyawan atau ketik kode <strong>EMP:EmployeeID</strong>.
     </div>
   </section>
 
   <section class="card visitor-card" id="visitor-card">
-    <h2>Data Tamu Ditemukan</h2>
+    <h2 id="record-card-title">Data Tamu Ditemukan</h2>
     <div id="status-area"></div>
     <div class="info-grid" id="info-grid"></div>
     <div class="action-row">
@@ -84,6 +88,6 @@
 <script>
 window.csrf_token = '{{ csrf_token }}';
 </script>
-<script src="/assets/visitor_management/js/vms-scanner.js"></script>
+<script src="/assets/visitor_management/js/vms-scanner.js?v={{ asset_version }}"></script>
 </body>
 </html>
