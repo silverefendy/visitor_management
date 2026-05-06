@@ -38,6 +38,31 @@ function isInvalidRequest(error) {
   return String(error || "").toLowerCase().indexOf("invalid request") !== -1;
 }
 
+function parseApiResponse(response) {
+  return response.text().then(function(responseText) {
+    var data = {};
+    if (responseText) {
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        data = {message: responseText};
+      }
+    }
+    data.__ok = response.ok;
+    data.__http_status = response.status;
+    data.__status_text = response.statusText;
+    return data;
+  });
+}
+
+function responseError(data) {
+  var error = getError(data) || data.__status_text || ("HTTP " + data.__http_status);
+  if (data.__http_status === 400 && !isInvalidRequest(error)) {
+    return "Invalid Request";
+  }
+  return error;
+}
+
 function refreshCsrfToken(ok, fail) {
   fetch("/api/method/visitor_management.visitor_management.api.get_csrf_token", {
     method: "GET",
@@ -47,19 +72,10 @@ function refreshCsrfToken(ok, fail) {
       "X-Requested-With": "XMLHttpRequest"
     }
   })
-    .then(function(response) {
-      return response.text().then(function(text) {
-        var data;
-        try { data = t ? JSON.parse(t) : {}; }
-        catch(e) { data = {message: t || r.statusText}; }
-        data.__ok = r.ok;
-        data.__http_status = r.status;
-        return data;
-      });
-    })
+    .then(parseApiResponse)
     .then(function(data) {
       if (!data.__ok || data.exc || data._server_messages) {
-        if (fail) fail(getError(data) || ("HTTP " + data.__http_status));
+        if (fail) fail(responseError(data));
         return;
       }
 
@@ -99,19 +115,10 @@ function postApi(method, args, ok, fail) {
     },
     body: params
   })
-    .then(function(response) {
-      return response.text().then(function(text) {
-        var data;
-        try { data = text ? JSON.parse(text) : {}; }
-        catch (e) { data = {message: text || response.statusText}; }
-        data.__ok = response.ok;
-        data.__http_status = response.status;
-        return data;
-      });
-    })
+    .then(parseApiResponse)
     .then(function(data) {
       if (!data.__ok || data.exc || data._server_messages) {
-        if (fail) fail(getError(data) || ("HTTP " + data.__http_status));
+        if (fail) fail(responseError(data));
         return;
       }
       if (ok) ok(data.message);
