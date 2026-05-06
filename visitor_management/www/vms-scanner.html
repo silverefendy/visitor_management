@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-store">
 <title>VMS Security Scanner</title>
 <link rel="stylesheet" href="/assets/visitor_management/css/vms-scanner.css?v={{ asset_version }}">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
@@ -19,8 +20,8 @@
     <button class="target-btn" id="target-employee" onclick="setScanTarget('employee')">Scan Karyawan</button>
   </div>
   <div class="mode-bar">
-    <button class="mode-btn active-in" id="btn-in" onclick="setMode('checkin')">CHECK IN</button>
-    <button class="mode-btn" id="btn-out" onclick="setMode('checkout')">CHECK OUT</button>
+    <button type="button" class="mode-btn active-in" id="btn-in">CHECK IN</button>
+    <button type="button" class="mode-btn" id="btn-out">CHECK OUT</button>
   </div>
 
   <div class="alert" id="alert-box"></div>
