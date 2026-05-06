@@ -10,6 +10,8 @@ body{font-family:Arial,sans-serif;background:#eef1f4;color:#14213d;min-height:10
 .entry-form{display:flex;gap:10px;align-items:stretch}
 .entry-form textarea{flex:1;border:1px solid #cfd6df;border-radius:8px;padding:12px;font-size:14px;resize:vertical}
 .btn{border:0;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:700;cursor:pointer}
+.btn-sm{padding:6px 9px;font-size:12px;border-radius:6px}
+.btn-sm{padding:6px 9px;font-size:12px;border-radius:6px}
 .btn-primary{background:#23405d;color:white}
 .btn-success{background:#1f9d55;color:white}
 .btn-danger{background:#df3f32;color:white}

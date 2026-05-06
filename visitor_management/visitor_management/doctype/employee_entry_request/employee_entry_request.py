@@ -5,6 +5,10 @@ from frappe.utils import now_datetime
 
 
 class EmployeeEntryRequest(Document):
+	def _save_and_commit(self):
+		self.save(ignore_permissions=True)
+		frappe.db.commit()
+
 	def before_insert(self):
 		if not self.status:
 			self.status = "Pending Approval"
@@ -33,7 +37,7 @@ class EmployeeEntryRequest(Document):
 		self.status = "Approved"
 		self.approved_by = frappe.session.user
 		self.approved_at = now_datetime()
-		self.save(ignore_permissions=True)
+		self._save_and_commit()
 		return {"status": "success", "message": "Karyawan disetujui masuk."}
 
 	@frappe.whitelist()
@@ -44,7 +48,7 @@ class EmployeeEntryRequest(Document):
 		self.rejected_reason = reason
 		self.approved_by = frappe.session.user
 		self.approved_at = now_datetime()
-		self.save(ignore_permissions=True)
+		self._save_and_commit()
 		return {"status": "success", "message": "Pengajuan karyawan ditolak."}
 
 	@frappe.whitelist()
@@ -53,7 +57,7 @@ class EmployeeEntryRequest(Document):
 			frappe.throw(_("Status belum Approved"))
 		self.status = "Completed"
 		self.completed_at = now_datetime()
-		self.save(ignore_permissions=True)
+		self._save_and_commit()
 		return {"status": "success", "message": "Kegiatan karyawan selesai."}
 
 	@frappe.whitelist()
@@ -62,5 +66,6 @@ class EmployeeEntryRequest(Document):
 			frappe.throw(_("Status belum Completed"))
 		self.status = "Checked Out"
 		self.check_out_time = now_datetime()
-		self.save(ignore_permissions=True)
+		self._save_and_commit()
 		return {"status": "success", "message": "Karyawan check-out."}
+
