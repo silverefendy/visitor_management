@@ -79,6 +79,12 @@ def _employee_has_field(fieldname):
 
 def _get_employee_from_barcode(qr_data):
     employee_code = _parse_employee_barcode(qr_data)
+	
+    if frappe.db.exists("Employee Entry Request", employee_code):
+        entry_employee = frappe.db.get_value("Employee Entry Request", employee_code, "employee")
+        if entry_employee:
+            return entry_employee
+
 
     if frappe.db.exists("Employee", employee_code):
         return employee_code
@@ -427,6 +433,166 @@ def get_employee_by_barcode(qr_data):
         "completed_at": str(open_entry.completed_at) if open_entry and open_entry.completed_at else None,
     }
 
+@@ -58,50 +58,55 @@ def _parse_employee_barcode(qr_data):
+    value = str(qr_data).strip()
+    employee_code = value
+    try:
+        data = json.loads(value)
+        if isinstance(data, dict):
+            employee_code = data.get("employee") or data.get("employee_id") or data.get("name") or data.get("code")
+    except (json.JSONDecodeError, TypeError):
+        employee_code = value
+
+    if str(employee_code).upper().startswith("EMP:"):
+        employee_code = str(employee_code).split(":", 1)[1].strip()
+
+    if not employee_code:
+        frappe.throw(_("Barcode karyawan tidak valid"))
+
+    return employee_code
+
+
+def _employee_has_field(fieldname):
+    return frappe.get_meta("Employee").has_field(fieldname)
+
+
+def _get_employee_from_barcode(qr_data):
+    employee_code = _parse_employee_barcode(qr_data)
+
+    if frappe.db.exists("Employee Entry Request", employee_code):
+        entry_employee = frappe.db.get_value("Employee Entry Request", employee_code, "employee")
+        if entry_employee:
+            return entry_employee
+
+    if frappe.db.exists("Employee", employee_code):
+        return employee_code
+
+    lookup_filters = []
+    if _employee_has_field("attendance_device_id"):
+        lookup_filters.append({"attendance_device_id": employee_code})
+    if _employee_has_field("user_id"):
+        lookup_filters.append({"user_id": employee_code})
+    if _employee_has_field("employee_number"):
+        lookup_filters.append({"employee_number": employee_code})
+
+    for filters in lookup_filters:
+        employee = frappe.db.get_value("Employee", filters, "name")
+        if employee:
+            return employee
+
+    frappe.throw(_("Karyawan dengan kode {0} tidak ditemukan").format(employee_code))
+
+
+def _get_open_employee_entry(employee):
+    open_statuses = ["Pending Approval", "Approved", "Completed"]
+    rows = frappe.get_all(
+        "Employee Entry Request",
+        filters={"employee": employee, "status": ["in", open_statuses]},
+        pluck="name",
+@@ -406,50 +411,128 @@ def get_employee_by_barcode(qr_data):
+    emp = frappe.db.get_value(
+        "Employee",
+        employee,
+        ["name", "employee_name", "department", "status"],
+        as_dict=True,
+    )
+    if not emp:
+        return {"error": "Karyawan tidak ditemukan"}
+
+    open_entry = _get_open_employee_entry(employee)
+    return {
+        "name": emp.name,
+        "employee_name": emp.employee_name,
+        "department": emp.department,
+        "employee_status": emp.status,
+        "barcode_text": "EMP:{0}".format(emp.name),
+        "entry": open_entry.name if open_entry else None,
+        "entry_status": open_entry.status if open_entry else None,
+        "purpose": open_entry.purpose if open_entry else None,
+        "check_in_time": str(open_entry.check_in_time) if open_entry and open_entry.check_in_time else None,
+        "approved_at": str(open_entry.approved_at) if open_entry and open_entry.approved_at else None,
+        "completed_at": str(open_entry.completed_at) if open_entry and open_entry.completed_at else None,
+    }
+
+
+
+
+@frappe.whitelist(allow_guest=False)
+def search_employee_entry_candidates(keyword, limit=10):
+    keyword = (keyword or "").strip()
+    if len(keyword) < 2:
+        return []
+
+    try:
+        limit = max(1, min(int(limit or 10), 20))
+    except Exception:
+        limit = 10
+
+    results = []
+    seen = set()
+
+    employee_filters = [["status", "=", "Active"], ["name", "like", f"%{keyword}%"]]
+    employee_rows = frappe.get_all(
+        "Employee",
+        filters=employee_filters,
+        fields=["name", "employee_name", "department"],
+        order_by="modified desc",
+        limit_page_length=limit,
+    )
+
+    if len(employee_rows) < limit:
+        by_name = frappe.get_all(
+            "Employee",
+            filters=[["status", "=", "Active"], ["employee_name", "like", f"%{keyword}%"]],
+            fields=["name", "employee_name", "department"],
+            order_by="modified desc",
+            limit_page_length=limit,
+        )
+        employee_rows.extend(by_name)
+
+    for row in employee_rows:
+        key = f"EMP::{row.name}"
+        if key in seen:
+            continue
+        seen.add(key)
+        results.append({
+            "value": row.name,
+            "label": f"{row.name} — {row.employee_name or '-'}",
+            "type": "employee",
+            "employee": row.name,
+            "employee_name": row.employee_name,
+            "department": row.department,
+        })
+        if len(results) >= limit:
+            return results
+
+    entry_rows = frappe.get_all(
+        "Employee Entry Request",
+        filters=[["name", "like", f"%{keyword}%"]],
+        fields=["name", "employee", "employee_name", "department", "status"],
+        order_by="modified desc",
+        limit_page_length=limit,
+    )
+    for row in entry_rows:
+        key = f"ENTRY::{row.name}"
+        if key in seen:
+            continue
+        seen.add(key)
+        results.append({
+            "value": row.name,
+            "label": f"{row.name} — {row.employee or '-'} ({row.status or '-'})",
+            "type": "entry_request",
+            "entry_request": row.name,
+            "employee": row.employee,
+            "employee_name": row.employee_name,
+            "department": row.department,
+            "entry_status": row.status,
+        })
+        if len(results) >= limit:
+            break
+
+    return results
+
 
 @frappe.whitelist(allow_guest=False)
 def scan_employee_entry_barcode(qr_data, action):
@@ -486,6 +652,14 @@ def create_employee_entry(purpose):
         ))
     if not purpose or not purpose.strip():
         frappe.throw(_("Keperluan / keterangan wajib diisi"))
+		
+    open_entry = _get_open_employee_entry(employee)
+    if open_entry:
+        frappe.throw(_(
+            "Anda sudah memiliki pengajuan aktif dengan status {0}. "
+            "Selesaikan sampai check-out terlebih dahulu sebelum check-in lagi."
+        ).format(open_entry.status))
+
 
     open_entry = _get_open_employee_entry(employee)
     if open_entry:

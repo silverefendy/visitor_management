@@ -93,6 +93,40 @@ function extractError(d) {
   return "Request gagal";
 }
 
+var employeeSuggestTimer = null;
+var employeeSuggestMap = {};
+
+function bindEmployeeSuggest() {
+  var input = document.getElementById("vid-input");
+  if (!input) return;
+  input.addEventListener("input", function() {
+    if (scanTarget !== "employee") return;
+    var keyword = input.value.trim();
+    if (employeeSuggestTimer) clearTimeout(employeeSuggestTimer);
+    employeeSuggestTimer = setTimeout(function() { fetchEmployeeSuggestions(keyword); }, 200);
+  });
+}
+
+function fetchEmployeeSuggestions(keyword) {
+  var datalist = document.getElementById("employee-suggest");
+  if (!datalist) return;
+  if (!keyword || keyword.length < 2) {
+    datalist.innerHTML = "";
+    employeeSuggestMap = {};
+    return;
+  }
+  api("visitor_management.visitor_management.api.search_employee_entry_candidates", {keyword: keyword, limit: 12}, function(rows) {
+    rows = rows || [];
+    employeeSuggestMap = {};
+    datalist.innerHTML = rows.map(function(r) {
+      var value = r.value || "";
+      employeeSuggestMap[value] = r;
+      return '<option value="' + esc(value) + '" label="' + esc(r.label || value) + '"></option>';
+    }).join("");
+  });
+}
+
+
 function setScanTarget(target) {
   if (scannerRunning) stopScanner();
   scanTarget = target;
@@ -142,7 +176,9 @@ function loadRecord(input) {
 }
 
 function loadVisitor(input) {
-  var qr = normalisasiQR(input);
+  var selected = employeeSuggestMap[input] || null;
+  var payload = selected && selected.type === "entry_request" ? {employee_id: selected.entry_request || input} : {employee_id: input};
+  var qr = (input || "").trim().charAt(0) === "{" ? (input || "").trim() : JSON.stringify(payload);
   if (!qr) { alert2("warning", "Data QR / Visitor ID kosong"); return; }
 
   api(
@@ -513,6 +549,7 @@ function initScannerPage() {
   bindClick("btn-out", function() { setMode("checkout"); });
   setModeTitle();
   muatAktif();
+  bindEmployeeSuggest();
 }
 
 if (document.readyState === "loading") {

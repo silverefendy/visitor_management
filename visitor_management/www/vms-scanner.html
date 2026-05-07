@@ -41,7 +41,8 @@
   <section class="card">
     <h2 id="mode-title">Check In Tamu</h2>
     <div class="input-area">
-      <input type="text" id="vid-input" placeholder="Ketik Visitor ID (VIS-2026-05-00001)" onkeydown="if(event.key==='Enter') cari()" autofocus>
+      <input type="text" id="vid-input" list="employee-suggest" placeholder="Ketik Visitor ID (VIS-2026-05-00001)" onkeydown="if(event.key==='Enter') cari()" autofocus>
+      <datalist id="employee-suggest"></datalist>
       <button class="btn btn-dark" onclick="cari()">Cari</button>
     </div>
     <div class="hint">
