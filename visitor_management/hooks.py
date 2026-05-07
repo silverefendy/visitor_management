@@ -259,7 +259,7 @@ doc_events = {
 
 scheduler_events = {
     "hourly": [
-        "visitor_management.visitor_management.tasks.auto_checkout_stale_visitors"
+        "visitor_management.visitor_management.tasks.visitor_tasks.auto_checkout_stale_visitors"
     ]
 }
 

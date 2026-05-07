@@ -2,6 +2,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import now_datetime
+from visitor_management.visitor_management.permissions.approval_permissions import is_approval_manager
 
 def _create_employee_entry_log(doc, action, notes=""):
 	try:
@@ -21,6 +22,10 @@ def _create_employee_entry_log(doc, action, notes=""):
 
 
 class EmployeeEntryRequest(Document):
+	def _ensure_manager(self):
+		if not is_approval_manager():
+			frappe.throw(_("Anda tidak memiliki hak untuk aksi approval"), frappe.PermissionError)
+
 	def _save_and_commit(self):
 		self.save(ignore_permissions=True)
 		frappe.db.commit()
@@ -51,6 +56,7 @@ class EmployeeEntryRequest(Document):
 
 	@frappe.whitelist()
 	def approve(self):
+		self._ensure_manager()
 		if self.status != "Pending Approval":
 			frappe.throw(_("Status bukan Pending Approval"))
 		self.status = "Approved"
@@ -62,6 +68,7 @@ class EmployeeEntryRequest(Document):
 
 	@frappe.whitelist()
 	def reject(self, reason=""):
+		self._ensure_manager()
 		if self.status != "Pending Approval":
 			frappe.throw(_("Status bukan Pending Approval"))
 		self.status = "Rejected"
@@ -74,6 +81,7 @@ class EmployeeEntryRequest(Document):
 
 	@frappe.whitelist()
 	def complete(self):
+		self._ensure_manager()
 		if self.status != "Approved":
 			frappe.throw(_("Status belum Approved"))
 		self.status = "Completed"
@@ -91,4 +99,3 @@ class EmployeeEntryRequest(Document):
 		self._save_and_commit()
 		_create_employee_entry_log(self, "Checked Out", "Karyawan check-out")
 		return {"status": "success", "message": "Karyawan check-out."}
-
