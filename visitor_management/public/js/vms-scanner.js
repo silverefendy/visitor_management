@@ -150,7 +150,7 @@ function loadVisitor(input) {
     {qr_data: qr},
     function(v) {
       if (!v || v.error) { alert2("error", v ? v.error : "Visitor ID tidak ditemukan"); return; }
-	  v.record_type = "visitor";
+          v.record_type = "visitor";
       visitor = v;
       tampil(v);
     },
@@ -267,7 +267,7 @@ function tampilVisitor(v) {
   var bisaIn = v.status === "Registered";
   var bisaOut = v.status === "Completed";
   updateProcessButton(mode === "checkin" ? bisaIn : bisaOut, v.status, mode === "checkin" ? "KONFIRMASI CHECK IN" : "KONFIRMASI CHECK OUT");
-
+}
 function tampilEmployee(emp) {
   var status = emp.entry_status || "Belum Check In";
   var warna = {
