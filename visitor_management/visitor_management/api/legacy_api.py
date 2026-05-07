@@ -487,6 +487,14 @@ def create_employee_entry(purpose):
     if not purpose or not purpose.strip():
         frappe.throw(_("Keperluan / keterangan wajib diisi"))
 
+    open_entry = _get_open_employee_entry(employee)
+    if open_entry:
+        frappe.throw(_(
+            "Anda sudah memiliki pengajuan aktif dengan status {0}. "
+            "Selesaikan sampai check-out terlebih dahulu sebelum check-in lagi."
+        ).format(open_entry.status))
+
+
     doc = frappe.get_doc({
         "doctype": "Employee Entry Request",
         "employee": employee,
