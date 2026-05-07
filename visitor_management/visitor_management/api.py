@@ -15,6 +15,7 @@ import frappe
 import qrcode
 from frappe import _
 from frappe.utils import today, now_datetime
+from visitor_management.visitor_management.api import approval_api, qr_api, visitor_api
 from visitor_management.visitor_management.services.visitor_service import check_in, check_out
 from visitor_management.visitor_management.services.qr_service import parse_visitor_qr
 
@@ -218,54 +219,13 @@ def _parse_names(names):
 
 @frappe.whitelist(allow_guest=False)
 def scan_qr_action(qr_data, action, gate=None, device_id=None):
-    """Endpoint scanner: frontend kirim hasil scan, backend validasi & proses aksi."""
-    visitor_id = parse_visitor_qr(qr_data)
-
-    if not frappe.db.exists("Visitor", visitor_id):
-        frappe.throw(_("Visitor {0} tidak ditemukan dalam sistem").format(visitor_id))
-
-    visitor = frappe.get_doc("Visitor", visitor_id)
-
-    if action == "checkin":
-        return check_in(visitor, gate=gate, device_id=device_id)
-    if action == "checkout":
-        return check_out(visitor, gate=gate, device_id=device_id)
-
-    frappe.throw(_("Aksi tidak dikenali: {0}").format(action))
+    return qr_api.scan_qr_action(qr_data=qr_data, action=action, gate=gate, device_id=device_id)
 
 
 
 @frappe.whitelist(allow_guest=False)
 def get_visitor_by_qr(qr_data):
-    """
-    Ambil detail visitor dari QR data (untuk preview sebelum konfirmasi scan).
-    Dipanggil dari: /vms-scanner
-    """
-    try:
-        data = json.loads(qr_data)
-    except (json.JSONDecodeError, TypeError):
-        data = {"visitor_id": qr_data.strip()}
-
-    visitor_id = data.get("visitor_id")
-    if not visitor_id or not frappe.db.exists("Visitor", visitor_id):
-        return {"error": "Visitor tidak ditemukan"}
-
-    v = frappe.get_doc("Visitor", visitor_id)
-    return {
-        "name":               v.name,
-        "visitor_name":       v.visitor_name,
-        "visitor_company":    v.visitor_company or "-",
-        "visitor_phone":      v.visitor_phone,
-        "host_employee_name": v.host_employee_name,
-        "department":         v.department or "-",
-        "visit_purpose":      v.visit_purpose,
-        "status":             v.status,
-        "check_in_time":      str(v.check_in_time) if v.check_in_time else None,
-        "check_out_time":     str(v.check_out_time) if v.check_out_time else None,
-        "id_type":            v.id_type,
-        "id_number":          v.id_number,
-        "qr_code_image":      v.qr_code_image,
-    }
+    return visitor_api.get_visitor_by_qr(qr_data=qr_data)
 
 
 # =============================================================================
@@ -410,35 +370,17 @@ def employee_approval_data():
 
 @frappe.whitelist(allow_guest=False)
 def approve_visitor(visitor_id):
-    """Setujui visitor masuk. Dipanggil dari /vms-approval."""
-    visitor = _get_manageable_visitor(visitor_id)
-    result  = visitor.approve_visit()
-    frappe.publish_realtime(
-        "vms_visitor_approved",
-        {"visitor": visitor.name, "visitor_name": visitor.visitor_name},
-        after_commit=True,
-    )
-    return result
+    return approval_api.approve_visitor(visitor_id=visitor_id)
 
 
 @frappe.whitelist(allow_guest=False)
 def reject_visitor(visitor_id, reason=""):
-    """Tolak visitor. Dipanggil dari /vms-approval."""
-    visitor = _get_manageable_visitor(visitor_id)
-    result  = visitor.reject_visit(reason)
-    frappe.publish_realtime(
-        "vms_visitor_rejected",
-        {"visitor": visitor.name, "visitor_name": visitor.visitor_name, "reason": reason},
-        after_commit=True,
-    )
-    return result
+    return approval_api.reject_visitor(visitor_id=visitor_id, reason=reason)
 
 
 @frappe.whitelist(allow_guest=False)
 def complete_visit(visitor_id):
-    """Tandai kunjungan selesai. Dipanggil dari /vms-approval."""
-    visitor = _get_manageable_visitor(visitor_id)
-    return visitor.end_visit()
+    return approval_api.complete_visit(visitor_id=visitor_id)
 
 @frappe.whitelist(allow_guest=False)
 def get_my_employee_barcode():
