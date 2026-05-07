@@ -1,7 +1,7 @@
 {
  "app": "visitor_management",
  "charts": [],
- "content": "[{\"id\":\"4RYg8kuFEp\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Welcome to the Visitor Management workspace</span>\",\"col\":12}},{\"id\":\"_ag5a2rFt2\",\"type\":\"paragraph\",\"data\":{\"text\":\"Click on \\n\\t\\t\\t\\n\\t\\t\\t\\n\\t\\t to edit\",\"col\":12}},{\"id\":\"oiJxIXs0X4\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"VMS Approval\",\"col\":3}},{\"id\":\"ax0ZCic8hA\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Visitor Scanner\",\"col\":3}},{\"id\":\"_e5uYugJ28\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Employee Entry\",\"col\":3}},{\"id\":\"-qNie43dss\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Employee Entry\",\"col\":3}},{\"id\":\"BfrB41Xdtr\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Visitor Management</b></span>\",\"col\":12}},{\"id\":\"loqhSgtD2l\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Visitor Log\",\"col\":4}},{\"id\":\"A3zWVqQz2i\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Visitor\",\"col\":4}}]",
+ "content": "[{\"id\":\"4RYg8kuFEp\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Welcome to the Visitor Management workspace</span>\",\"col\":12}},{\"id\":\"_ag5a2rFt2\",\"type\":\"paragraph\",\"data\":{\"text\":\"Click on \\n\\t\\t\\t\\n\\t\\t\\t\\n\\t\\t to edit\",\"col\":12}},{\"id\":\"oiJxIXs0X4\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"VMS Approval\",\"col\":3}},{\"id\":\"ax0ZCic8hA\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Visitor Scanner\",\"col\":5}},{\"id\":\"_e5uYugJ28\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Employee Entry\",\"col\":3}},{\"id\":\"BfrB41Xdtr\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Visitor Management</b></span>\",\"col\":12}},{\"id\":\"Alu1600LE8\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Employee Entry\",\"col\":4}},{\"id\":\"loqhSgtD2l\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Visitor Log\",\"col\":4}},{\"id\":\"A3zWVqQz2i\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Visitor\",\"col\":4}}]",
  "creation": "2026-05-02 15:55:00.088354",
  "custom_blocks": [],
  "docstatus": 0,
@@ -45,7 +45,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-05-07 09:36:45.434550",
+ "modified": "2026-05-07 12:56:40.250890",
  "modified_by": "Administrator",
  "module": "Visitor Management",
  "name": "Visitor Management",
@@ -53,6 +53,11 @@
  "owner": "Administrator",
  "public": 1,
  "quick_lists": [
+  {
+   "document_type": "Employee Entry Request",
+   "label": "Employee Entry",
+   "quick_list_filter": "[]"
+  },
   {
    "document_type": "Visitor",
    "label": "Visitor",

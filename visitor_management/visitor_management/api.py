@@ -15,6 +15,9 @@ import frappe
 import qrcode
 from frappe import _
 from frappe.utils import today, now_datetime
+from visitor_management.visitor_management.services.visitor_service import check_in, check_out
+from visitor_management.visitor_management.services.qr_service import parse_visitor_qr
+
 
 
 
@@ -214,24 +217,9 @@ def _parse_names(names):
 # =============================================================================
 
 @frappe.whitelist(allow_guest=False)
-def scan_qr_action(qr_data, action):
-    """
-    Endpoint untuk scanner QR di security post.
-    action: 'checkin' atau 'checkout'
-    Dipanggil dari: /vms-scanner
-    """
-    if not qr_data:
-        frappe.throw(_("QR data tidak boleh kosong"))
-
-    try:
-        data = json.loads(qr_data)
-    except (json.JSONDecodeError, TypeError):
-        # Jika bukan JSON, anggap langsung sebagai visitor ID
-        data = {"visitor_id": qr_data.strip()}
-
-    visitor_id = data.get("visitor_id")
-    if not visitor_id:
-        frappe.throw(_("QR Code tidak valid — visitor ID tidak ditemukan"))
+def scan_qr_action(qr_data, action, gate=None, device_id=None):
+    """Endpoint scanner: frontend kirim hasil scan, backend validasi & proses aksi."""
+    visitor_id = parse_visitor_qr(qr_data)
 
     if not frappe.db.exists("Visitor", visitor_id):
         frappe.throw(_("Visitor {0} tidak ditemukan dalam sistem").format(visitor_id))
@@ -239,11 +227,12 @@ def scan_qr_action(qr_data, action):
     visitor = frappe.get_doc("Visitor", visitor_id)
 
     if action == "checkin":
-        return visitor.do_checkin()
-    elif action == "checkout":
-        return visitor.do_checkout()
-    else:
-        frappe.throw(_("Aksi tidak dikenali: {0}").format(action))
+        return check_in(visitor, gate=gate, device_id=device_id)
+    if action == "checkout":
+        return check_out(visitor, gate=gate, device_id=device_id)
+
+    frappe.throw(_("Aksi tidak dikenali: {0}").format(action))
+
 
 
 @frappe.whitelist(allow_guest=False)
@@ -450,7 +439,7 @@ def complete_visit(visitor_id):
     """Tandai kunjungan selesai. Dipanggil dari /vms-approval."""
     visitor = _get_manageable_visitor(visitor_id)
     return visitor.end_visit()
-	
+
 @frappe.whitelist(allow_guest=False)
 def get_my_employee_barcode():
     employee = _get_employee_for_user()
@@ -531,7 +520,7 @@ def scan_employee_entry_barcode(qr_data, action):
         return open_entry.checkout()
 
     frappe.throw(_("Aksi tidak dikenali"))
-	
+
 
 
 # =============================================================================

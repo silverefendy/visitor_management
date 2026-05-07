@@ -11,7 +11,12 @@
   "action",
   "action_time",
   "action_by",
-  "remarks"
+  "remarks",
+  "status",
+  "check_in_time",
+  "check_out_time",
+  "is_active",
+  "gate"
  ],
  "fields": [
   {
@@ -48,6 +53,37 @@
    "fieldname": "remarks",
    "fieldtype": "Small Text",
    "label": "Keterangan"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "IN\nOUT",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "check_in_time",
+   "fieldtype": "Datetime",
+   "label": "Check In Time"
+  },
+  {
+   "fieldname": "check_out_time",
+   "fieldtype": "Datetime",
+   "label": "Check Out Time"
+  },
+  {
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Is Active",
+   "default": "0",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "gate",
+   "fieldtype": "Link",
+   "label": "Gate",
+   "options": "Gate",
+   "in_list_view": 1
   }
  ],
  "grid_page_length": 50,
