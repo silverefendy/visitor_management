@@ -1,0 +1,3 @@
+com.fndcorp.vmsscanner
+style AppTheme
+xml network_security_config

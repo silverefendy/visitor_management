@@ -77,6 +77,15 @@ def _parse_names(names):
     return names or []
 
 
+def _parse_qr_payload(qr_data):
+    if not qr_data:
+        return {}
+    try:
+        return json.loads(qr_data)
+    except (json.JSONDecodeError, TypeError):
+        return {"raw": qr_data.strip()}
+
+
 @frappe.whitelist(allow_guest=False)
 def scan_qr_action(qr_data, action):
     """
@@ -137,6 +146,87 @@ def get_visitor_by_qr(qr_data):
         "id_number": v.id_number,
         "qr_code_image": v.qr_code_image,
     }
+
+
+@frappe.whitelist(allow_guest=False)
+def get_employee_by_qr(qr_data):
+    data = _parse_qr_payload(qr_data)
+    employee_id = data.get("employee") or data.get("employee_id") or data.get("raw")
+    if not employee_id or not frappe.db.exists("Employee", employee_id):
+        return {"error": "Employee tidak ditemukan"}
+
+    employee = frappe.db.get_value(
+        "Employee",
+        employee_id,
+        ["name", "employee_name", "department", "status", "company"],
+        as_dict=True,
+    )
+    if employee.status != "Active":
+        return {"error": "Employee tidak aktif"}
+
+    active_entry = frappe.get_all(
+        "Employee Entry Request",
+        filters={"employee": employee_id, "status": ["in", ["Pending Approval", "Approved", "Completed"]]},
+        fields=_get_employee_entry_fields(),
+        order_by="modified desc",
+        limit_page_length=1,
+    )
+
+    return {
+        "name": employee.name,
+        "employee_name": employee.employee_name,
+        "department": employee.department,
+        "company": employee.company,
+        "status": employee.status,
+        "active_entry": active_entry[0] if active_entry else None,
+    }
+
+
+@frappe.whitelist(allow_guest=False)
+def scan_employee_entry_action(qr_data, action, purpose="Security scan"):
+    data = _parse_qr_payload(qr_data)
+    employee_id = data.get("employee") or data.get("employee_id") or data.get("raw")
+    if not employee_id or not frappe.db.exists("Employee", employee_id):
+        frappe.throw(_("Employee tidak ditemukan"))
+
+    emp_status = frappe.db.get_value("Employee", employee_id, "status")
+    if emp_status != "Active":
+        frappe.throw(_("Employee tidak aktif"))
+
+    if action == "checkin":
+        existing = frappe.get_all(
+            "Employee Entry Request",
+            filters={"employee": employee_id, "status": ["in", ["Pending Approval", "Approved", "Completed"]]},
+            fields=["name", "status"],
+            order_by="modified desc",
+            limit_page_length=1,
+        )
+        if existing:
+            frappe.throw(_("Employee masih memiliki entry aktif: {0} ({1})").format(existing[0].name, existing[0].status))
+
+        doc = frappe.get_doc({
+            "doctype": "Employee Entry Request",
+            "employee": employee_id,
+            "purpose": purpose or "Security scan",
+        })
+        doc.insert(ignore_permissions=True)
+        frappe.db.commit()
+        return {"status": "success", "message": "Pengajuan employee entry dibuat. Menunggu approval HRD.", "name": doc.name}
+
+    if action == "checkout":
+        rows = frappe.get_all(
+            "Employee Entry Request",
+            filters={"employee": employee_id, "status": "Completed"},
+            fields=["name"],
+            order_by="modified desc",
+            limit_page_length=1,
+        )
+        if not rows:
+            frappe.throw(_("Tidak ada employee entry berstatus Completed untuk checkout"))
+        doc = frappe.get_doc("Employee Entry Request", rows[0].name)
+        return doc.checkout()
+
+    frappe.throw(_("Aksi tidak dikenali: {0}").format(action))
 
 
 @frappe.whitelist(allow_guest=False)
