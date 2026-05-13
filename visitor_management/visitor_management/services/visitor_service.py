@@ -12,6 +12,8 @@ def is_visitor_inside(visitor_id):
 
 
 def validate_blacklist(visitor, method=None):
+    if not frappe.db.exists("DocType", "Visitor Blacklist"):
+        return
     if frappe.db.exists("Visitor Blacklist", {"id_number": visitor.id_number}):
         frappe.throw(_("Visitor ini masuk blacklist"))
 

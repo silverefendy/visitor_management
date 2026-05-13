@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -45,6 +46,8 @@ public class MainActivity extends Activity {
     private EditText passwordInput;
     private EditText codeInput;
     private TextView statusText;
+    private TextView loginStateText;
+    private TextView modeHintText;
     private DecoratedBarcodeView barcodeView;
     private RadioGroup typeGroup;
     private RadioGroup actionGroup;
@@ -68,6 +71,10 @@ public class MainActivity extends Activity {
         TextView title = title("VMS Scanner");
         root.addView(title);
 
+        loginStateText = badge(hasSession() ? "Status: sudah login" : "Status: belum login", hasSession());
+        root.addView(loginStateText);
+
+        root.addView(sectionTitle("Koneksi Server"));
         baseUrlInput = input("Server URL", prefs.getString("baseUrl", DEFAULT_BASE_URL), false);
         usernameInput = input("Username / Email", prefs.getString("username", ""), false);
         passwordInput = input("Password", "", true);
@@ -79,6 +86,7 @@ public class MainActivity extends Activity {
         loginButton.setOnClickListener(v -> login());
         root.addView(loginButton);
 
+        root.addView(sectionTitle("Mode Scan"));
         typeGroup = new RadioGroup(this);
         typeGroup.setOrientation(RadioGroup.HORIZONTAL);
         RadioButton visitor = radio("Visitor", 1, true);
@@ -96,7 +104,12 @@ public class MainActivity extends Activity {
         actionGroup.addView(checkout);
         root.addView(label("Aksi"));
         root.addView(actionGroup);
+        modeHintText = label("Visitor + Check In: scan badge visitor saat masuk.");
+        root.addView(modeHintText);
+        typeGroup.setOnCheckedChangeListener((group, checkedId) -> updateModeHint());
+        actionGroup.setOnCheckedChangeListener((group, checkedId) -> updateModeHint());
 
+        root.addView(sectionTitle("Scan / Input Manual"));
         codeInput = input("Scan result / input manual", "", false);
         root.addView(codeInput);
 
@@ -123,15 +136,16 @@ public class MainActivity extends Activity {
 
         statusText = new TextView(this);
         statusText.setTextColor(Color.rgb(20, 33, 61));
+        statusText.setBackgroundColor(Color.rgb(240, 243, 247));
         statusText.setTextSize(14);
-        statusText.setPadding(0, 18, 0, 18);
+        statusText.setPadding(16, 16, 16, 16);
         root.addView(statusText);
 
         Button stopButton = button("Stop Kamera", "#B91C1C");
         stopButton.setOnClickListener(v -> stopScanner());
         root.addView(stopButton);
 
-        showStatus("Login dulu, lalu scan Visitor atau Employee.");
+        showStatus(hasSession() ? "Siap scan. Pilih jenis dan aksi, lalu scan kamera." : "Login dulu, lalu scan Visitor atau Employee.");
         return scroll;
     }
 
@@ -139,8 +153,30 @@ public class MainActivity extends Activity {
         TextView v = new TextView(this);
         v.setText(text);
         v.setTextSize(24);
+        v.setTypeface(Typeface.DEFAULT_BOLD);
         v.setTextColor(Color.rgb(36, 54, 79));
         v.setPadding(0, 0, 0, 18);
+        return v;
+    }
+
+    private TextView sectionTitle(String text) {
+        TextView v = new TextView(this);
+        v.setText(text);
+        v.setTextSize(16);
+        v.setTypeface(Typeface.DEFAULT_BOLD);
+        v.setTextColor(Color.rgb(36, 54, 79));
+        v.setPadding(0, 22, 0, 8);
+        return v;
+    }
+
+    private TextView badge(String text, boolean success) {
+        TextView v = new TextView(this);
+        v.setText(text);
+        v.setTextSize(14);
+        v.setTypeface(Typeface.DEFAULT_BOLD);
+        v.setTextColor(success ? Color.rgb(18, 108, 58) : Color.rgb(167, 40, 30));
+        v.setBackgroundColor(success ? Color.rgb(223, 245, 232) : Color.rgb(253, 232, 230));
+        v.setPadding(14, 12, 14, 12);
         return v;
     }
 
@@ -171,6 +207,31 @@ public class MainActivity extends Activity {
         return b;
     }
 
+    private boolean hasSession() {
+        return !prefs.getString("cookie", "").isEmpty();
+    }
+
+    private void updateLoginState(boolean loggedIn) {
+        main.post(() -> {
+            loginStateText.setText(loggedIn ? "Status: sudah login" : "Status: belum login");
+            loginStateText.setTextColor(loggedIn ? Color.rgb(18, 108, 58) : Color.rgb(167, 40, 30));
+            loginStateText.setBackgroundColor(loggedIn ? Color.rgb(223, 245, 232) : Color.rgb(253, 232, 230));
+        });
+    }
+
+    private void updateModeHint() {
+        boolean isVisitor = typeGroup.getCheckedRadioButtonId() == 1;
+        boolean isCheckin = actionGroup.getCheckedRadioButtonId() == 1;
+        String who = isVisitor ? "Visitor" : "Employee";
+        String action = isCheckin ? "Check In" : "Check Out";
+        String note;
+        if (isVisitor && isCheckin) note = "scan badge visitor saat masuk.";
+        else if (isVisitor) note = "scan visitor yang sudah Completed.";
+        else if (isCheckin) note = "scan kode karyawan untuk buat entry menunggu approval HRD.";
+        else note = "scan karyawan yang entry-nya sudah Completed.";
+        modeHintText.setText(who + " + " + action + ": " + note);
+    }
+
     private RadioButton radio(String text, int id, boolean checked) {
         RadioButton r = new RadioButton(this);
         r.setText(text);
@@ -195,8 +256,10 @@ public class MainActivity extends Activity {
                     .putString("baseUrl", base)
                     .putString("username", username)
                     .apply();
+                updateLoginState(true);
                 showStatus("Login berhasil. Siap scan.");
             } catch (Exception e) {
+                updateLoginState(false);
                 showStatus("Login gagal: " + e.getMessage());
             }
         }).start();
