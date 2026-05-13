@@ -4,6 +4,9 @@ from frappe.model.document import Document
 from frappe.utils import now_datetime
 import json
 import os
+from visitor_management.visitor_management.services.visitor_service import check_in, check_out
+from visitor_management.visitor_management.services.log_service import create_visitor_log
+
 
 
 class Visitor(Document):
@@ -83,13 +86,7 @@ class Visitor(Document):
 
     @frappe.whitelist()
     def do_checkin(self):
-        if self.status != "Registered":
-            frappe.throw(_("Tidak bisa check-in. Status: {0}").format(self.status))
-        self.status = "Awaiting Approval"
-        self.check_in_time = now_datetime()
-        self.save(ignore_permissions=True)
-        self.create_visitor_log("Check In", "Visitor check-in di security")
-        return {"status": "success", "message": "Check-in berhasil. Menunggu konfirmasi karyawan."}
+        return check_in(self)
 
     @frappe.whitelist()
     def approve_visit(self):
@@ -125,26 +122,11 @@ class Visitor(Document):
 
     @frappe.whitelist()
     def do_checkout(self):
-        if self.status != "Completed":
-            frappe.throw(_("Status belum Completed. Status: {0}").format(self.status))
-        self.status = "Checked Out"
-        self.check_out_time = now_datetime()
-        self.save(ignore_permissions=True)
-        self.create_visitor_log("Check Out", "Visitor check-out di security")
-        return {"status": "success", "message": "Check-out berhasil."}
+        return check_out(self)
 
     def create_visitor_log(self, action, remarks=""):
         try:
-            log = frappe.get_doc({
-                "doctype": "Visitor Log",
-                "visitor": self.name,
-                "action": action,
-                "action_time": now_datetime(),
-                "action_by": frappe.session.user,
-                "remarks": remarks,
-            })
-            log.insert(ignore_permissions=True)
-            frappe.db.commit()
+            create_visitor_log(self, action, remarks=remarks)
         except Exception:
             frappe.log_error(title="VMS Log Error", message=frappe.get_traceback())
 

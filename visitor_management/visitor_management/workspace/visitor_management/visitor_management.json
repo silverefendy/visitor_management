@@ -1,7 +1,7 @@
 {
  "app": "visitor_management",
  "charts": [],
- "content": "[]",
+ "content": "[{\"id\":\"4RYg8kuFEp\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Welcome to the Visitor Management workspace</span>\",\"col\":12}},{\"id\":\"_ag5a2rFt2\",\"type\":\"paragraph\",\"data\":{\"text\":\"Click on \\n\\t\\t\\t\\n\\t\\t\\t\\n\\t\\t to edit\",\"col\":12}},{\"id\":\"oiJxIXs0X4\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"VMS Approval\",\"col\":3}},{\"id\":\"ax0ZCic8hA\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Visitor Scanner\",\"col\":3}},{\"id\":\"_e5uYugJ28\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Employee Entry\",\"col\":3}},{\"id\":\"r2_h-8YZ47\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Employee Entry Url\",\"col\":3}},{\"id\":\"BfrB41Xdtr\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Visitor Management</b></span>\",\"col\":12}},{\"id\":\"Alu1600LE8\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Employee Entry\",\"col\":4}},{\"id\":\"loqhSgtD2l\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Visitor Log\",\"col\":4}},{\"id\":\"A3zWVqQz2i\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Visitor\",\"col\":4}}]",
  "creation": "2026-05-02 15:55:00.088354",
  "custom_blocks": [],
  "docstatus": 0,
@@ -14,15 +14,6 @@
  "label": "Visitor Management",
  "link_type": "DocType",
  "links": [
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Master",
-   "link_count": 0,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
-  },
   {
    "hidden": 0,
    "is_query_report": 0,
@@ -54,14 +45,30 @@
    "type": "Link"
   }
  ],
- "modified": "2026-05-02 15:55:00.088354",
+ "modified": "2026-05-07 14:58:45.123504",
  "modified_by": "Administrator",
  "module": "Visitor Management",
  "name": "Visitor Management",
  "number_cards": [],
  "owner": "Administrator",
  "public": 1,
- "quick_lists": [],
+ "quick_lists": [
+  {
+   "document_type": "Employee Entry Request",
+   "label": "Employee Entry",
+   "quick_list_filter": "[]"
+  },
+  {
+   "document_type": "Visitor",
+   "label": "Visitor",
+   "quick_list_filter": "[]"
+  },
+  {
+   "document_type": "Visitor Log",
+   "label": "Visitor Log",
+   "quick_list_filter": "[]"
+  }
+ ],
  "roles": [
   {
    "role": "System Manager"
@@ -79,25 +86,32 @@
  "sequence_id": 0.0,
  "shortcuts": [
   {
-   "color": "blue",
-   "doc_view": "",
-   "label": "Visitor",
-   "link_to": "Visitor",
-   "type": "DocType"
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Employee Entry Url",
+   "type": "URL",
+   "url": "http://10.1.0.30:8001/employee-entry"
   },
   {
-   "color": "green",
-   "doc_view": "",
-   "label": "Visitor Log",
-   "link_to": "Visitor Log",
-   "type": "DocType"
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Employee Entry",
+   "type": "URL",
+   "url": "http://10.1.0.30:8001/desk/employee-entry-request"
   },
   {
-   "color": "orange",
-   "doc_view": "",
-   "label": "Employee Entry Request",
-   "link_to": "Employee Entry Request",
-   "type": "DocType"
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Visitor Scanner",
+   "type": "URL",
+   "url": "http://10.1.0.30:8001/vms-scanner"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "VMS Approval",
+   "type": "URL",
+   "url": "http://10.1.0.30:8001/vms-approval"
   }
  ],
  "title": "Visitor Management",

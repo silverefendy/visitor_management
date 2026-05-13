@@ -4,6 +4,9 @@ body{font-family:Arial,sans-serif;background:#f0f2f5;min-height:100vh}
 .header h1{font-size:20px;margin-bottom:4px}
 .header div{font-size:13px;opacity:.8}
 .container{max-width:900px;margin:24px auto;padding:0 16px}
+.target-bar{display:flex;gap:10px;margin-bottom:12px}
+.target-btn{flex:1;padding:12px;font-size:14px;font-weight:bold;border:none;border-radius:10px;cursor:pointer;background:#d9e2ec;color:#2e4057}
+.target-btn.active{background:#2e4057;color:white}
 .mode-bar{display:flex;gap:12px;margin-bottom:20px}
 .mode-btn{flex:1;padding:16px;font-size:16px;font-weight:bold;border:none;border-radius:10px;cursor:pointer;background:#ddd;color:#555}
 .mode-btn.active-in{background:#27ae60;color:white}
@@ -50,7 +53,8 @@ table tr:hover{background:#f8f9fa}
 .pill-danger{background:#fde8e8;color:#c0392b}
 .pill-purple{background:#efe7f7;color:#6f3fa0}
 @media(max-width:640px){
-  .input-area,.action-row,.scanner-actions{flex-direction:column}
+  .target-bar,.input-area,.action-row,.scanner-actions{flex-direction:column}
   .info-grid{grid-template-columns:1fr}
   .btn-dark,.btn-success,.btn-danger{width:100%}
 }
+

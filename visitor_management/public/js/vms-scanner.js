@@ -1,4 +1,5 @@
 var mode = "checkin";
+var scanTarget = "visitor";
 var visitor = null;
 var scanner = null;
 var scannerRunning = false;
@@ -92,29 +93,92 @@ function extractError(d) {
   return "Request gagal";
 }
 
+var employeeSuggestTimer = null;
+var employeeSuggestMap = {};
+
+function bindEmployeeSuggest() {
+  var input = document.getElementById("vid-input");
+  if (!input) return;
+  input.addEventListener("input", function() {
+    if (scanTarget !== "employee") return;
+    var keyword = input.value.trim();
+    if (employeeSuggestTimer) clearTimeout(employeeSuggestTimer);
+    employeeSuggestTimer = setTimeout(function() { fetchEmployeeSuggestions(keyword); }, 200);
+  });
+}
+
+function fetchEmployeeSuggestions(keyword) {
+  var datalist = document.getElementById("employee-suggest");
+  if (!datalist) return;
+  if (!keyword || keyword.length < 2) {
+    datalist.innerHTML = "";
+    employeeSuggestMap = {};
+    return;
+  }
+  api("visitor_management.visitor_management.api.search_employee_entry_candidates", {keyword: keyword, limit: 12}, function(rows) {
+    rows = rows || [];
+    employeeSuggestMap = {};
+    datalist.innerHTML = rows.map(function(r) {
+      var value = r.value || "";
+      employeeSuggestMap[value] = r;
+      return '<option value="' + esc(value) + '" label="' + esc(r.label || value) + '"></option>';
+    }).join("");
+  });
+}
+
+
+function setScanTarget(target) {
+  if (scannerRunning) stopScanner();
+  scanTarget = target;
+  document.getElementById("target-visitor").className = "target-btn" + (target === "visitor" ? " active" : "");
+  document.getElementById("target-employee").className = "target-btn" + (target === "employee" ? " active" : "");
+  document.getElementById("scan-title").textContent = target === "visitor" ? "Scan QR / Barcode Tamu" : "Scan Barcode Karyawan";
+  document.getElementById("vid-input").placeholder = target === "visitor" ? "Ketik Visitor ID (VIS-2026-05-00001)" : "Ketik kode karyawan (EMP:HR-EMP-00001 / Employee ID)";
+  setModeTitle();
+  reset();
+}
+
 function setMode(m) {
   mode = m;
   document.getElementById("btn-in").className = "mode-btn" + (m === "checkin" ? " active-in" : "");
   document.getElementById("btn-out").className = "mode-btn" + (m === "checkout" ? " active-out" : "");
-  document.getElementById("mode-title").textContent = m === "checkin" ? "Check In Tamu" : "Check Out Tamu";
+  setModeTitle();
   reset();
 }
 
+function setModeTitle() {
+  var targetLabel = scanTarget === "visitor" ? "Tamu" : "Karyawan";
+  document.getElementById("mode-title").textContent = (mode === "checkin" ? "Check In " : "Check Out ") + targetLabel;
+}
+
+
+
 function cari() {
   var val = document.getElementById("vid-input").value.trim();
-  if (!val) { alert2("warning", "Masukkan Visitor ID"); return; }
-  loadVisitor(val);
+  if (!val) { alert2("warning", scanTarget === "visitor" ? "Masukkan Visitor ID" : "Masukkan kode karyawan"); return; }
+  loadRecord(val);
 }
 
 function normalisasiQR(input) {
   var val = (input || "").trim();
   if (!val) return "";
   if (val.charAt(0) === "{") return val;
+  if (scanTarget === "employee") return JSON.stringify({employee_id: val});
   return JSON.stringify({visitor_id: val.toUpperCase()});
 }
 
+function loadRecord(input) {
+  if (scanTarget === "employee") {
+    loadEmployee(input);
+    return;
+  }
+  loadVisitor(input);
+}
+
 function loadVisitor(input) {
-  var qr = normalisasiQR(input);
+  var selected = employeeSuggestMap[input] || null;
+  var payload = selected && selected.type === "entry_request" ? {employee_id: selected.entry_request || input} : {employee_id: input};
+  var qr = (input || "").trim().charAt(0) === "{" ? (input || "").trim() : JSON.stringify(payload);
   if (!qr) { alert2("warning", "Data QR / Visitor ID kosong"); return; }
 
   api(
@@ -122,8 +186,27 @@ function loadVisitor(input) {
     {qr_data: qr},
     function(v) {
       if (!v || v.error) { alert2("error", v ? v.error : "Visitor ID tidak ditemukan"); return; }
+          v.record_type = "visitor";
       visitor = v;
       tampil(v);
+    },
+    function(e) { alert2("error", "Error: " + e); }
+  );
+}
+
+function loadEmployee(input) {
+  var qr = normalisasiQR(input);
+  if (!qr) { alert2("warning", "Data barcode / kode karyawan kosong"); return; }
+
+  api(
+    "visitor_management.visitor_management.api.get_employee_by_barcode",
+    {qr_data: qr},
+    function(emp) {
+      if (!emp || emp.error) { alert2("error", emp ? emp.error : "Karyawan tidak ditemukan"); return; }
+      emp.record_type = "employee";
+      emp.qr_data = qr;
+      visitor = emp;
+      tampil(emp);
     },
     function(e) { alert2("error", "Error: " + e); }
   );
@@ -162,14 +245,14 @@ function mulaiScanner() {
   scanner = new Html5QrcodeScanner("qr-reader", config, false);
   scanner.render(function(decodedText) {
     if (!decodedText) return;
-    document.getElementById("camera-status").textContent = "QR terbaca. Memuat data visitor...";
+    document.getElementById("camera-status").textContent = "Barcode terbaca. Memuat data...";
     document.getElementById("vid-input").value = decodedText.charAt(0) === "{" ? "" : decodedText;
     stopScanner();
-    loadVisitor(decodedText);
+    loadRecord(decodedText);
   }, function() {});
 
   scannerRunning = true;
-  document.getElementById("camera-status").textContent = "Kamera aktif. Arahkan ke QR code visitor.";
+  document.getElementById("camera-status").textContent = scanTarget === "visitor" ? "Kamera aktif. Arahkan ke QR code visitor." : "Kamera aktif. Arahkan ke barcode karyawan.";
 }
 
 function stopScanner() {
@@ -181,7 +264,15 @@ function stopScanner() {
   document.getElementById("camera-status").textContent = "Scanner berhenti.";
 }
 
-function tampil(v) {
+function tampil(record) {
+  if (record.record_type === "employee") {
+    tampilEmployee(record);
+    return;
+  }
+  tampilVisitor(record);
+}
+
+function tampilVisitor(v) {
   var warna = {
     "Registered": "#6c757d",
     "Awaiting Approval": "#f39c12",
@@ -192,8 +283,9 @@ function tampil(v) {
   };
   var c = warna[v.status] || "#888";
 
+  document.getElementById("record-card-title").textContent = "Data Tamu Ditemukan";
   document.getElementById("status-area").innerHTML =
-    "<span class=\"status-badge\" style=\"background:" + c + "22;color:" + c + ";border:1px solid " + c + "\">" + v.status + "</span>";
+    "<span class=\"status-badge\" style=\"background:" + c + "22;color:" + c + ";border:1px solid " + c + "\">" + esc(v.status) + "</span>";
 
   document.getElementById("info-grid").innerHTML = [
     ["Nama Tamu", v.visitor_name],
@@ -205,21 +297,55 @@ function tampil(v) {
     ["Check In", v.check_in_time || "Belum"],
     ["Visitor ID", v.name]
   ].map(function(r) {
-    return "<div class=\"info-item\"><label>" + r[0] + "</label><span>" + r[1] + "</span></div>";
+    return "<div class=\"info-item\"><label>" + esc(r[0]) + "</label><span>" + esc(r[1]) + "</span></div>";
   }).join("");
 
   var bisaIn = v.status === "Registered";
   var bisaOut = v.status === "Completed";
-  var bisa = mode === "checkin" ? bisaIn : bisaOut;
-  var label = mode === "checkin" ? "KONFIRMASI CHECK IN" : "KONFIRMASI CHECK OUT";
-  var btnOk = document.getElementById("btn-ok");
+  updateProcessButton(mode === "checkin" ? bisaIn : bisaOut, v.status, mode === "checkin" ? "KONFIRMASI CHECK IN" : "KONFIRMASI CHECK OUT");
+}
+function tampilEmployee(emp) {
+  var status = emp.entry_status || "Belum Check In";
+  var warna = {
+    "Belum Check In": "#6c757d",
+    "Pending Approval": "#f39c12",
+    "Approved": "#3498db",
+    "Completed": "#9b59b6",
+    "Checked Out": "#1abc9c",
+    "Rejected": "#e74c3c"
+  };
+  var c = warna[status] || "#888";
 
-  if (bisa) {
+  document.getElementById("record-card-title").textContent = "Data Karyawan Ditemukan";
+  document.getElementById("status-area").innerHTML =
+    "<span class=\"status-badge\" style=\"background:" + c + "22;color:" + c + ";border:1px solid " + c + "\">" + esc(status) + "</span>";
+
+  document.getElementById("info-grid").innerHTML = [
+    ["Nama Karyawan", emp.employee_name],
+    ["Employee ID", emp.name],
+    ["Departemen", emp.department || "-"],
+    ["Kode Barcode", emp.barcode_text || ("EMP:" + emp.name)],
+    ["Entry Request", emp.entry || "Belum ada"],
+    ["Check In", emp.check_in_time || "Belum"],
+    ["Approved", emp.approved_at || "Belum"],
+    ["Completed", emp.completed_at || "Belum"]
+  ].map(function(r) {
+    return "<div class=\"info-item\"><label>" + esc(r[0]) + "</label><span>" + esc(r[1]) + "</span></div>";
+  }).join("");
+
+  var bisaIn = !emp.entry_status;
+  var bisaOut = emp.entry_status === "Completed";
+  updateProcessButton(mode === "checkin" ? bisaIn : bisaOut, status, mode === "checkin" ? "AJUKAN CHECK IN KARYAWAN" : "KONFIRMASI CHECK OUT KARYAWAN");
+}
+
+function updateProcessButton(canProcess, status, label) {
+  var btnOk = document.getElementById("btn-ok");
+  if (canProcess) {
     btnOk.textContent = label;
     btnOk.disabled = false;
     btnOk.style.opacity = "1";
   } else {
-    btnOk.textContent = "Tidak bisa proses - Status: " + v.status;
+    btnOk.textContent = "Tidak bisa proses - Status: " + status;
     btnOk.disabled = true;
     btnOk.style.opacity = "0.5";
   }
@@ -230,6 +356,15 @@ function tampil(v) {
 
 function proses() {
   if (!visitor) return;
+  if (visitor.record_type === "employee") {
+  prosesEmployee();
+  return;
+  }
+  prosesVisitor();
+}
+
+function prosesVisitor() {
+
   var qr = JSON.stringify({visitor_id: visitor.name});
   api(
     "visitor_management.visitor_management.api.scan_qr_action",
@@ -237,6 +372,23 @@ function proses() {
     function(r) {
       if (r && r.status === "success") {
         alert2("success", r.message);
+        muatAktif();
+        setTimeout(reset, 3000);
+      } else {
+        alert2("error", (r && r.message) || "Gagal");
+      }
+    },
+    function(e) { alert2("error", "Gagal: " + e); }
+  );
+}
+
+function prosesEmployee() {
+  api(
+    "visitor_management.visitor_management.api.scan_employee_entry_barcode",
+    {qr_data: visitor.qr_data || JSON.stringify({employee: visitor.name}), action: mode},
+    function(r) {
+      if (r && r.status === "success") {
+        alert2("success", r.message || "Aksi karyawan berhasil diproses.");
         muatAktif();
         setTimeout(reset, 3000);
       } else {
@@ -379,11 +531,31 @@ function pilih(id, targetMode) {
     mode = targetMode;
     document.getElementById("btn-in").className = "mode-btn" + (mode === "checkin" ? " active-in" : "");
     document.getElementById("btn-out").className = "mode-btn" + (mode === "checkout" ? " active-out" : "");
-    document.getElementById("mode-title").textContent = mode === "checkin" ? "Check In Tamu" : "Check Out Tamu";
+    setModeTitle();
   }
   document.getElementById("vid-input").value = id;
   cari();
 }
 
-window.onload = muatAktif;
+function bindClick(id, handler) {
+  var el = document.getElementById(id);
+  if (el) el.addEventListener("click", handler);
+}
+
+function initScannerPage() {
+  bindClick("target-visitor", function() { setScanTarget("visitor"); });
+  bindClick("target-employee", function() { setScanTarget("employee"); });
+  bindClick("btn-in", function() { setMode("checkin"); });
+  bindClick("btn-out", function() { setMode("checkout"); });
+  setModeTitle();
+  muatAktif();
+  bindEmployeeSuggest();
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initScannerPage);
+} else {
+  initScannerPage();
+}
+
 setInterval(muatAktif, 30000);

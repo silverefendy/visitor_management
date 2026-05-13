@@ -250,3 +250,16 @@ app_license = "mit"
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
 
+
+doc_events = {
+    "Visitor": {
+        "validate": "visitor_management.visitor_management.services.visitor_service.validate_duplicate_active"
+    }
+}
+
+scheduler_events = {
+    "hourly": [
+        "visitor_management.visitor_management.tasks.visitor_tasks.auto_checkout_stale_visitors"
+    ]
+}
+
