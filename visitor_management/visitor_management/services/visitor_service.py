@@ -29,10 +29,13 @@ def validate_duplicate_active(visitor, method=None):
 
 
 def check_in(visitor, gate=None, device_id=None):
+    # Cek apakah visitor sudah pernah check-in dan masih aktif di dalam
+    if is_visitor_inside(visitor.name):
+        frappe.throw(_("Visitor ini sudah check-in dan masih berada di dalam area"))
+    
+    # Hanya visitor dengan status tertentu yang boleh check-in
     if visitor.status not in ["Registered", "Checked Out", "Rejected", "Cancelled"]:
         frappe.throw(_("Tidak bisa check-in. Status: {0}").format(visitor.status))
-    if is_visitor_inside(visitor.name):
-        frappe.throw(_("Visitor masih tercatat berada di dalam area"))
 
     validate_blacklist(visitor)
     validate_duplicate_active(visitor)
@@ -43,6 +46,9 @@ def check_in(visitor, gate=None, device_id=None):
     visitor.check_in_time = now_datetime()
     visitor.check_out_time = None
     visitor.save(ignore_permissions=True)
+    
+    # Commit segera agar data tersimpan sebelum create log
+    frappe.db.commit()
 
     create_visitor_log(
         visitor,
