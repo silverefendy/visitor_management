@@ -176,9 +176,9 @@ function loadRecord(input) {
 }
 
 function loadVisitor(input) {
-  var selected = employeeSuggestMap[input] || null;
-  var payload = selected && selected.type === "entry_request" ? {employee_id: selected.entry_request || input} : {employee_id: input};
-  var qr = (input || "").trim().charAt(0) === "{" ? (input || "").trim() : JSON.stringify(payload);
+  var value = (input || "").trim();
+  var payload = {visitor_id: value.toUpperCase()};
+  var qr = value.charAt(0) === "{" ? value : JSON.stringify(payload);
   if (!qr) { alert2("warning", "Data QR / Visitor ID kosong"); return; }
 
   api(
@@ -186,7 +186,7 @@ function loadVisitor(input) {
     {qr_data: qr},
     function(v) {
       if (!v || v.error) { alert2("error", v ? v.error : "Visitor ID tidak ditemukan"); return; }
-          v.record_type = "visitor";
+      v.record_type = "visitor";
       visitor = v;
       tampil(v);
     },

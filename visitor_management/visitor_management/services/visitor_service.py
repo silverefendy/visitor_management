@@ -7,8 +7,17 @@ from visitor_management.visitor_management.services.gate_service import get_gate
 ACTIVE_STATUSES = ["Awaiting Approval", "Approved", "Checked In", "Completed"]
 
 
+def get_active_visitor_logs(visitor_id):
+    return frappe.get_all(
+        "Visitor Log",
+        filters={"visitor": visitor_id, "is_active": 1},
+        pluck="name",
+        order_by="creation asc",
+    )
+
+
 def is_visitor_inside(visitor_id):
-    return bool(frappe.db.exists("Visitor Log", {"visitor": visitor_id, "is_active": 1}))
+    return bool(get_active_visitor_logs(visitor_id))
 
 
 def validate_blacklist(visitor, method=None):
@@ -58,19 +67,24 @@ def check_in(visitor, gate=None, device_id=None):
 def check_out(visitor, gate=None, device_id=None):
     if visitor.status != "Completed":
         frappe.throw(_("Status belum Completed. Status: {0}").format(visitor.status))
-    if not is_visitor_inside(visitor.name):
-        frappe.throw(_("Tidak ditemukan log aktif untuk visitor ini"))
 
+    active_logs = get_active_visitor_logs(visitor.name)
     gate_name = get_gate_by_device(device_id=device_id, gate=gate)
     visitor.status = "Checked Out"
     visitor.check_out_time = now_datetime()
     visitor.save(ignore_permissions=True)
 
-    frappe.db.set_value("Visitor Log", {"visitor": visitor.name, "is_active": 1}, "is_active", 0, update_modified=False)
+    for log_name in active_logs:
+        frappe.db.set_value("Visitor Log", log_name, "is_active", 0, update_modified=False)
+
+    remarks = "Visitor check-out di security"
+    if not active_logs:
+        remarks = "Visitor check-out di security (log aktif tidak ditemukan; status Completed dipakai sebagai dasar checkout)"
+
     create_visitor_log(
         visitor,
         "Check Out",
-        "Visitor check-out di security",
+        remarks,
         gate=gate_name,
         status="OUT",
         check_out_time=visitor.check_out_time,
