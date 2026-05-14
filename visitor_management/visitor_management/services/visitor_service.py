@@ -59,7 +59,11 @@ def check_in(visitor, gate=None, device_id=None):
         check_in_time=visitor.check_in_time,
         is_active=1,
     )
-    return {"status": "success", "message": _("Check-in berhasil. Menunggu approval dari host employee.")}
+    
+    # Refresh document untuk mendapatkan data terbaru
+    visitor.reload()
+    
+    return {"status": "success", "message": _("Check-in berhasil. Menunggu approval dari host employee."), "visitor": visitor.name}
 
 
 def check_out(visitor, gate=None, device_id=None):
