@@ -97,6 +97,7 @@ class Visitor(Document):
         self.approved_at = now_datetime()
         self.save(ignore_permissions=True)
         self.create_visitor_log("Approved", "Disetujui oleh {0}".format(frappe.session.user))
+        frappe.db.commit()
         return {"status": "success", "message": "Kunjungan disetujui."}
 
     @frappe.whitelist()
@@ -109,15 +110,17 @@ class Visitor(Document):
         self.approved_at = now_datetime()
         self.save(ignore_permissions=True)
         self.create_visitor_log("Rejected", "Ditolak: {0}".format(reason))
+        frappe.db.commit()
         return {"status": "success", "message": "Kunjungan ditolak."}
 
     @frappe.whitelist()
     def end_visit(self):
-        if self.status not in ["Approved", "Checked In"]:
-            frappe.throw(_("Kunjungan belum disetujui."))
+        if self.status not in ["Approved", "Checked In", "Awaiting Approval"]:
+            frappe.throw(_("Status belum Approved. Status saat ini: {0}").format(self.status))
         self.status = "Completed"
         self.save(ignore_permissions=True)
         self.create_visitor_log("Completed", "Kunjungan selesai")
+        frappe.db.commit()
         return {"status": "success", "message": "Kunjungan selesai. Tamu dapat check-out."}
 
     @frappe.whitelist()

@@ -357,7 +357,8 @@ def employee_approval_data():
     ]
 
     pending_filters = {**base_filters, "status": "Awaiting Approval"}
-    active_filters  = {**base_filters, "status": "Approved"}
+    # Active includes Checked In (after security scan), Approved, and Completed (waiting checkout)
+    active_filters  = {**base_filters, "status": ["in", ["Checked In", "Approved", "Completed"]]}
 
     return {
         "user":       user,
@@ -369,7 +370,7 @@ def employee_approval_data():
         ),
         "active": frappe.get_all(
             "Visitor", filters=active_filters, fields=fields,
-            order_by="approved_at asc, check_in_time asc",
+            order_by="check_in_time asc",
         ),
     }
 

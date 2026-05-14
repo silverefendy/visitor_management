@@ -98,10 +98,17 @@ function esc(v) {
 }
 
 function card(v, type) {
-  var approveActions = type === "pending"
-    ? "<button class=\"btn btn-success\" onclick=\"approveVisitor('" + esc(v.name) + "')\">Approve</button>" +
-      "<button class=\"btn btn-danger\" onclick=\"rejectVisitor('" + esc(v.name) + "')\">Reject</button>"
-    : "<button class=\"btn btn-primary\" onclick=\"completeVisit('" + esc(v.name) + "')\">Selesai Kunjungan</button>";
+  var approveActions = "";
+  if (type === "pending") {
+    approveActions = "<button class=\"btn btn-success\" onclick=\"approveVisitor('" + esc(v.name) + "')\">Approve</button>" +
+      "<button class=\"btn btn-danger\" onclick=\"rejectVisitor('" + esc(v.name) + "')\">Reject</button>";
+  } else if (v.status === "Completed") {
+    // Sudah completed, tidak ada action lagi (menunggu checkout security)
+    approveActions = "<span style=\"color:#888;\">Menunggu Check-out Security</span>";
+  } else {
+    // Status Approved atau Checked In - tampilkan tombol Selesai Kunjungan
+    approveActions = "<button class=\"btn btn-primary\" onclick=\"completeVisit('" + esc(v.name) + "')\">Selesai Kunjungan</button>";
+  }
 
   return "<article class=\"card\">" +
     "<h4>" + esc(v.visitor_name) + "</h4>" +
