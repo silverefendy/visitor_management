@@ -2,4 +2,4 @@ from visitor_management.visitor_management.integrations.base import AccessDevice
 
 
 class ZKTecoAdapter(AccessDeviceAdapter):
-    pass
+	pass

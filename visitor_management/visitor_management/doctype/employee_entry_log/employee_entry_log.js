@@ -1,3 +1,1 @@
-frappe.ui.form.on('Employee Entry Log', {
-});
-
+frappe.ui.form.on("Employee Entry Log", {});

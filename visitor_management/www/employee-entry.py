@@ -11,4 +11,3 @@ def get_context(context):
 	context.user = frappe.session.user
 	context.csrf_token = frappe.sessions.get_csrf_token()
 	context.asset_version = int(now_datetime().timestamp())
-

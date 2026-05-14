@@ -2,21 +2,25 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import now_datetime
+
 from visitor_management.visitor_management.permissions.approval_permissions import is_approval_manager
+
 
 def _create_employee_entry_log(doc, action, notes=""):
 	try:
-		frappe.get_doc({
-			"doctype": "Employee Entry Log",
-			"entry": doc.name,
-			"employee": doc.employee,
-			"employee_name": doc.employee_name,
-			"action": action,
-			"status_after": doc.status,
-			"performed_by": frappe.session.user,
-			"performed_at": now_datetime(),
-			"notes": notes or "",
-		}).insert(ignore_permissions=True)
+		frappe.get_doc(
+			{
+				"doctype": "Employee Entry Log",
+				"entry": doc.name,
+				"employee": doc.employee,
+				"employee_name": doc.employee_name,
+				"action": action,
+				"status_after": doc.status,
+				"performed_by": frappe.session.user,
+				"performed_at": now_datetime(),
+				"notes": notes or "",
+			}
+		).insert(ignore_permissions=True)
 	except Exception:
 		frappe.log_error(message=frappe.get_traceback(), title="Employee Entry Log Insert Error")
 
