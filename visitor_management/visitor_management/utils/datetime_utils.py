@@ -1,4 +1,4 @@
-from frappe.utils import now_datetime, add_hours
+from frappe.utils import now_datetime, add_to_date
 
 
 def now():
@@ -6,4 +6,4 @@ def now():
 
 
 def hours_ago(hours):
-    return add_hours(now_datetime(), -abs(hours))
+    return add_to_date(now_datetime(), hours=-abs(hours))
