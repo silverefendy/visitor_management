@@ -218,30 +218,22 @@ function loadRecord(input) {
 }
 
 function loadVisitor(input) {
-	var value = (input || "").trim();
-	var payload = { visitor_id: value.toUpperCase() };
-	var qr = value.charAt(0) === "{" ? value : JSON.stringify(payload);
-	if (!qr) {
-		alert2("warning", "Data QR / Visitor ID kosong");
-		return;
-	}
+  var value = (input || "").trim();
+  var payload = {visitor_id: value.toUpperCase()};
+  var qr = value.charAt(0) === "{" ? value : JSON.stringify(payload);
+  if (!qr) { alert2("warning", "Data QR / Visitor ID kosong"); return; }
 
-	api(
-		"visitor_management.visitor_management.api.get_visitor_by_qr",
-		{ qr_data: qr },
-		function (v) {
-			if (!v || v.error) {
-				alert2("error", v ? v.error : "Visitor ID tidak ditemukan");
-				return;
-			}
-			v.record_type = "visitor";
-			visitor = v;
-			tampil(v);
-		},
-		function (e) {
-			alert2("error", "Error: " + e);
-		},
-	);
+  api(
+    "visitor_management.visitor_management.api.get_visitor_by_qr",
+    {qr_data: qr},
+    function(v) {
+      if (!v || v.error) { alert2("error", v ? v.error : "Visitor ID tidak ditemukan"); return; }
+      v.record_type = "visitor";
+      visitor = v;
+      tampil(v);
+    },
+    function(e) { alert2("error", "Error: " + e); }
+  );
 }
 
 function loadEmployee(input) {

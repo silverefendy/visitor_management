@@ -9,17 +9,16 @@ ACTIVE_STATUSES = ["Awaiting Approval", "Approved", "Checked In", "Completed"]
 
 
 def get_active_visitor_logs(visitor_id):
-	rows = frappe.get_all(
-		"Visitor Log",
-		filters={"visitor": visitor_id, "is_active": 1},
-		fields=["name"],
-		order_by="creation asc",
-	)
-	return [row.name for row in rows]
+    return frappe.get_all(
+        "Visitor Log",
+        filters={"visitor": visitor_id, "is_active": 1},
+        pluck="name",
+        order_by="creation asc",
+    )
 
 
 def is_visitor_inside(visitor_id):
-	return bool(get_active_visitor_logs(visitor_id))
+    return bool(get_active_visitor_logs(visitor_id))
 
 
 def validate_blacklist(visitor, method=None):
@@ -70,29 +69,30 @@ def check_in(visitor, gate=None, device_id=None):
 
 
 def check_out(visitor, gate=None, device_id=None):
-	if visitor.status != "Completed":
-		frappe.throw(_("Status belum Completed. Status: {0}").format(visitor.status))
+    if visitor.status != "Completed":
+        frappe.throw(_("Status belum Completed. Status: {0}").format(visitor.status))
 
-	active_logs = get_active_visitor_logs(visitor.name)
-	gate_name = get_gate_by_device(device_id=device_id, gate=gate)
-	visitor.status = "Checked Out"
-	visitor.check_out_time = now_datetime()
-	visitor.save(ignore_permissions=True)
+    active_logs = get_active_visitor_logs(visitor.name)
+    gate_name = get_gate_by_device(device_id=device_id, gate=gate)
+    visitor.status = "Checked Out"
+    visitor.check_out_time = now_datetime()
+    visitor.save(ignore_permissions=True)
 
-	for log_name in active_logs:
-		frappe.db.set_value("Visitor Log", log_name, "is_active", 0, update_modified=False)
+    for log_name in active_logs:
+        frappe.db.set_value("Visitor Log", log_name, "is_active", 0, update_modified=False)
 
-	remarks = "Visitor check-out di security"
-	if not active_logs:
-		remarks = "Visitor check-out di security (log aktif tidak ditemukan; status Completed dipakai sebagai dasar checkout)"
+    remarks = "Visitor check-out di security"
+    if not active_logs:
+        remarks = "Visitor check-out di security (log aktif tidak ditemukan; status Completed dipakai sebagai dasar checkout)"
 
-	create_visitor_log(
-		visitor,
-		"Check Out",
-		remarks,
-		gate=gate_name,
-		status="OUT",
-		check_out_time=visitor.check_out_time,
-		is_active=0,
-	)
-	return {"status": "success", "message": _("Check-out berhasil.")}
+    create_visitor_log(
+        visitor,
+        "Check Out",
+        remarks,
+        gate=gate_name,
+        status="OUT",
+        check_out_time=visitor.check_out_time,
+        is_active=0,
+    )
+    return {"status": "success", "message": _("Check-out berhasil.")}
+
