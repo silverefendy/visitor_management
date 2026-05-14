@@ -117,7 +117,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Status",
-   "options": "Registered\nAwaiting Approval\nApproved\nCompleted\nChecked Out\nRejected\nCancelled",
+   "options": "Registered\nAwaiting Approval\nApproved\nChecked In\nCompleted\nChecked Out\nRejected\nCancelled",
    "read_only": 1
   },
   {
