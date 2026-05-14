@@ -176,9 +176,7 @@ function loadRecord(input) {
 }
 
 function loadVisitor(input) {
-  var selected = employeeSuggestMap[input] || null;
-  var payload = selected && selected.type === "entry_request" ? {employee_id: selected.entry_request || input} : {employee_id: input};
-  var qr = (input || "").trim().charAt(0) === "{" ? (input || "").trim() : JSON.stringify(payload);
+  var qr = (input || "").trim().charAt(0) === "{" ? (input || "").trim() : JSON.stringify({visitor_id: input.toUpperCase()});
   if (!qr) { alert2("warning", "Data QR / Visitor ID kosong"); return; }
 
   api(
