@@ -38,7 +38,7 @@ def check_in(visitor, gate=None, device_id=None):
     validate_duplicate_active(visitor)
     gate_name = get_gate_by_device(device_id=device_id, gate=gate)
 
-    visitor.status = "Awaiting Approval"
+    visitor.status = "Checked In"
     visitor.check_in_time = now_datetime()
     visitor.check_out_time = None
     visitor.save(ignore_permissions=True)
@@ -52,7 +52,7 @@ def check_in(visitor, gate=None, device_id=None):
         check_in_time=visitor.check_in_time,
         is_active=1,
     )
-    return {"status": "success", "message": _("Check-in berhasil. Menunggu approval.")}
+    return {"status": "success", "message": _("Check-in berhasil.")}
 
 
 def check_out(visitor, gate=None, device_id=None):
