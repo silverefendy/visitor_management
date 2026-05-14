@@ -38,7 +38,8 @@ def check_in(visitor, gate=None, device_id=None):
     validate_duplicate_active(visitor)
     gate_name = get_gate_by_device(device_id=device_id, gate=gate)
 
-    visitor.status = "Checked In"
+    # Setelah check-in security, status jadi "Awaiting Approval" untuk menunggu approval host employee
+    visitor.status = "Awaiting Approval"
     visitor.check_in_time = now_datetime()
     visitor.check_out_time = None
     visitor.save(ignore_permissions=True)
@@ -46,13 +47,13 @@ def check_in(visitor, gate=None, device_id=None):
     create_visitor_log(
         visitor,
         "Check In",
-        "Visitor check-in di security",
+        "Visitor check-in di security - menunggu approval host employee",
         gate=gate_name,
         status="IN",
         check_in_time=visitor.check_in_time,
         is_active=1,
     )
-    return {"status": "success", "message": _("Check-in berhasil.")}
+    return {"status": "success", "message": _("Check-in berhasil. Menunggu approval dari host employee.")}
 
 
 def check_out(visitor, gate=None, device_id=None):
