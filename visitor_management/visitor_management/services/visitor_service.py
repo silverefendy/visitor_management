@@ -8,13 +8,12 @@ ACTIVE_STATUSES = ["Awaiting Approval", "Approved", "Checked In", "Completed"]
 
 
 def get_active_visitor_logs(visitor_id):
-    rows = frappe.get_all(
+    return frappe.get_all(
         "Visitor Log",
         filters={"visitor": visitor_id, "is_active": 1},
-        fields=["name"],
+        pluck="name",
         order_by="creation asc",
     )
-    return [row.name for row in rows]
 
 
 def is_visitor_inside(visitor_id):
