@@ -1,7 +1,7 @@
 import frappe
 from frappe import _
 
-GATE_ROLES = {"System Manager", "Visitor Manager", "Security User"}
+GATE_ROLES = {"System Manager", "Visitor Manager", "Visitor Security", "Security User"}
 
 
 def ensure_gate_access(user=None):
