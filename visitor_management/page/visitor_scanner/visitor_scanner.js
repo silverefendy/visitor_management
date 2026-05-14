@@ -1,52 +1,59 @@
 frappe.pages["visitor-scanner"].on_page_load = function (wrapper) {
-    const page = frappe.ui.make_app_page({
-        parent: wrapper,
-        title: "VMS Security Scanner",
-        single_column: true,
-    });
+	const page = frappe.ui.make_app_page({
+		parent: wrapper,
+		title: "VMS Security Scanner",
+		single_column: true,
+	});
 
-    // Load library QR scanner
-    frappe.require([
-        "https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js",
-    ], () => {
-        new VMSScanner(page);
-    });
+	// Load library QR scanner
+	frappe.require(
+		["https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"],
+		() => {
+			new VMSScanner(page);
+		},
+	);
 };
 
 class VMSScanner {
-    constructor(page) {
-        this.page     = page;
-        this.mode     = "checkin";   // 'checkin' | 'checkout'
-        this.scanner  = null;
-        this.scanning = false;
-        this.pendingVisitor = null;
+	constructor(page) {
+		this.page = page;
+		this.mode = "checkin"; // 'checkin' | 'checkout'
+		this.scanner = null;
+		this.scanning = false;
+		this.pendingVisitor = null;
 
-        this.render();
-        this.startScanner();
-        this.loadActiveVisitors();
+		this.render();
+		this.startScanner();
+		this.loadActiveVisitors();
 
-        // Refresh active visitors setiap 30 detik
-        this.refreshInterval = setInterval(() => this.loadActiveVisitors(), 30000);
+		// Refresh active visitors setiap 30 detik
+		this.refreshInterval = setInterval(() => this.loadActiveVisitors(), 30000);
 
-        // Dengar realtime event dari server
-        frappe.realtime.on("vms_visitor_approved", (data) => {
-            frappe.show_alert({
-                message: `✓ ${data.visitor_name} diizinkan masuk`,
-                indicator: "green",
-            }, 8);
-            this.loadActiveVisitors();
-        });
+		// Dengar realtime event dari server
+		frappe.realtime.on("vms_visitor_approved", (data) => {
+			frappe.show_alert(
+				{
+					message: `✓ ${data.visitor_name} diizinkan masuk`,
+					indicator: "green",
+				},
+				8,
+			);
+			this.loadActiveVisitors();
+		});
 
-        frappe.realtime.on("vms_visitor_rejected", (data) => {
-            frappe.show_alert({
-                message: `✗ ${data.visitor_name} ditolak: ${data.reason || '-'}`,
-                indicator: "red",
-            }, 8);
-        });
-    }
+		frappe.realtime.on("vms_visitor_rejected", (data) => {
+			frappe.show_alert(
+				{
+					message: `✗ ${data.visitor_name} ditolak: ${data.reason || "-"}`,
+					indicator: "red",
+				},
+				8,
+			);
+		});
+	}
 
-    render() {
-        this.page.main.html(`
+	render() {
+		this.page.main.html(`
             <style>
                 .vms-scanner-wrapper { max-width: 900px; margin: 0 auto; padding: 20px; }
                 .mode-selector { display: flex; gap: 12px; margin-bottom: 24px; }
@@ -158,110 +165,114 @@ class VMSScanner {
             </div>
         `);
 
-        // Simpan reference global agar bisa dipanggil dari inline onclick
-        window.vmsScanner = this;
-    }
+		// Simpan reference global agar bisa dipanggil dari inline onclick
+		window.vmsScanner = this;
+	}
 
-    setMode(mode) {
-        this.mode = mode;
-        const btnCI = document.getElementById("btn-checkin");
-        const btnCO = document.getElementById("btn-checkout");
+	setMode(mode) {
+		this.mode = mode;
+		const btnCI = document.getElementById("btn-checkin");
+		const btnCO = document.getElementById("btn-checkout");
 
-        if (mode === "checkin") {
-            btnCI.classList.add("active");
-            btnCO.classList.remove("active");
-        } else {
-            btnCO.classList.add("active");
-            btnCI.classList.remove("active");
-        }
-        this.resetCard();
-    }
+		if (mode === "checkin") {
+			btnCI.classList.add("active");
+			btnCO.classList.remove("active");
+		} else {
+			btnCO.classList.add("active");
+			btnCI.classList.remove("active");
+		}
+		this.resetCard();
+	}
 
-    startScanner() {
-        if (!window.Html5QrcodeScanner) return;
+	startScanner() {
+		if (!window.Html5QrcodeScanner) return;
 
-        this.scanner = new Html5QrcodeScanner("qr-reader", {
-            fps: 10,
-            qrbox: { width: 250, height: 250 },
-            rememberLastUsedCamera: true,
-        });
+		this.scanner = new Html5QrcodeScanner("qr-reader", {
+			fps: 10,
+			qrbox: { width: 250, height: 250 },
+			rememberLastUsedCamera: true,
+		});
 
-        this.scanner.render(
-            (decodedText) => this.onQRScanned(decodedText),
-            (error) => { /* ignore scan errors */ }
-        );
-    }
+		this.scanner.render(
+			(decodedText) => this.onQRScanned(decodedText),
+			(error) => {
+				/* ignore scan errors */
+			},
+		);
+	}
 
-    onQRScanned(qrData) {
-        if (this.scanning) return;
-        this.scanning = true;
+	onQRScanned(qrData) {
+		if (this.scanning) return;
+		this.scanning = true;
 
-        this.fetchVisitorInfo(qrData)
-            .then((visitor) => {
-                this.pendingVisitor = { qrData, visitor };
-                this.showVisitorCard(visitor);
-            })
-            .catch((err) => {
-                this.showResult("error", `QR tidak valid: ${err.message || err}`);
-                setTimeout(() => { this.scanning = false; }, 3000);
-            });
-    }
+		this.fetchVisitorInfo(qrData)
+			.then((visitor) => {
+				this.pendingVisitor = { qrData, visitor };
+				this.showVisitorCard(visitor);
+			})
+			.catch((err) => {
+				this.showResult("error", `QR tidak valid: ${err.message || err}`);
+				setTimeout(() => {
+					this.scanning = false;
+				}, 3000);
+			});
+	}
 
-    processManualInput() {
-        const input = document.getElementById("manual-visitor-id");
-        const visitorId = input.value.trim();
-        if (!visitorId) {
-            frappe.show_alert({ message: "Masukkan Visitor ID", indicator: "orange" });
-            return;
-        }
+	processManualInput() {
+		const input = document.getElementById("manual-visitor-id");
+		const visitorId = input.value.trim();
+		if (!visitorId) {
+			frappe.show_alert({ message: "Masukkan Visitor ID", indicator: "orange" });
+			return;
+		}
 
-        // Buat QR data dari manual input
-        const qrData = JSON.stringify({ visitor_id: visitorId });
-        this.onQRScanned(qrData);
-    }
+		// Buat QR data dari manual input
+		const qrData = JSON.stringify({ visitor_id: visitorId });
+		this.onQRScanned(qrData);
+	}
 
-    fetchVisitorInfo(qrData) {
-        return new Promise((resolve, reject) => {
-            frappe.call({
-                method: "visitor_management.visitor_management.api.get_visitor_by_qr",
-                args: { qr_data: qrData },
-                callback(r) {
-                    if (r.message && !r.message.error) {
-                        resolve(r.message);
-                    } else {
-                        reject(new Error(r.message?.error || "Visitor tidak ditemukan"));
-                    }
-                },
-                error(err) {
-                    reject(err);
-                },
-            });
-        });
-    }
+	fetchVisitorInfo(qrData) {
+		return new Promise((resolve, reject) => {
+			frappe.call({
+				method: "visitor_management.visitor_management.api.get_visitor_by_qr",
+				args: { qr_data: qrData },
+				callback(r) {
+					if (r.message && !r.message.error) {
+						resolve(r.message);
+					} else {
+						reject(new Error(r.message?.error || "Visitor tidak ditemukan"));
+					}
+				},
+				error(err) {
+					reject(err);
+				},
+			});
+		});
+	}
 
-    showVisitorCard(v) {
-        const statusColors = {
-            "Registered":        "#95a5a6",
-            "Awaiting Approval":  "#f39c12",
-            "Approved":           "#3498db",
-            "Checked In":         "#27ae60",
-            "Completed":          "#9b59b6",
-            "Checked Out":        "#1abc9c",
-            "Rejected":           "#e74c3c",
-            "Cancelled":          "#e74c3c",
-        };
+	showVisitorCard(v) {
+		const statusColors = {
+			Registered: "#95a5a6",
+			"Awaiting Approval": "#f39c12",
+			Approved: "#3498db",
+			"Checked In": "#27ae60",
+			Completed: "#9b59b6",
+			"Checked Out": "#1abc9c",
+			Rejected: "#e74c3c",
+			Cancelled: "#e74c3c",
+		};
 
-        const color = statusColors[v.status] || "#888";
-        const canCheckin  = ["Registered", "Approved"].includes(v.status);
-        const canCheckout = v.status === "Completed";
-        const modeLabel   = this.mode === "checkin" ? "CHECK IN" : "CHECK OUT";
+		const color = statusColors[v.status] || "#888";
+		const canCheckin = ["Registered", "Approved"].includes(v.status);
+		const canCheckout = v.status === "Completed";
+		const modeLabel = this.mode === "checkin" ? "CHECK IN" : "CHECK OUT";
 
-        const canProceed = this.mode === "checkin" ? canCheckin : canCheckout;
-        const btnText    = canProceed
-            ? `✓ Konfirmasi ${modeLabel}`
-            : `⚠ Tidak dapat ${modeLabel} (Status: ${v.status})`;
+		const canProceed = this.mode === "checkin" ? canCheckin : canCheckout;
+		const btnText = canProceed
+			? `✓ Konfirmasi ${modeLabel}`
+			: `⚠ Tidak dapat ${modeLabel} (Status: ${v.status})`;
 
-        document.getElementById("visitor-card-content").innerHTML = `
+		document.getElementById("visitor-card-content").innerHTML = `
             <h3>${v.visitor_name}</h3>
             <span class="status-badge" style="background:${color}20; color:${color}; border:1px solid ${color};">
                 ${v.status}
@@ -269,7 +280,7 @@ class VMSScanner {
             <div class="visitor-info-grid">
                 <div class="info-item">
                     <div class="info-label">Perusahaan</div>
-                    <div class="info-value">${v.visitor_company || '-'}</div>
+                    <div class="info-value">${v.visitor_company || "-"}</div>
                 </div>
                 <div class="info-item">
                     <div class="info-label">Host</div>
@@ -277,7 +288,7 @@ class VMSScanner {
                 </div>
                 <div class="info-item">
                     <div class="info-label">Departemen</div>
-                    <div class="info-value">${v.department || '-'}</div>
+                    <div class="info-value">${v.department || "-"}</div>
                 </div>
                 <div class="info-item">
                     <div class="info-label">Keperluan</div>
@@ -289,101 +300,107 @@ class VMSScanner {
                 </div>
                 <div class="info-item">
                     <div class="info-label">Check In</div>
-                    <div class="info-value">${v.check_in_time || '-'}</div>
+                    <div class="info-value">${v.check_in_time || "-"}</div>
                 </div>
             </div>
         `;
 
-        const btnConfirm = document.getElementById("btn-confirm");
-        btnConfirm.textContent = btnText;
-        btnConfirm.disabled = !canProceed;
-        btnConfirm.style.opacity = canProceed ? "1" : "0.5";
+		const btnConfirm = document.getElementById("btn-confirm");
+		btnConfirm.textContent = btnText;
+		btnConfirm.disabled = !canProceed;
+		btnConfirm.style.opacity = canProceed ? "1" : "0.5";
 
-        document.getElementById("visitor-card").style.display = "block";
-        document.getElementById("visitor-card").scrollIntoView({ behavior: "smooth" });
-    }
+		document.getElementById("visitor-card").style.display = "block";
+		document.getElementById("visitor-card").scrollIntoView({ behavior: "smooth" });
+	}
 
-    confirmAction() {
-        if (!this.pendingVisitor) return;
+	confirmAction() {
+		if (!this.pendingVisitor) return;
 
-        const { qrData } = this.pendingVisitor;
+		const { qrData } = this.pendingVisitor;
 
-        frappe.call({
-            method: "visitor_management.visitor_management.api.scan_qr_action",
-            args: {
-                qr_data: qrData,
-                action: this.mode,
-            },
-            freeze: true,
-            freeze_message: "Memproses...",
-            callback: (r) => {
-                if (r.message?.status === "success") {
-                    this.showResult("success", r.message.message);
-                    this.loadActiveVisitors();
-                    setTimeout(() => this.resetAll(), 4000);
-                }
-            },
-            error: (err) => {
-                this.showResult("error", err.message || "Gagal memproses");
-                setTimeout(() => this.resetCard(), 3000);
-            },
-        });
-    }
+		frappe.call({
+			method: "visitor_management.visitor_management.api.scan_qr_action",
+			args: {
+				qr_data: qrData,
+				action: this.mode,
+			},
+			freeze: true,
+			freeze_message: "Memproses...",
+			callback: (r) => {
+				if (r.message?.status === "success") {
+					this.showResult("success", r.message.message);
+					this.loadActiveVisitors();
+					setTimeout(() => this.resetAll(), 4000);
+				}
+			},
+			error: (err) => {
+				this.showResult("error", err.message || "Gagal memproses");
+				setTimeout(() => this.resetCard(), 3000);
+			},
+		});
+	}
 
-    showResult(type, message) {
-        const el = document.getElementById("result-message");
-        el.className = `result-msg result-${type}`;
-        el.textContent = message;
-        el.style.display = "block";
-        setTimeout(() => { el.style.display = "none"; }, 5000);
-    }
+	showResult(type, message) {
+		const el = document.getElementById("result-message");
+		el.className = `result-msg result-${type}`;
+		el.textContent = message;
+		el.style.display = "block";
+		setTimeout(() => {
+			el.style.display = "none";
+		}, 5000);
+	}
 
-    resetCard() {
-        this.pendingVisitor = null;
-        this.scanning = false;
-        document.getElementById("visitor-card").style.display = "none";
-        document.getElementById("manual-visitor-id").value = "";
-    }
+	resetCard() {
+		this.pendingVisitor = null;
+		this.scanning = false;
+		document.getElementById("visitor-card").style.display = "none";
+		document.getElementById("manual-visitor-id").value = "";
+	}
 
-    resetAll() {
-        this.resetCard();
-        document.getElementById("result-message").style.display = "none";
-    }
+	resetAll() {
+		this.resetCard();
+		document.getElementById("result-message").style.display = "none";
+	}
 
-    loadActiveVisitors() {
-        frappe.call({
-            method: "visitor_management.visitor_management.api.get_dashboard_data",
-            callback: (r) => {
-                if (!r.message) return;
-                const { active_visitors, stats } = r.message;
-                const el = document.getElementById("active-visitors-list");
+	loadActiveVisitors() {
+		frappe.call({
+			method: "visitor_management.visitor_management.api.get_dashboard_data",
+			callback: (r) => {
+				if (!r.message) return;
+				const { active_visitors, stats } = r.message;
+				const el = document.getElementById("active-visitors-list");
 
-                if (!active_visitors.length) {
-                    el.innerHTML = `<p style="color:#aaa; text-align:center; padding:20px;">
+				if (!active_visitors.length) {
+					el.innerHTML = `<p style="color:#aaa; text-align:center; padding:20px;">
                         Tidak ada tamu aktif saat ini</p>`;
-                    return;
-                }
+					return;
+				}
 
-                const rows = active_visitors.map((v) => `
+				const rows = active_visitors
+					.map(
+						(v) => `
                     <tr>
                         <td><strong>${v.visitor_name}</strong><br>
-                            <span style="font-size:11px; color:#888;">${v.visitor_company || '-'}</span>
+                            <span style="font-size:11px; color:#888;">${v.visitor_company || "-"}</span>
                         </td>
                         <td>${v.host_employee_name}<br>
-                            <span style="font-size:11px; color:#888;">${v.department || '-'}</span>
+                            <span style="font-size:11px; color:#888;">${v.department || "-"}</span>
                         </td>
-                        <td>${v.check_in_time ? frappe.datetime.str_to_user(v.check_in_time) : '-'}</td>
+                        <td>${v.check_in_time ? frappe.datetime.str_to_user(v.check_in_time) : "-"}</td>
                         <td>
                             <span style="
                                 padding:3px 10px; border-radius:12px; font-size:11px;
-                                background:${v.status === 'Awaiting Approval' ? '#fff3cd' : '#d5f4e6'};
-                                color:${v.status === 'Awaiting Approval' ? '#856404' : '#1a7a4a'};
+                                background:${v.status === "Awaiting Approval" ? "#fff3cd" : "#d5f4e6"};
+                                color:${v.status === "Awaiting Approval" ? "#856404" : "#1a7a4a"};
                             ">${v.status}</span>
                         </td>
                     </tr>
-                `).join("");
+                `,
+					)
+					.join("");
 
-                el.innerHTML = `
+				el.innerHTML = `
                     <table class="active-table">
                         <thead>
                             <tr>
@@ -401,7 +418,7 @@ class VMSScanner {
                         | Selesai: ${stats.checked_out}
                     </p>
                 `;
-            },
-        });
-    }
+			},
+		});
+	}
 }

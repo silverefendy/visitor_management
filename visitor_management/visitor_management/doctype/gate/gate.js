@@ -1,1 +1,1 @@
-frappe.ui.form.on('Gate', {});
+frappe.ui.form.on("Gate", {});

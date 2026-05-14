@@ -120,6 +120,9 @@
 		"after": true,
 		"qz": true,
 		"localforage": true,
+		"Html5QrcodeScanner": true,
+		"Html5QrcodeScanType": true,
+		"Html5QrcodeSupportedFormats": true,
 		"extend_cscript": true
 	}
 }

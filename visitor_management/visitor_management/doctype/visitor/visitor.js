@@ -5,7 +5,8 @@ frappe.ui.form.on("Visitor", {
 		if (frm.doc.status === "Awaiting Approval") {
 			frm.add_custom_button(__("Approve"), () => {
 				frm.call("approve_visit").then((r) => {
-					if (r.message) frappe.msgprint(r.message.message || __("Kunjungan disetujui."));
+					if (r.message)
+						frappe.msgprint(r.message.message || __("Kunjungan disetujui."));
 					frm.reload_doc();
 				});
 			}).addClass("btn-primary");
@@ -22,24 +23,31 @@ frappe.ui.form.on("Visitor", {
 					],
 					(values) => {
 						frm.call("reject_visit", { reason: values.reason }).then((r) => {
-							if (r.message) frappe.msgprint(r.message.message || __("Kunjungan ditolak."));
+							if (r.message)
+								frappe.msgprint(r.message.message || __("Kunjungan ditolak."));
 							frm.reload_doc();
 						});
 					},
 					__("Reject Visit"),
-					__("Reject")
+					__("Reject"),
 				);
 			});
 		}
 
 		if (frm.doc.status === "Approved") {
 			frm.add_custom_button(__("Selesai Kunjungan"), () => {
-				frappe.confirm(__("Tandai kunjungan ini selesai? Setelah itu security dapat melakukan check-out."), () => {
-					frm.call("end_visit").then((r) => {
-						if (r.message) frappe.msgprint(r.message.message || __("Kunjungan selesai."));
-						frm.reload_doc();
-					});
-				});
+				frappe.confirm(
+					__(
+						"Tandai kunjungan ini selesai? Setelah itu security dapat melakukan check-out.",
+					),
+					() => {
+						frm.call("end_visit").then((r) => {
+							if (r.message)
+								frappe.msgprint(r.message.message || __("Kunjungan selesai."));
+							frm.reload_doc();
+						});
+					},
+				);
 			}).addClass("btn-primary");
 		}
 	},
