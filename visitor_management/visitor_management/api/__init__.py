@@ -1,24 +1,9 @@
-from . import approval_api, gate_api, qr_api, visitor_api
-from .visitor_api import *
-from .qr_api import *
-from .approval_api import *
-from .gate_api import *
+# api/__init__.py — Import semua modul API
+# legacy_api.py sudah dipecah ke modul-modul berikut:
+#   - visitor_api.py  : QR visitor, badge, CSRF
+#   - approval_api.py : approve, reject, complete + employee approval data
+#   - gate_api.py     : gate scan, monitor, dashboard (HTTP + Mobile Android)
+#   - employee_api.py : employee entry request (barcode, pengajuan)
+#   - report_api.py   : dashboard VMS & laporan
 
-# Backward-compatible exports consolidated in package-level legacy module.
-from .legacy_api import (  # noqa: F401
-    approve_visitor,
-    bulk_employee_entry_action,
-    complete_visit,
-    create_employee_entry,
-    employee_approval_data,
-    employee_entry_action,
-    employee_pending_approvals,
-    get_csrf_token,
-    get_dashboard_data,
-    get_employee_by_barcode,
-    get_employee_entry_data,
-    get_my_employee_barcode,
-    reject_visitor,
-    scan_employee_entry_barcode,
-)
-
+from . import approval_api, gate_api, qr_api, visitor_api, employee_api, report_api
