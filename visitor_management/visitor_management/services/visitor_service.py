@@ -1,12 +1,13 @@
-import json
-
 import frappe
 from frappe import _
 from frappe.utils import now_datetime
 
 from visitor_management.visitor_management.services.gate_service import get_gate_by_device
 from visitor_management.visitor_management.services.log_service import create_visitor_log
-from visitor_management.visitor_management.services.qr_service import generate_and_attach_visitor_qr
+from visitor_management.visitor_management.services.qr_service import (
+    generate_and_attach_visitor_qr,
+    parse_visitor_qr,
+)
 
 
 class VisitorService:
@@ -81,15 +82,7 @@ def get_visitor_info(visitor_id):
 
 
 def get_visitor_id_from_qr(qr_data):
-	try:
-		data = json.loads(qr_data)
-	except json.JSONDecodeError:
-		frappe.throw(_("Format QR tidak dikenali"))
-
-	visitor_id = data.get("visitor_id")
-	if not visitor_id:
-		frappe.throw(_("QR tidak valid"))
-	return visitor_id
+    return parse_visitor_qr(qr_data)
 
 
 ACTIVE_STATUSES = ["Awaiting Approval", "Approved", "Checked In", "Completed"]
