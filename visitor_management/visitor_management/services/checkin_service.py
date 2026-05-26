@@ -32,12 +32,17 @@ class EmployeeEntryCheckinService:
             self.doc.employee_name = employee.employee_name
             self.doc.department = employee.department
 
-    def ensure_manager(self):
+    def ensure_approval_manager(self):
         if not is_approval_manager():
-            frappe.throw(
-                _("Anda tidak memiliki hak untuk aksi approval"), frappe.PermissionError
-            )
+            frappe.throw(_("Anda tidak memiliki hak untuk aksi approval"), frappe.PermissionError)
 
-    def save_and_commit(self):
+    def save_with_commit(self):
         self.doc.save(ignore_permissions=True)
         frappe.db.commit()
+
+    # Backward-compatible aliases for existing call sites.
+    def ensure_manager(self):
+        self.ensure_approval_manager()
+
+    def save_and_commit(self):
+        self.save_with_commit()

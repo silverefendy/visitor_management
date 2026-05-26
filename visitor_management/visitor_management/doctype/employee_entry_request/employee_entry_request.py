@@ -2,12 +2,8 @@ import frappe
 from frappe.model.document import Document
 from frappe.utils import now_datetime
 
-from visitor_management.visitor_management.services.approval_service import (
-    EmployeeEntryApprovalService,
-)
-from visitor_management.visitor_management.services.checkin_service import (
-    EmployeeEntryCheckinService,
-)
+from visitor_management.visitor_management.services.approval_service import EmployeeEntryApprovalService
+from visitor_management.visitor_management.services.checkin_service import EmployeeEntryCheckinService
 
 
 def _create_employee_entry_log(doc, action, notes=""):
@@ -32,14 +28,8 @@ def _create_employee_entry_log(doc, action, notes=""):
 
 
 class EmployeeEntryRequest(Document):
-    def before_insert(self):
-        EmployeeEntryCheckinService(self).before_insert()
-
-    def after_insert(self):
-        _create_employee_entry_log(self, "Created", "Pengajuan employee entry dibuat")
-
-    def validate(self):
-        EmployeeEntryCheckinService(self).validate()
+	def before_insert(self):
+		EmployeeEntryCheckinService(self).before_insert()
 
     def _approval_service(self):
         checkin_service = EmployeeEntryCheckinService(self)
@@ -47,18 +37,25 @@ class EmployeeEntryRequest(Document):
             self, checkin_service, _create_employee_entry_log
         )
 
-    @frappe.whitelist()
-    def approve(self):
-        return self._approval_service().approve()
+	def validate(self):
+		EmployeeEntryCheckinService(self).validate()
 
-    @frappe.whitelist()
-    def reject(self, reason=""):
-        return self._approval_service().reject(reason=reason)
+	def _approval_service(self):
+		checkin_service = EmployeeEntryCheckinService(self)
+		return EmployeeEntryApprovalService(self, checkin_service, _create_employee_entry_log)
 
-    @frappe.whitelist()
-    def complete(self):
-        return self._approval_service().complete()
+	@frappe.whitelist()
+	def approve(self):
+		return self._approval_service().approve()
 
-    @frappe.whitelist()
-    def checkout(self):
-        return self._approval_service().checkout()
+	@frappe.whitelist()
+	def reject(self, reason=""):
+		return self._approval_service().reject(reason=reason)
+
+	@frappe.whitelist()
+	def complete(self):
+		return self._approval_service().complete()
+
+	@frappe.whitelist()
+	def checkout(self):
+		return self._approval_service().checkout()

@@ -10,11 +10,11 @@ app_license = "mit"
 # Keep hooks thin: business logic lives in services.
 # -----------------------------------------------------------------------------
 doc_events = {
-    "Visitor": {
-        "validate": (
-            "visitor_management.visitor_management.services.visitor_service.validate_duplicate_active"
-        )
-    }
+	"Visitor": {
+		"validate": (
+			"visitor_management.visitor_management.services.visitor_service.validate_duplicate_active"
+		)
+	}
 }
 
 # -----------------------------------------------------------------------------
