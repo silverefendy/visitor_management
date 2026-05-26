@@ -72,7 +72,7 @@ def _parse_employee_barcode(qr_data):
                 or data.get("name")
                 or data.get("code")
             )
-    except (json.JSONDecodeError, TypeError):
+    except json.JSONDecodeError, TypeError:
         employee_code = value
 
     if str(employee_code).upper().startswith("EMP:"):
@@ -226,7 +226,7 @@ def _parse_names(names):
     if isinstance(names, str):
         try:
             names = json.loads(names)
-        except (json.JSONDecodeError, TypeError):
+        except json.JSONDecodeError, TypeError:
             names = [n.strip() for n in names.split(",") if n.strip()]
     return names or []
 

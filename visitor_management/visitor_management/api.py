@@ -75,7 +75,7 @@ def _parse_names(names):
     if isinstance(names, str):
         try:
             names = json.loads(names)
-        except (json.JSONDecodeError, TypeError):
+        except json.JSONDecodeError, TypeError:
             names = [n.strip() for n in names.split(",") if n.strip()]
     return names or []
 
@@ -91,7 +91,7 @@ def scan_qr_action(qr_data, action):
 
     try:
         data = json.loads(qr_data)
-    except (json.JSONDecodeError, TypeError):
+    except json.JSONDecodeError, TypeError:
         # Coba langsung sebagai visitor ID
         data = {"visitor_id": qr_data.strip()}
 
@@ -117,7 +117,7 @@ def get_visitor_by_qr(qr_data):
     """Ambil detail visitor dari QR data (untuk preview sebelum konfirmasi)"""
     try:
         data = json.loads(qr_data)
-    except (json.JSONDecodeError, TypeError):
+    except json.JSONDecodeError, TypeError:
         data = {"visitor_id": qr_data.strip()}
 
     visitor_id = data.get("visitor_id")

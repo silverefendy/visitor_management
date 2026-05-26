@@ -8,6 +8,8 @@ import frappe
 from visitor_management.visitor_management.api import qr_api
 from visitor_management.visitor_management.api.legacy_api import (
     get_employee_by_qr as _get_employee_by_qr,
+)
+from visitor_management.visitor_management.api.legacy_api import (
     scan_employee_entry_action as _scan_employee_entry_action,
 )
 

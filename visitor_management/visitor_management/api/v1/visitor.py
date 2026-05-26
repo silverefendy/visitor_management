@@ -5,7 +5,11 @@ import frappe
 from visitor_management.visitor_management.api import visitor_api
 from visitor_management.visitor_management.api.legacy_api import (
     employee_approval_data as _employee_approval_data,
+)
+from visitor_management.visitor_management.api.legacy_api import (
     employee_pending_approvals as _employee_pending_approvals,
+)
+from visitor_management.visitor_management.api.legacy_api import (
     get_dashboard_data as _get_dashboard_data,
 )
 

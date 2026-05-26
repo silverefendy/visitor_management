@@ -23,4 +23,4 @@ def complete_visit(visitor_id):
     return approval_api.complete_visit(visitor_id)
 
 
-__all__ = ["approve_visitor", "reject_visitor", "complete_visit"]
+__all__ = ["approve_visitor", "complete_visit", "reject_visitor"]
