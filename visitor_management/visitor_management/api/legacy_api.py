@@ -16,13 +16,6 @@ import qrcode
 from frappe import _
 from frappe.utils import now_datetime, today
 
-from visitor_management.visitor_management.api import approval_api, qr_api, visitor_api
-from visitor_management.visitor_management.services.qr_service import parse_visitor_qr
-from visitor_management.visitor_management.services.visitor_service import (
-    check_in,
-    check_out,
-)
-
 # =============================================================================
 # HELPER FUNCTIONS (private — tidak bisa dipanggil dari browser)
 # Fungsi dengan awalan _ adalah helper internal, tidak perlu @whitelist
@@ -232,23 +225,6 @@ def _parse_names(names):
 
 
 # =============================================================================
-# VISITOR — QR SCANNER
-# =============================================================================
-
-
-@frappe.whitelist(allow_guest=False)
-def scan_qr_action(qr_data, action, gate=None, device_id=None):
-    return qr_api.scan_qr_action(
-        qr_data=qr_data, action=action, gate=gate, device_id=device_id
-    )
-
-
-@frappe.whitelist(allow_guest=False)
-def get_visitor_by_qr(qr_data):
-    return visitor_api.get_visitor_by_qr(qr_data=qr_data)
-
-
-# =============================================================================
 # VISITOR — DASHBOARD & APPROVAL
 # =============================================================================
 
@@ -407,21 +383,6 @@ def employee_approval_data():
             order_by="approved_at asc, check_in_time asc",
         ),
     }
-
-
-@frappe.whitelist(allow_guest=False)
-def approve_visitor(visitor_id):
-    return approval_api.approve_visitor(visitor_id=visitor_id)
-
-
-@frappe.whitelist(allow_guest=False)
-def reject_visitor(visitor_id, reason=""):
-    return approval_api.reject_visitor(visitor_id=visitor_id, reason=reason)
-
-
-@frappe.whitelist(allow_guest=False)
-def complete_visit(visitor_id):
-    return approval_api.complete_visit(visitor_id=visitor_id)
 
 
 @frappe.whitelist(allow_guest=False)
