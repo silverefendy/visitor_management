@@ -1,11 +1,5 @@
-# =============================================================================
-# api.py — Visitor Management
-# Lokasi file ini di server:
-#   /home/frappe/frappe-bench/apps/visitor_management/visitor_management/visitor_management/api.py
-#
-# Setelah upload/edit file ini, jalankan di server:
-#   bench clear-cache && bench restart
-# =============================================================================
+# Legacy whitelisted API endpoints (employee entry, dashboard, CSRF, reports).
+# After changes: bench --site <site> clear-cache
 
 import base64
 import io

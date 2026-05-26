@@ -39,7 +39,8 @@ import java.util.Map;
 
 public class MainActivity extends Activity {
     private static final int CAMERA_REQUEST = 10;
-    private static final String DEFAULT_BASE_URL = "http://10.1.0.30:8001";
+    /** Set in-app via Server URL field; no hardcoded environment default. */
+    private static final String DEFAULT_BASE_URL = "";
 
     private EditText baseUrlInput;
     private EditText usernameInput;

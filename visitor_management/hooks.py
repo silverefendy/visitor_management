@@ -5,10 +5,6 @@ app_description = "Visitor Aps"
 app_email = "silver_efendy@yahoo.co.id"
 app_license = "mit"
 
-# -----------------------------------------------------------------------------
-# Document Events
-# Keep hooks thin: business logic lives in services.
-# -----------------------------------------------------------------------------
 doc_events = {
     "Visitor": {
         "validate": (
@@ -17,9 +13,6 @@ doc_events = {
     }
 }
 
-# -----------------------------------------------------------------------------
-# Scheduled Tasks
-# -----------------------------------------------------------------------------
 scheduler_events = {
     "hourly": [
         "visitor_management.visitor_management.tasks.visitor_tasks.auto_checkout_stale_visitors"

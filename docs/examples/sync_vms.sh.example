@@ -1,0 +1,22 @@
+#!/bin/bash
+# Example: refresh visitor_management after deploy (copy to sync_vms.sh and adjust).
+#
+# Usage:
+#   export BENCH_ROOT=/path/to/frappe-bench
+#   export SITE_NAME=your.site.name
+#   bash sync_vms.sh.example
+
+set -euo pipefail
+
+BENCH_ROOT="${BENCH_ROOT:?Set BENCH_ROOT to your bench directory}"
+SITE_NAME="${SITE_NAME:?Set SITE_NAME to your Frappe site}"
+APP_PATH="${BENCH_ROOT}/apps/visitor_management"
+
+echo "=== Refreshing VMS ==="
+find "${APP_PATH}" -name "*.pyc" -delete
+find "${APP_PATH}" -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+
+cd "${BENCH_ROOT}"
+bench --site "${SITE_NAME}" clear-cache
+bench restart
+echo "=== Done ==="

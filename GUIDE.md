@@ -368,7 +368,7 @@ bench --site nama_site run-tests --app visitor_management
 3. QR code disimpan ke path hardcoded:
 
    ```text
-   /home/frappe/frappe-bench-v16/sites/wp.local/public/files
+   frappe.utils.get_site_path("public", "files")  # per-site, portable
    ```
 
    Ini bisa gagal jika site name, bench path, atau environment berbeda. Lebih aman memakai API file manager Frappe atau path site dinamis.

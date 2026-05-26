@@ -1,2 +1,3 @@
+# Runtime dependencies for visitor_management (installed via setup.py / bench).
 qrcode
 pillow

@@ -90,28 +90,28 @@
    "doc_view": "List",
    "label": "Employee Entry Url",
    "type": "URL",
-   "url": "http://10.1.0.30:8001/employee-entry"
+   "url": "/employee-entry"
   },
   {
    "color": "Grey",
    "doc_view": "List",
    "label": "Employee Entry",
    "type": "URL",
-   "url": "http://10.1.0.30:8001/desk/employee-entry-request"
+   "url": "/desk/employee-entry-request"
   },
   {
    "color": "Grey",
    "doc_view": "List",
    "label": "Visitor Scanner",
    "type": "URL",
-   "url": "http://10.1.0.30:8001/vms-scanner"
+   "url": "/vms-scanner"
   },
   {
    "color": "Grey",
    "doc_view": "List",
    "label": "VMS Approval",
    "type": "URL",
-   "url": "http://10.1.0.30:8001/vms-approval"
+   "url": "/vms-approval"
   }
  ],
  "title": "Visitor Management",

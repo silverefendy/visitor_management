@@ -1,4 +1,5 @@
 #!/bin/bash
+# LOCAL-ONLY: paths below are environment-specific. See docs/examples/sync_vms.sh.example
 # Script untuk refresh VMS setelah edit.
 # Source aktif ada di visitor_management/visitor_management/.
 # Folder duplicate visitor_management/doctype sudah dihapus agar tidak saling menimpa.

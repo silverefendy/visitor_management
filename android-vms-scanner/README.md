@@ -13,11 +13,13 @@ APK ini adalah scanner native Android untuk Visitor Management.
 
 ## Default Server
 
+Tidak ada URL server bawaan di repo — set **Server URL** di aplikasi sesuai environment Anda, misalnya:
+
 ```text
-http://10.1.0.30:8001
+https://erp.yourcompany.com
 ```
 
-URL bisa diubah dari field `Server URL` di aplikasi.
+Gunakan scheme (`http` atau `https`) dan host/port yang mengarah ke bench Frappe Anda.
 
 ## Format Kode
 
