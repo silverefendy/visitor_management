@@ -1,6 +1,6 @@
 """Whitelisted API exports for backward-compatible import paths."""
 
-from . import approval_api, gate_api, qr_api, visitor_api
+from . import approval_api, gate_api, qr_api, v1, visitor_api
 from .approval_api import approve_visitor, complete_visit, reject_visitor
 from .gate_api import list_active_gates
 from .legacy_api import (
@@ -40,5 +40,6 @@ __all__ = [
     "reject_visitor",
     "scan_employee_entry_barcode",
     "scan_qr_action",
+    "v1",
     "visitor_api",
 ]
