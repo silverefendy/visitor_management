@@ -1,7 +1,7 @@
 {
  "app": "visitor_management",
  "charts": [],
- "content": "[{\"id\":\"4RYg8kuFEp\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Welcome to the Visitor Management workspace</span>\",\"col\":12}},{\"id\":\"_ag5a2rFt2\",\"type\":\"paragraph\",\"data\":{\"text\":\"Click on \\n\\t\\t\\t\\n\\t\\t\\t\\n\\t\\t to edit\",\"col\":12}},{\"id\":\"oiJxIXs0X4\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"VMS Approval\",\"col\":3}},{\"id\":\"ax0ZCic8hA\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Visitor Scanner\",\"col\":3}},{\"id\":\"_e5uYugJ28\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Employee Entry\",\"col\":3}},{\"id\":\"r2_h-8YZ47\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Employee Entry Url\",\"col\":3}},{\"id\":\"BfrB41Xdtr\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Visitor Management</b></span>\",\"col\":12}},{\"id\":\"Alu1600LE8\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Employee Entry\",\"col\":4}},{\"id\":\"loqhSgtD2l\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Visitor Log\",\"col\":4}},{\"id\":\"A3zWVqQz2i\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Visitor\",\"col\":4}}]",
+ "content": "[{\"id\":\"ops_hdr\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Operations</b></span>\",\"col\":12}},{\"id\":\"scn\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Visitor Scanner\",\"col\":3}},{\"id\":\"apv\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"VMS Approval\",\"col\":3}},{\"id\":\"eurl\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Employee Entry Url\",\"col\":3}},{\"id\":\"eent\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Employee Entry\",\"col\":3}},{\"id\":\"live_hdr\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Live Operations</b></span>\",\"col\":12}},{\"id\":\"qv\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Visitor\",\"col\":4}},{\"id\":\"qvl\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Visitor Log\",\"col\":4}},{\"id\":\"qeer\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Employee Entry\",\"col\":4}},{\"id\":\"admin_hdr\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Administration</b></span>\",\"col\":12}},{\"id\":\"admin_txt\",\"type\":\"paragraph\",\"data\":{\"text\":\"Kelola master data Visitor, Gate, dan laporan dari menu sidebar untuk operasi harian.\",\"col\":12}}]",
  "creation": "2026-05-02 15:55:00.088354",
  "custom_blocks": [],
  "docstatus": 0,
@@ -40,6 +40,26 @@
    "label": "Employee Entry Request",
    "link_count": 0,
    "link_to": "Employee Entry Request",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Employee Entry Log",
+   "link_count": 0,
+   "link_to": "Employee Entry Log",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Gate",
+   "link_count": 0,
+   "link_to": "Gate",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
