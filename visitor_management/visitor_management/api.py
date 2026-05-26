@@ -4,6 +4,8 @@ import frappe
 from frappe import _
 from frappe.utils import now_datetime, today
 
+from visitor_management.visitor_management.utils.qr_utils import parse_qr_payload
+
 
 def _get_employee_for_user(user=None):
 	user = user or frappe.session.user
@@ -78,15 +80,6 @@ def _parse_names(names):
 	return names or []
 
 
-def _parse_qr_payload(qr_data):
-	if not qr_data:
-		return {}
-	try:
-		return json.loads(qr_data)
-	except json.JSONDecodeError, TypeError:
-		return {"raw": qr_data.strip()}
-
-
 @frappe.whitelist(allow_guest=False)
 def scan_qr_action(qr_data, action):
 	"""
@@ -151,8 +144,8 @@ def get_visitor_by_qr(qr_data):
 
 @frappe.whitelist(allow_guest=False)
 def get_employee_by_qr(qr_data):
-	data = _parse_qr_payload(qr_data)
-	employee_id = data.get("employee") or data.get("employee_id") or data.get("raw")
+	data = parse_qr_payload(qr_data)
+	employee_id = data.get("employee") or data.get("employee_id") or data.get("raw") or data.get("value")
 	if not employee_id or not frappe.db.exists("Employee", employee_id):
 		return {"error": "Employee tidak ditemukan"}
 
@@ -185,8 +178,8 @@ def get_employee_by_qr(qr_data):
 
 @frappe.whitelist(allow_guest=False)
 def scan_employee_entry_action(qr_data, action, purpose="Security scan"):
-	data = _parse_qr_payload(qr_data)
-	employee_id = data.get("employee") or data.get("employee_id") or data.get("raw")
+	data = parse_qr_payload(qr_data)
+	employee_id = data.get("employee") or data.get("employee_id") or data.get("raw") or data.get("value")
 	if not employee_id or not frappe.db.exists("Employee", employee_id):
 		frappe.throw(_("Employee tidak ditemukan"))
 
