@@ -20,7 +20,7 @@ def get_dashboard_data():
     return _get_dashboard_data()
 
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=False)
 def employee_pending_approvals():
     return _employee_pending_approvals()
 

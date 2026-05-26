@@ -1,11 +1,18 @@
-import frappe
 from frappe import _
 
-GATE_ROLES = {"System Manager", "Visitor Manager", "Visitor Security", "Security User"}
+from visitor_management.visitor_management.permissions.auth_helpers import ensure_roles
+
+GATE_ROLES = {
+    "System Manager",
+    "Visitor Manager",
+    "Visitor Security",
+    "Security User",
+}
 
 
 def ensure_gate_access(user=None):
-    user = user or frappe.session.user
-    roles = set(frappe.get_roles(user))
-    if not (roles & GATE_ROLES):
-        frappe.throw(_("Akses gate ditolak"), frappe.PermissionError)
+    ensure_roles(
+        GATE_ROLES,
+        user=user,
+        message=_("Akses gate ditolak"),
+    )
