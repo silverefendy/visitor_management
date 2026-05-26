@@ -49,7 +49,8 @@ def generate_and_attach_visitor_qr(visitor_doc):
         buf.seek(0)
         img_bytes = buf.read()
 
-        abs_files_path = "/home/frappe/frappe-bench-v16/sites/wp.local/public/files"
+        abs_files_path = frappe.get_site_path("public", "files")
+        os.makedirs(abs_files_path, exist_ok=True)
         file_name = "qr_{0}.png".format(visitor_doc.name)
         full_path = os.path.join(abs_files_path, file_name)
 
