@@ -254,8 +254,7 @@ class VMSScanner {
 		const statusColors = {
 			Registered: "#95a5a6",
 			"Awaiting Approval": "#f39c12",
-			Approved: "#3498db",
-			"Checked In": "#27ae60",
+			Approved: "#27ae60",
 			Completed: "#9b59b6",
 			"Checked Out": "#1abc9c",
 			Rejected: "#e74c3c",
@@ -263,7 +262,9 @@ class VMSScanner {
 		};
 
 		const color = statusColors[v.status] || "#888";
-		const canCheckin = ["Registered", "Approved"].includes(v.status);
+		const canCheckin = ["Registered", "Checked Out", "Rejected", "Cancelled"].includes(
+			v.status,
+		);
 		const canCheckout = v.status === "Completed";
 		const modeLabel = this.mode === "checkin" ? "CHECK IN" : "CHECK OUT";
 
@@ -391,8 +392,20 @@ class VMSScanner {
                         <td>
                             <span style="
                                 padding:3px 10px; border-radius:12px; font-size:11px;
-                                background:${v.status === "Awaiting Approval" ? "#fff3cd" : "#d5f4e6"};
-                                color:${v.status === "Awaiting Approval" ? "#856404" : "#1a7a4a"};
+                                background:${
+									v.status === "Awaiting Approval"
+										? "#fff3cd"
+										: v.status === "Approved"
+											? "#d5f4e6"
+											: "#e9ecef"
+								};
+                                color:${
+									v.status === "Awaiting Approval"
+										? "#856404"
+										: v.status === "Approved"
+											? "#1a7a4a"
+											: "#495057"
+								};
                             ">${v.status}</span>
                         </td>
                     </tr>

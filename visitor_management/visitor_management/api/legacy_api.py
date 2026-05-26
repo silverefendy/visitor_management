@@ -251,7 +251,7 @@ def get_dashboard_data():
 
     active_visitors = frappe.get_all(
         "Visitor",
-        filters=[["status", "in", ["Checked In", "Approved", "Awaiting Approval"]]],
+        filters=[["status", "in", ["Awaiting Approval", "Approved"]]],
         fields=dashboard_fields,
         order_by="check_in_time asc",
     )
@@ -271,9 +271,7 @@ def get_dashboard_data():
     )
 
     waiting = len([v for v in active_visitors if v.status == "Awaiting Approval"])
-    checked_in = len(
-        [v for v in active_visitors if v.status in ["Checked In", "Approved"]]
-    )
+    checked_in = len([v for v in active_visitors if v.status == "Approved"])
     completed = len(pending_checkout)
     rejected = len(rejected_visitors)
     checked_out = frappe.db.count(

@@ -656,7 +656,7 @@ function visitorCell(v) {
 function statusPill(status) {
 	var cls = "pill-info";
 	if (status === "Awaiting Approval") cls = "pill-warning";
-	if (status === "Approved" || status === "Checked In") cls = "pill-success";
+	if (status === "Approved") cls = "pill-success";
 	if (status === "Completed") cls = "pill-purple";
 	if (status === "Rejected") cls = "pill-danger";
 	return '<span class="status-pill ' + cls + '">' + esc(status || "-") + "</span>";

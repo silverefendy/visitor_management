@@ -61,7 +61,7 @@ class VisitorService:
         return {"status": "success", "message": "Kunjungan ditolak."}
 
     def end_visit(self):
-        if self.doc.status not in ["Approved", "Checked In"]:
+        if self.doc.status != "Approved":
             frappe.throw(_("Kunjungan belum disetujui."))
 
         self.doc.status = "Completed"
@@ -95,7 +95,13 @@ def get_visitor_id_from_qr(qr_data):
     return parse_visitor_qr(qr_data)
 
 
-ACTIVE_STATUSES = ["Awaiting Approval", "Approved", "Checked In", "Completed"]
+# Statuses where the same ID must not open a parallel visit (matches visitor.json options).
+ACTIVE_STATUSES = [
+    "Registered",
+    "Awaiting Approval",
+    "Approved",
+    "Completed",
+]
 
 
 def get_active_visitor_logs(visitor_id):
