@@ -61,7 +61,8 @@ def generate_and_attach_visitor_qr(visitor_doc):
 		file_size = os.path.getsize(full_path)
 
 		frappe.db.sql(
-			"DELETE FROM `tabFile` WHERE attached_to_doctype='Visitor' AND attached_to_name=%s", visitor_doc.name
+			"DELETE FROM `tabFile` WHERE attached_to_doctype='Visitor' AND attached_to_name=%s",
+			visitor_doc.name,
 		)
 
 		file_doc_name = uuid.uuid4().hex[:10]
