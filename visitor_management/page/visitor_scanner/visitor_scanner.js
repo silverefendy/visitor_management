@@ -253,6 +253,7 @@ class VMSScanner {
 	showVisitorCard(v) {
 		const statusColors = {
 			Registered: "#95a5a6",
+			"Checked In": "#3498db",
 			"Awaiting Approval": "#f39c12",
 			Approved: "#27ae60",
 			Completed: "#9b59b6",

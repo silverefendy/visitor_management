@@ -16,6 +16,71 @@ from visitor_management.visitor_management.services.qr_service import (
     parse_visitor_qr,
 )
 
+STATUS_REGISTERED = "Registered"
+STATUS_CHECKED_IN = "Checked In"
+STATUS_AWAITING_APPROVAL = "Awaiting Approval"
+STATUS_APPROVED = "Approved"
+STATUS_COMPLETED = "Completed"
+STATUS_CHECKED_OUT = "Checked Out"
+STATUS_REJECTED = "Rejected"
+STATUS_CANCELLED = "Cancelled"
+
+VISITOR_STATUSES = [
+    STATUS_REGISTERED,
+    STATUS_CHECKED_IN,
+    STATUS_AWAITING_APPROVAL,
+    STATUS_APPROVED,
+    STATUS_COMPLETED,
+    STATUS_CHECKED_OUT,
+    STATUS_REJECTED,
+    STATUS_CANCELLED,
+]
+
+ACTIVE_STATUSES = [
+    STATUS_CHECKED_IN,
+    STATUS_AWAITING_APPROVAL,
+    STATUS_APPROVED,
+    STATUS_COMPLETED,
+]
+DASHBOARD_ACTIVE_STATUSES = [
+    STATUS_CHECKED_IN,
+    STATUS_AWAITING_APPROVAL,
+    STATUS_APPROVED,
+]
+
+ALLOWED_TRANSITIONS = {
+    STATUS_REGISTERED: {STATUS_AWAITING_APPROVAL},
+    STATUS_CHECKED_IN: {STATUS_AWAITING_APPROVAL},
+    STATUS_AWAITING_APPROVAL: {STATUS_APPROVED, STATUS_REJECTED},
+    STATUS_APPROVED: {STATUS_COMPLETED},
+    STATUS_COMPLETED: {STATUS_CHECKED_OUT},
+    STATUS_CHECKED_OUT: {STATUS_AWAITING_APPROVAL},
+    STATUS_REJECTED: {STATUS_AWAITING_APPROVAL},
+    STATUS_CANCELLED: {STATUS_AWAITING_APPROVAL},
+}
+
+
+def validate_visitor_transition(current_status, target_status):
+    if target_status not in VISITOR_STATUSES:
+        frappe.throw(_("Status visitor tidak valid: {0}").format(target_status))
+
+    allowed_targets = ALLOWED_TRANSITIONS.get(current_status, set())
+    if target_status not in allowed_targets:
+        frappe.throw(
+            _("Transisi visitor tidak valid: {0} ke {1}").format(
+                current_status, target_status
+            )
+        )
+
+
+def transition_visitor(visitor, target_status, field_updates=None):
+    validate_visitor_transition(visitor.status, target_status)
+    visitor.status = target_status
+    for fieldname, value in (field_updates or {}).items():
+        setattr(visitor, fieldname, value)
+    visitor.save(ignore_permissions=True)
+    return visitor
+
 
 class VisitorService:
     def __init__(self, doc):
@@ -35,13 +100,14 @@ class VisitorService:
         generate_and_attach_visitor_qr(self.doc)
 
     def approve_visit(self):
-        if self.doc.status != "Awaiting Approval":
-            frappe.throw(_("Status bukan Awaiting Approval."))
-
-        self.doc.status = "Approved"
-        self.doc.approved_by = frappe.session.user
-        self.doc.approved_at = now_datetime()
-        self.doc.save(ignore_permissions=True)
+        transition_visitor(
+            self.doc,
+            STATUS_APPROVED,
+            {
+                "approved_by": frappe.session.user,
+                "approved_at": now_datetime(),
+            },
+        )
 
         self.create_visitor_log(
             "Approved", "Disetujui oleh {0}".format(frappe.session.user)
@@ -50,25 +116,22 @@ class VisitorService:
         return {"status": "success", "message": "Kunjungan disetujui."}
 
     def reject_visit(self, reason=""):
-        if self.doc.status != "Awaiting Approval":
-            frappe.throw(_("Status bukan Awaiting Approval."))
-
-        self.doc.status = "Rejected"
-        self.doc.rejected_reason = reason
-        self.doc.approved_by = frappe.session.user
-        self.doc.approved_at = now_datetime()
-        self.doc.save(ignore_permissions=True)
+        transition_visitor(
+            self.doc,
+            STATUS_REJECTED,
+            {
+                "rejected_reason": reason,
+                "approved_by": frappe.session.user,
+                "approved_at": now_datetime(),
+            },
+        )
 
         self.create_visitor_log("Rejected", "Ditolak: {0}".format(reason))
         frappe.db.commit()
         return {"status": "success", "message": "Kunjungan ditolak."}
 
     def end_visit(self):
-        if self.doc.status != "Approved":
-            frappe.throw(_("Kunjungan belum disetujui."))
-
-        self.doc.status = "Completed"
-        self.doc.save(ignore_permissions=True)
+        transition_visitor(self.doc, STATUS_COMPLETED)
 
         self.create_visitor_log("Completed", "Kunjungan selesai")
         frappe.db.commit()
@@ -107,9 +170,6 @@ def get_visitor_id_from_qr(qr_data):
     return parse_visitor_qr(qr_data)
 
 
-ACTIVE_STATUSES = ["Awaiting Approval", "Approved", "Completed"]
-
-
 def get_active_visitor_logs(visitor_id):
     return frappe.get_all(
         "Visitor Log",
@@ -144,20 +204,23 @@ def validate_duplicate_active(visitor, method=None):
 
 
 def check_in(visitor, gate=None, device_id=None):
-    if visitor.status not in ["Registered", "Checked Out", "Rejected", "Cancelled"]:
-        frappe.throw(_("Tidak bisa check-in. Status: {0}").format(visitor.status))
-
     if is_visitor_inside(visitor.name):
         frappe.throw(_("Visitor masih tercatat berada di dalam area"))
 
+    validate_visitor_transition(visitor.status, STATUS_AWAITING_APPROVAL)
     validate_blacklist(visitor)
     validate_duplicate_active(visitor)
     gate_name = get_gate_by_device(device_id=device_id, gate=gate)
+    check_in_time = now_datetime()
 
-    visitor.status = "Awaiting Approval"
-    visitor.check_in_time = now_datetime()
-    visitor.check_out_time = None
-    visitor.save(ignore_permissions=True)
+    transition_visitor(
+        visitor,
+        STATUS_AWAITING_APPROVAL,
+        {
+            "check_in_time": check_in_time,
+            "check_out_time": None,
+        },
+    )
 
     create_visitor_log(
         visitor,
@@ -175,15 +238,18 @@ def check_in(visitor, gate=None, device_id=None):
 
 
 def check_out(visitor, gate=None, device_id=None):
-    if visitor.status != "Completed":
-        frappe.throw(_("Status belum Completed. Status: {0}").format(visitor.status))
-
+    validate_visitor_transition(visitor.status, STATUS_CHECKED_OUT)
     active_logs = get_active_visitor_logs(visitor.name)
     gate_name = get_gate_by_device(device_id=device_id, gate=gate)
+    check_out_time = now_datetime()
 
-    visitor.status = "Checked Out"
-    visitor.check_out_time = now_datetime()
-    visitor.save(ignore_permissions=True)
+    transition_visitor(
+        visitor,
+        STATUS_CHECKED_OUT,
+        {
+            "check_out_time": check_out_time,
+        },
+    )
 
     for log_name in active_logs:
         frappe.db.set_value(

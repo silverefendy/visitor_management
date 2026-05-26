@@ -7,10 +7,8 @@ import frappe
 
 from visitor_management.visitor_management.api import qr_api
 from visitor_management.visitor_management.api.legacy_api import (
-    get_employee_by_qr as _get_employee_by_qr,
-)
-from visitor_management.visitor_management.api.legacy_api import (
-    scan_employee_entry_action as _scan_employee_entry_action,
+    get_employee_by_barcode as _get_employee_by_barcode,
+    scan_employee_entry_barcode as _scan_employee_entry_barcode,
 )
 
 
@@ -26,16 +24,12 @@ def scan_qr_action(qr_data, action, gate=None, device_id=None):
 
 @frappe.whitelist(allow_guest=False)
 def get_employee_by_qr(qr_data):
-    return _get_employee_by_qr(qr_data)
+    return _get_employee_by_barcode(qr_data)
 
 
 @frappe.whitelist(allow_guest=False)
 def scan_employee_entry_action(qr_data, action, purpose="Security scan"):
-    return _scan_employee_entry_action(
-        qr_data=qr_data,
-        action=action,
-        purpose=purpose,
-    )
+    return _scan_employee_entry_barcode(qr_data=qr_data, action=action)
 
 
 __all__ = [

@@ -4,6 +4,20 @@ import frappe
 from frappe import _
 from frappe.utils import now_datetime, today
 
+from visitor_management.visitor_management.services.visitor_service import (
+    DASHBOARD_ACTIVE_STATUSES,
+    STATUS_APPROVED,
+    STATUS_AWAITING_APPROVAL,
+    STATUS_CHECKED_IN,
+    STATUS_CHECKED_OUT,
+    STATUS_COMPLETED,
+    STATUS_REJECTED,
+)
+from visitor_management.visitor_management.services.approval_service import (
+    approve_visitor as approve_visitor_service,
+    complete_visit as complete_visit_service,
+    reject_visitor as reject_visitor_service,
+)
 from visitor_management.visitor_management.utils.qr_utils import parse_qr_payload
 
 
@@ -75,7 +89,7 @@ def _parse_names(names):
     if isinstance(names, str):
         try:
             names = json.loads(names)
-        except json.JSONDecodeError, TypeError:
+        except (json.JSONDecodeError, TypeError):
             names = [n.strip() for n in names.split(",") if n.strip()]
     return names or []
 
@@ -91,7 +105,7 @@ def scan_qr_action(qr_data, action):
 
     try:
         data = json.loads(qr_data)
-    except json.JSONDecodeError, TypeError:
+    except (json.JSONDecodeError, TypeError):
         # Coba langsung sebagai visitor ID
         data = {"visitor_id": qr_data.strip()}
 
@@ -117,7 +131,7 @@ def get_visitor_by_qr(qr_data):
     """Ambil detail visitor dari QR data (untuk preview sebelum konfirmasi)"""
     try:
         data = json.loads(qr_data)
-    except json.JSONDecodeError, TypeError:
+    except (json.JSONDecodeError, TypeError):
         data = {"visitor_id": qr_data.strip()}
 
     visitor_id = data.get("visitor_id")
@@ -271,31 +285,33 @@ def get_dashboard_data():
     # Visitor aktif saat ini (masih di dalam gedung)
     active_visitors = frappe.get_all(
         "Visitor",
-        filters=[["status", "in", ["Awaiting Approval", "Approved"]]],
+        filters=[["status", "in", DASHBOARD_ACTIVE_STATUSES]],
         fields=dashboard_fields,
         order_by="check_in_time asc",
     )
 
     pending_checkout = frappe.get_all(
         "Visitor",
-        filters=[["status", "=", "Completed"]],
+        filters=[["status", "=", STATUS_COMPLETED]],
         fields=dashboard_fields,
         order_by="modified asc",
     )
 
     rejected_visitors = frappe.get_all(
         "Visitor",
-        filters=[*activity_filters, ["status", "=", "Rejected"]],
+        filters=[*activity_filters, ["status", "=", STATUS_REJECTED]],
         fields=dashboard_fields,
         order_by="modified desc",
     )
 
-    waiting = len([v for v in active_visitors if v.status == "Awaiting Approval"])
-    checked_in = len([v for v in active_visitors if v.status == "Approved"])
+    waiting = len([v for v in active_visitors if v.status == STATUS_AWAITING_APPROVAL])
+    checked_in = len(
+        [v for v in active_visitors if v.status in [STATUS_CHECKED_IN, STATUS_APPROVED]]
+    )
     completed = len(pending_checkout)
     rejected = len(rejected_visitors)
     checked_out = frappe.db.count(
-        "Visitor", filters=[*activity_filters, ["status", "=", "Checked Out"]]
+        "Visitor", filters=[*activity_filters, ["status", "=", STATUS_CHECKED_OUT]]
     )
     total = waiting + checked_in + completed + checked_out + rejected
 
@@ -327,7 +343,7 @@ def employee_pending_approvals():
         "Visitor",
         filters={
             "host_employee": employee,
-            "status": "Awaiting Approval",
+            "status": STATUS_AWAITING_APPROVAL,
         },
         fields=[
             "name",
@@ -379,10 +395,10 @@ def employee_approval_data():
     ]
 
     pending_filters = dict(base_filters)
-    pending_filters["status"] = "Awaiting Approval"
+    pending_filters["status"] = STATUS_AWAITING_APPROVAL
 
     active_filters = dict(base_filters)
-    active_filters["status"] = "Approved"
+    active_filters["status"] = STATUS_APPROVED
 
     return {
         "user": user,
@@ -405,36 +421,17 @@ def employee_approval_data():
 
 @frappe.whitelist(allow_guest=False)
 def approve_visitor(visitor_id):
-    visitor = _get_manageable_visitor(visitor_id)
-    result = visitor.approve_visit()
-    frappe.publish_realtime(
-        "vms_visitor_approved",
-        {"visitor": visitor.name, "visitor_name": visitor.visitor_name},
-        after_commit=True,
-    )
-    return result
+    return approve_visitor_service(visitor_id)
 
 
 @frappe.whitelist(allow_guest=False)
 def reject_visitor(visitor_id, reason=""):
-    visitor = _get_manageable_visitor(visitor_id)
-    result = visitor.reject_visit(reason)
-    frappe.publish_realtime(
-        "vms_visitor_rejected",
-        {
-            "visitor": visitor.name,
-            "visitor_name": visitor.visitor_name,
-            "reason": reason,
-        },
-        after_commit=True,
-    )
-    return result
+    return reject_visitor_service(visitor_id, reason)
 
 
 @frappe.whitelist(allow_guest=False)
 def complete_visit(visitor_id):
-    visitor = _get_manageable_visitor(visitor_id)
-    return visitor.end_visit()
+    return complete_visit_service(visitor_id)
 
 
 @frappe.whitelist(allow_guest=False)

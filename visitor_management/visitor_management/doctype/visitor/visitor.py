@@ -3,18 +3,17 @@ from frappe.model.document import Document
 
 from visitor_management.visitor_management.services.visitor_service import (
     VisitorService,
+    STATUS_REGISTERED,
     check_in,
     check_out,
-    get_visitor_id_from_qr,
-)
-from visitor_management.visitor_management.services.visitor_service import (
     get_visitor_info as get_visitor_info_service,
+    get_visitor_id_from_qr,
 )
 
 
 class Visitor(Document):
     def before_insert(self):
-        self.status = "Registered"
+        self.status = STATUS_REGISTERED
 
     def after_insert(self):
         VisitorService(self).generate_qr_code()
@@ -62,7 +61,7 @@ def get_permission_query_conditions(user):
     employee = frappe.db.get_value("Employee", {"user_id": user}, "name")
 
     if employee:
-        return "`tabVisitor`.`host_employee` = '{0}'".format(employee)
+        return "`tabVisitor`.`host_employee` = {0}".format(frappe.db.escape(employee))
 
     return "1=0"
 

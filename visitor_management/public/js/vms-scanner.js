@@ -336,6 +336,7 @@ function tampil(record) {
 function tampilVisitor(v) {
 	var warna = {
 		Registered: "#6c757d",
+		"Checked In": "#3498db",
 		"Awaiting Approval": "#f39c12",
 		Approved: "#27ae60",
 		Completed: "#9b59b6",
@@ -377,7 +378,9 @@ function tampilVisitor(v) {
 		})
 		.join("");
 
-	var bisaIn = v.status === "Registered";
+	var bisaIn = ["Registered", "Checked In", "Checked Out", "Rejected", "Cancelled"].includes(
+		v.status,
+	);
 	var bisaOut = v.status === "Completed";
 	updateProcessButton(
 		mode === "checkin" ? bisaIn : bisaOut,

@@ -10,6 +10,16 @@ import qrcode
 from frappe import _
 from frappe.utils import now_datetime, today
 
+from visitor_management.visitor_management.services.visitor_service import (
+    DASHBOARD_ACTIVE_STATUSES,
+    STATUS_APPROVED,
+    STATUS_AWAITING_APPROVAL,
+    STATUS_CHECKED_IN,
+    STATUS_CHECKED_OUT,
+    STATUS_COMPLETED,
+    STATUS_REJECTED,
+)
+
 # =============================================================================
 # HELPER FUNCTIONS (private — tidak bisa dipanggil dari browser)
 # Fungsi dengan awalan _ adalah helper internal, tidak perlu @whitelist
@@ -59,7 +69,7 @@ def _parse_employee_barcode(qr_data):
                 or data.get("name")
                 or data.get("code")
             )
-    except json.JSONDecodeError, TypeError:
+    except (json.JSONDecodeError, TypeError):
         employee_code = value
 
     if str(employee_code).upper().startswith("EMP:"):
@@ -213,7 +223,7 @@ def _parse_names(names):
     if isinstance(names, str):
         try:
             names = json.loads(names)
-        except json.JSONDecodeError, TypeError:
+        except (json.JSONDecodeError, TypeError):
             names = [n.strip() for n in names.split(",") if n.strip()]
     return names or []
 
@@ -245,31 +255,33 @@ def get_dashboard_data():
 
     active_visitors = frappe.get_all(
         "Visitor",
-        filters=[["status", "in", ["Awaiting Approval", "Approved"]]],
+        filters=[["status", "in", DASHBOARD_ACTIVE_STATUSES]],
         fields=dashboard_fields,
         order_by="check_in_time asc",
     )
 
     pending_checkout = frappe.get_all(
         "Visitor",
-        filters=[["status", "=", "Completed"]],
+        filters=[["status", "=", STATUS_COMPLETED]],
         fields=dashboard_fields,
         order_by="modified asc",
     )
 
     rejected_visitors = frappe.get_all(
         "Visitor",
-        filters=[*activity_filters, ["status", "=", "Rejected"]],
+        filters=[*activity_filters, ["status", "=", STATUS_REJECTED]],
         fields=dashboard_fields,
         order_by="modified desc",
     )
 
-    waiting = len([v for v in active_visitors if v.status == "Awaiting Approval"])
-    checked_in = len([v for v in active_visitors if v.status == "Approved"])
+    waiting = len([v for v in active_visitors if v.status == STATUS_AWAITING_APPROVAL])
+    checked_in = len(
+        [v for v in active_visitors if v.status in [STATUS_CHECKED_IN, STATUS_APPROVED]]
+    )
     completed = len(pending_checkout)
     rejected = len(rejected_visitors)
     checked_out = frappe.db.count(
-        "Visitor", filters=[*activity_filters, ["status", "=", "Checked Out"]]
+        "Visitor", filters=[*activity_filters, ["status", "=", STATUS_CHECKED_OUT]]
     )
     total = waiting + checked_in + completed + checked_out + rejected
 
@@ -302,7 +314,7 @@ def employee_pending_approvals():
 
     return frappe.get_all(
         "Visitor",
-        filters={"host_employee": employee, "status": "Awaiting Approval"},
+        filters={"host_employee": employee, "status": STATUS_AWAITING_APPROVAL},
         fields=[
             "name",
             "visitor_name",
@@ -355,8 +367,8 @@ def employee_approval_data():
         "id_number",
     ]
 
-    pending_filters = {**base_filters, "status": "Awaiting Approval"}
-    active_filters = {**base_filters, "status": "Approved"}
+    pending_filters = {**base_filters, "status": STATUS_AWAITING_APPROVAL}
+    active_filters = {**base_filters, "status": STATUS_APPROVED}
 
     return {
         "user": user,

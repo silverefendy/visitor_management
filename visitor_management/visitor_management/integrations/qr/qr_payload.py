@@ -12,5 +12,5 @@ def parse_qr_payload(raw):
     try:
         parsed = json.loads(value)
         return parsed if isinstance(parsed, dict) else {"value": parsed}
-    except Exception:
+    except (json.JSONDecodeError, TypeError):
         return {"value": value}
