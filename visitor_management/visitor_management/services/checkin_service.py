@@ -34,7 +34,9 @@ class EmployeeEntryCheckinService:
 
     def ensure_approval_manager(self):
         if not is_approval_manager():
-            frappe.throw(_("Anda tidak memiliki hak untuk aksi approval"), frappe.PermissionError)
+            frappe.throw(
+                _("Anda tidak memiliki hak untuk aksi approval"), frappe.PermissionError
+            )
 
     def save_with_commit(self):
         self.doc.save(ignore_permissions=True)

@@ -2,8 +2,12 @@ import frappe
 from frappe.model.document import Document
 from frappe.utils import now_datetime
 
-from visitor_management.visitor_management.services.approval_service import EmployeeEntryApprovalService
-from visitor_management.visitor_management.services.checkin_service import EmployeeEntryCheckinService
+from visitor_management.visitor_management.services.approval_service import (
+    EmployeeEntryApprovalService,
+)
+from visitor_management.visitor_management.services.checkin_service import (
+    EmployeeEntryCheckinService,
+)
 
 
 def _create_employee_entry_log(doc, action, notes=""):
