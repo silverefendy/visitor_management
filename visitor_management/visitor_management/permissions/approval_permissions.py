@@ -1,11 +1,16 @@
 import frappe
 from frappe import _
 
+from visitor_management.visitor_management.permissions.auth_helpers import (
+    ensure_authenticated_user,
+)
+
 MANAGER_ROLES = {"System Manager", "Visitor Manager", "HR Manager"}
 
 
 def is_approval_manager(user=None):
-    roles = set(frappe.get_roles(user or frappe.session.user))
+    current_user = ensure_authenticated_user(user)
+    roles = set(frappe.get_roles(current_user))
     return bool(roles & MANAGER_ROLES)
 
 
