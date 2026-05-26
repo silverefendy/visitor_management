@@ -1,7 +1,26 @@
-"""v1 approval endpoints (backed by existing APIs)."""
+"""v1 approval endpoints.
 
-from visitor_management.visitor_management import api as legacy_api
+These wrappers preserve behavior while providing a stable, versioned import path.
+"""
 
-approve_visitor = legacy_api.approve_visitor
-reject_visitor = legacy_api.reject_visitor
-complete_visit = legacy_api.complete_visit
+import frappe
+
+from visitor_management.visitor_management.api import approval_api
+
+
+@frappe.whitelist(allow_guest=False)
+def approve_visitor(visitor_id):
+    return approval_api.approve_visitor(visitor_id)
+
+
+@frappe.whitelist(allow_guest=False)
+def reject_visitor(visitor_id, reason=""):
+    return approval_api.reject_visitor(visitor_id, reason)
+
+
+@frappe.whitelist(allow_guest=False)
+def complete_visit(visitor_id):
+    return approval_api.complete_visit(visitor_id)
+
+
+__all__ = ["approve_visitor", "reject_visitor", "complete_visit"]

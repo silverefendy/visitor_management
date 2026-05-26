@@ -1,7 +1,43 @@
-"""v1 check-in/check-out and QR endpoints."""
+"""v1 check-in/check-out and QR endpoints.
 
-from visitor_management.visitor_management import api as legacy_api
+Thin wrappers only: business logic stays in existing APIs/services.
+"""
 
-scan_qr_action = legacy_api.scan_qr_action
-get_employee_by_qr = legacy_api.get_employee_by_qr
-scan_employee_entry_action = legacy_api.scan_employee_entry_action
+import frappe
+
+from visitor_management.visitor_management.api import qr_api
+from visitor_management.visitor_management.api.legacy_api import (
+    get_employee_by_qr as _get_employee_by_qr,
+    scan_employee_entry_action as _scan_employee_entry_action,
+)
+
+
+@frappe.whitelist(allow_guest=False)
+def scan_qr_action(qr_data, action, gate=None, device_id=None):
+    return qr_api.scan_qr_action(
+        qr_data=qr_data,
+        action=action,
+        gate=gate,
+        device_id=device_id,
+    )
+
+
+@frappe.whitelist(allow_guest=False)
+def get_employee_by_qr(qr_data):
+    return _get_employee_by_qr(qr_data)
+
+
+@frappe.whitelist(allow_guest=False)
+def scan_employee_entry_action(qr_data, action, purpose="Security scan"):
+    return _scan_employee_entry_action(
+        qr_data=qr_data,
+        action=action,
+        purpose=purpose,
+    )
+
+
+__all__ = [
+    "get_employee_by_qr",
+    "scan_employee_entry_action",
+    "scan_qr_action",
+]

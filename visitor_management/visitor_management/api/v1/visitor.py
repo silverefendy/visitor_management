@@ -1,8 +1,38 @@
 """v1 visitor dashboard and approval-list endpoints."""
 
-from visitor_management.visitor_management import api as legacy_api
+import frappe
 
-get_visitor_by_qr = legacy_api.get_visitor_by_qr
-get_dashboard_data = legacy_api.get_dashboard_data
-employee_pending_approvals = legacy_api.employee_pending_approvals
-employee_approval_data = legacy_api.employee_approval_data
+from visitor_management.visitor_management.api import visitor_api
+from visitor_management.visitor_management.api.legacy_api import (
+    employee_approval_data as _employee_approval_data,
+    employee_pending_approvals as _employee_pending_approvals,
+    get_dashboard_data as _get_dashboard_data,
+)
+
+
+@frappe.whitelist(allow_guest=False)
+def get_visitor_by_qr(qr_data):
+    return visitor_api.get_visitor_by_qr(qr_data)
+
+
+@frappe.whitelist(allow_guest=False)
+def get_dashboard_data():
+    return _get_dashboard_data()
+
+
+@frappe.whitelist()
+def employee_pending_approvals():
+    return _employee_pending_approvals()
+
+
+@frappe.whitelist(allow_guest=False)
+def employee_approval_data():
+    return _employee_approval_data()
+
+
+__all__ = [
+    "employee_approval_data",
+    "employee_pending_approvals",
+    "get_dashboard_data",
+    "get_visitor_by_qr",
+]
