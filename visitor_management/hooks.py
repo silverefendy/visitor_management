@@ -10,16 +10,18 @@ app_license = "mit"
 # Keep hooks thin: business logic lives in services.
 # -----------------------------------------------------------------------------
 doc_events = {
-	"Visitor": {
-		"validate": (
-			"visitor_management.visitor_management.services.visitor_service.validate_duplicate_active"
-		)
-	}
+    "Visitor": {
+        "validate": (
+            "visitor_management.visitor_management.services.visitor_service.validate_duplicate_active"
+        )
+    }
 }
 
 # -----------------------------------------------------------------------------
 # Scheduled Tasks
 # -----------------------------------------------------------------------------
 scheduler_events = {
-	"hourly": ["visitor_management.visitor_management.tasks.visitor_tasks.auto_checkout_stale_visitors"]
+    "hourly": [
+        "visitor_management.visitor_management.tasks.visitor_tasks.auto_checkout_stale_visitors"
+    ]
 }
