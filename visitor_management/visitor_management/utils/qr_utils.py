@@ -1,14 +1,5 @@
-import json
+"""Backward-compatible wrappers for QR parsing helpers."""
 
+from visitor_management.visitor_management.integrations.qr.qr_payload import parse_qr_payload
 
-def parse_qr_payload(raw):
-	if isinstance(raw, dict):
-		return raw
-	if not raw:
-		return {}
-	value = str(raw).strip()
-	try:
-		parsed = json.loads(value)
-		return parsed if isinstance(parsed, dict) else {"value": parsed}
-	except Exception:
-		return {"value": value}
+__all__ = ["parse_qr_payload"]
