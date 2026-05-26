@@ -1,3 +1,2 @@
-def send_visit_notifications():
-    """Placeholder for notification queue integrations."""
-    return None
+# Placeholder — scheduled notification belum diimplementasi.
+# Tambahkan fungsi di sini dan daftarkan di hooks.py (scheduler_events) jika diperlukan.

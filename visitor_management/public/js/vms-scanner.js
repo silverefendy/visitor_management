@@ -337,7 +337,7 @@ function tampilVisitor(v) {
 	var warna = {
 		Registered: "#6c757d",
 		"Awaiting Approval": "#f39c12",
-		Approved: "#3498db",
+		Approved: "#27ae60",
 		Completed: "#9b59b6",
 		"Checked Out": "#1abc9c",
 		Rejected: "#e74c3c",

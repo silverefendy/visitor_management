@@ -79,6 +79,6 @@ def checkout_by_qr(qr_data):
     return visitor.do_checkout()
 
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=False)
 def get_visitor_info(visitor_id):
     return get_visitor_info_service(visitor_id)

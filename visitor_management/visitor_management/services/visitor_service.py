@@ -8,6 +8,9 @@ from visitor_management.visitor_management.services.gate_service import (
 from visitor_management.visitor_management.services.log_service import (
     create_visitor_log,
 )
+from visitor_management.visitor_management.permissions.visitor_permissions import (
+    can_manage_visitor,
+)
 from visitor_management.visitor_management.services.qr_service import (
     generate_and_attach_visitor_qr,
     parse_visitor_qr,
@@ -82,7 +85,16 @@ class VisitorService:
 
 
 def get_visitor_info(visitor_id):
+    if not visitor_id or not frappe.db.exists("Visitor", visitor_id):
+        frappe.throw(_("Visitor tidak ditemukan"))
+
     visitor = frappe.get_doc("Visitor", visitor_id)
+    if not can_manage_visitor(visitor):
+        frappe.throw(
+            _("Anda tidak memiliki akses untuk visitor ini"),
+            frappe.PermissionError,
+        )
+
     return {
         "name": visitor.name,
         "visitor_name": visitor.visitor_name,
@@ -95,13 +107,7 @@ def get_visitor_id_from_qr(qr_data):
     return parse_visitor_qr(qr_data)
 
 
-# Statuses where the same ID must not open a parallel visit (matches visitor.json options).
-ACTIVE_STATUSES = [
-    "Registered",
-    "Awaiting Approval",
-    "Approved",
-    "Completed",
-]
+ACTIVE_STATUSES = ["Awaiting Approval", "Approved", "Completed"]
 
 
 def get_active_visitor_logs(visitor_id):

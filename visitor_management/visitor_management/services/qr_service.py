@@ -1,7 +1,6 @@
 import io
 import json
 import os
-import uuid
 
 import frappe
 from frappe import _
@@ -25,6 +24,20 @@ def parse_visitor_qr(qr_data):
         frappe.throw(_("QR Code sudah kedaluwarsa"))
 
     return visitor_id
+
+
+def _delete_existing_qr_files(visitor_name):
+    existing_files = frappe.get_all(
+        "File",
+        filters={
+            "attached_to_doctype": "Visitor",
+            "attached_to_name": visitor_name,
+            "attached_to_field": "qr_code_image",
+        },
+        pluck="name",
+    )
+    for file_name in existing_files:
+        frappe.delete_doc("File", file_name, ignore_permissions=True)
 
 
 def generate_and_attach_visitor_qr(visitor_doc):
@@ -61,31 +74,29 @@ def generate_and_attach_visitor_qr(visitor_doc):
         file_url = "/files/{0}".format(file_name)
         file_size = os.path.getsize(full_path)
 
-        frappe.db.sql(
-            "DELETE FROM `tabFile` WHERE attached_to_doctype='Visitor' AND attached_to_name=%s",
-            visitor_doc.name,
+        _delete_existing_qr_files(visitor_doc.name)
+
+        file_doc = frappe.get_doc(
+            {
+                "doctype": "File",
+                "file_name": file_name,
+                "file_url": file_url,
+                "is_private": 0,
+                "attached_to_doctype": "Visitor",
+                "attached_to_name": visitor_doc.name,
+                "attached_to_field": "qr_code_image",
+                "file_size": file_size,
+            }
+        )
+        file_doc.insert(ignore_permissions=True)
+
+        visitor_doc.db_set(
+            {
+                "qr_code": qr_data,
+                "qr_code_image": file_url,
+            }
         )
 
-        file_doc_name = uuid.uuid4().hex[:10]
-        frappe.db.sql(
-            """
-            INSERT INTO `tabFile`
-            (name, file_name, file_url, is_private,
-             attached_to_doctype, attached_to_name, attached_to_field,
-             file_size, creation, modified, modified_by, owner, docstatus)
-            VALUES
-            (%s, %s, %s, 0, 'Visitor', %s, 'qr_code_image',
-             %s, NOW(), NOW(), 'Administrator', 'Administrator', 0)
-        """,
-            (file_doc_name, file_name, file_url, visitor_doc.name, file_size),
-        )
-
-        frappe.db.sql(
-            "UPDATE `tabVisitor` SET qr_code=%s, qr_code_image=%s WHERE name=%s",
-            (qr_data, file_url, visitor_doc.name),
-        )
-
-        frappe.db.commit()
         return file_url
     except Exception:
         frappe.log_error(message=frappe.get_traceback(), title="VMS QR Generate Error")

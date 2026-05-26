@@ -17,6 +17,8 @@ def auto_checkout_stale_visitors(hours=12):
     for name in rows:
         try:
             visitor = frappe.get_doc("Visitor", name)
+            if visitor.status == "Approved":
+                visitor.end_visit()
             if visitor.status == "Completed":
                 visitor.do_checkout()
         except Exception:

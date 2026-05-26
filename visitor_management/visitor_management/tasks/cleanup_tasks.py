@@ -1,3 +1,2 @@
-def cleanup_old_logs():
-    """Placeholder for scheduled cleanup tasks."""
-    return None
+# Placeholder — scheduled cleanup belum diimplementasi.
+# Tambahkan fungsi di sini dan daftarkan di hooks.py (scheduler_events) jika diperlukan.
