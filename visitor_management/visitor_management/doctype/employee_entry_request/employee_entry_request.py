@@ -7,30 +7,35 @@ from visitor_management.visitor_management.services.checkin_service import Emplo
 
 
 def _create_employee_entry_log(doc, action, notes=""):
-	try:
-		frappe.get_doc(
-			{
-				"doctype": "Employee Entry Log",
-				"entry": doc.name,
-				"employee": doc.employee,
-				"employee_name": doc.employee_name,
-				"action": action,
-				"status_after": doc.status,
-				"performed_by": frappe.session.user,
-				"performed_at": now_datetime(),
-				"notes": notes or "",
-			}
-		).insert(ignore_permissions=True)
-	except Exception:
-		frappe.log_error(message=frappe.get_traceback(), title="Employee Entry Log Insert Error")
+    try:
+        frappe.get_doc(
+            {
+                "doctype": "Employee Entry Log",
+                "entry": doc.name,
+                "employee": doc.employee,
+                "employee_name": doc.employee_name,
+                "action": action,
+                "status_after": doc.status,
+                "performed_by": frappe.session.user,
+                "performed_at": now_datetime(),
+                "notes": notes or "",
+            }
+        ).insert(ignore_permissions=True)
+    except Exception:
+        frappe.log_error(
+            message=frappe.get_traceback(), title="Employee Entry Log Insert Error"
+        )
 
 
 class EmployeeEntryRequest(Document):
 	def before_insert(self):
 		EmployeeEntryCheckinService(self).before_insert()
 
-	def after_insert(self):
-		_create_employee_entry_log(self, "Created", "Pengajuan employee entry dibuat")
+    def _approval_service(self):
+        checkin_service = EmployeeEntryCheckinService(self)
+        return EmployeeEntryApprovalService(
+            self, checkin_service, _create_employee_entry_log
+        )
 
 	def validate(self):
 		EmployeeEntryCheckinService(self).validate()

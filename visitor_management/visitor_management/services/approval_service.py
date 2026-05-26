@@ -3,20 +3,20 @@ from frappe import _
 from frappe.utils import now_datetime
 
 APPROVAL_STEPS = [
-	("Supervisor", "Supervisor Approval"),
-	("HR Manager", "Manager Approval"),
-	("Visitor Security", "Security Approval"),
+    ("Supervisor", "Supervisor Approval"),
+    ("HR Manager", "Manager Approval"),
+    ("Visitor Security", "Security Approval"),
 ]
 
 
 def next_stage(current_status):
-	mapping = {
-		"Draft": "Supervisor Approval",
-		"Supervisor Approval": "Manager Approval",
-		"Manager Approval": "Security Approval",
-		"Security Approval": "Approved",
-	}
-	return mapping.get(current_status)
+    mapping = {
+        "Draft": "Supervisor Approval",
+        "Supervisor Approval": "Manager Approval",
+        "Manager Approval": "Security Approval",
+        "Security Approval": "Approved",
+    }
+    return mapping.get(current_status)
 
 
 def approve_employee_entry(doc):

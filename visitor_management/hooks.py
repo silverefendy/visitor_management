@@ -21,5 +21,7 @@ doc_events = {
 # Scheduled Tasks
 # -----------------------------------------------------------------------------
 scheduler_events = {
-	"hourly": ["visitor_management.visitor_management.tasks.visitor_tasks.auto_checkout_stale_visitors"]
+    "hourly": [
+        "visitor_management.visitor_management.tasks.visitor_tasks.auto_checkout_stale_visitors"
+    ]
 }
