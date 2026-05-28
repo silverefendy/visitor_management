@@ -6,6 +6,11 @@ from visitor_management.visitor_management.services.gate_service import get_gate
 
 ACTIVE_STATUSES = ["Awaiting Approval", "Approved", "Checked In", "Completed"]
 
+# Status yang diizinkan untuk checkout
+# Termasuk "Approved" agar security bisa checkout langsung tanpa perlu
+# host menekan "Selesai Kunjungan" terlebih dahulu
+CHECKOUT_ALLOWED_STATUSES = ["Approved", "Completed"]
+
 
 def is_visitor_inside(visitor_id):
     return bool(frappe.db.exists("Visitor Log", {"visitor": visitor_id, "is_active": 1}))
@@ -28,7 +33,7 @@ def validate_duplicate_active(visitor, method=None):
 
 def check_in(visitor, gate=None, device_id=None):
     if visitor.status not in ["Registered", "Checked Out", "Rejected", "Cancelled"]:
-        frappe.throw(_("Tidak bisa check-in. Status: {0}").format(visitor.status))
+        frappe.throw(_("Tidak bisa check-in. Status saat ini: {0}").format(visitor.status))
     if is_visitor_inside(visitor.name):
         frappe.throw(_("Visitor masih tercatat berada di dalam area"))
 
@@ -54,8 +59,27 @@ def check_in(visitor, gate=None, device_id=None):
 
 
 def check_out(visitor, gate=None, device_id=None):
-    if visitor.status != "Completed":
-        frappe.throw(_("Status belum Completed. Status: {0}").format(visitor.status))
+    """
+    Proses checkout visitor.
+
+    Diizinkan dari status:
+    - Completed  : alur normal, host sudah klik "Selesai Kunjungan"
+    - Approved   : security checkout langsung tanpa perlu host selesaikan dulu
+
+    Status "Awaiting Approval" tidak diizinkan checkout karena kunjungan
+    belum disetujui host.
+    """
+    if visitor.status not in CHECKOUT_ALLOWED_STATUSES:
+        if visitor.status == "Awaiting Approval":
+            frappe.throw(_(
+                "Visitor masih menunggu approval dari host. "
+                "Minta host untuk approve atau reject terlebih dahulu."
+            ))
+        frappe.throw(_(
+            "Tidak bisa check-out. Status saat ini: {0}. "
+            "Status yang diizinkan: {1}."
+        ).format(visitor.status, ", ".join(CHECKOUT_ALLOWED_STATUSES)))
+
     if not is_visitor_inside(visitor.name):
         frappe.throw(_("Tidak ditemukan log aktif untuk visitor ini"))
 
@@ -64,7 +88,13 @@ def check_out(visitor, gate=None, device_id=None):
     visitor.check_out_time = now_datetime()
     visitor.save(ignore_permissions=True)
 
-    frappe.db.set_value("Visitor Log", {"visitor": visitor.name, "is_active": 1}, "is_active", 0, update_modified=False)
+    frappe.db.set_value(
+        "Visitor Log",
+        {"visitor": visitor.name, "is_active": 1},
+        "is_active",
+        0,
+        update_modified=False,
+    )
     create_visitor_log(
         visitor,
         "Check Out",
@@ -75,4 +105,3 @@ def check_out(visitor, gate=None, device_id=None):
         is_active=0,
     )
     return {"status": "success", "message": _("Check-out berhasil.")}
-
