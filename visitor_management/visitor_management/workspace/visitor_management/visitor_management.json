@@ -88,6 +88,11 @@
    "document_type": "Visitor Log",
    "label": "Visitor Log",
    "quick_list_filter": "[]"
+  },
+  {
+   "document_type": "VMS Cleanup Log",
+   "label": "VMS Cleanup Log",
+   "quick_list_filter": "[]"
   }
  ],
  "roles": [
