@@ -111,10 +111,42 @@
    "read": 1,
    "report": 1,
    "role": "Visitor Security"
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "Visitor Security Guard"
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "Visitor Receptionist"
+  },
+  {
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "VMS Manager"
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "VMS System Admin",
+   "share": 1,
+   "write": 1
   }
  ],
  "sort_field": "creation",
  "sort_order": "DESC",
  "title_field": "employee_name",
- "track_changes": 1
+ "track_changes": 1,
+ "search_fields": "entry,employee,employee_name,action,status_after,performed_by",
+ "show_name_in_global_search": 0,
+ "description": "Employee entry audit log; exposed in workspace lists but kept lower priority in global search."
 }

@@ -1,0 +1,30 @@
+{
+ "creation": "2026-05-29 00:00:00",
+ "docstatus": 0,
+ "doctype": "Workflow",
+ "document_type": "Visitor",
+ "is_active": 0,
+ "module": "Visitor Management",
+ "name": "Visitor Approval Workflow",
+ "override_status": 0,
+ "send_email_alert": 0,
+ "states": [
+  {"allow_edit": "Visitor Receptionist", "doc_status": "0", "state": "Registered"},
+  {"allow_edit": "Visitor Approver", "doc_status": "0", "state": "Awaiting Approval"},
+  {"allow_edit": "Visitor Security Guard", "doc_status": "0", "state": "Approved"},
+  {"allow_edit": "Visitor Security Guard", "doc_status": "0", "state": "Checked In"},
+  {"allow_edit": "Visitor Security Guard", "doc_status": "0", "state": "Checked Out"},
+  {"allow_edit": "VMS System Admin", "doc_status": "0", "state": "Archived"},
+  {"allow_edit": "Visitor Approver", "doc_status": "0", "state": "Rejected"}
+ ],
+ "transitions": [
+  {"action": "Submit for Approval", "allowed": "Visitor Receptionist", "next_state": "Awaiting Approval", "state": "Registered"},
+  {"action": "Approve", "allowed": "Visitor Approver", "next_state": "Approved", "state": "Awaiting Approval"},
+  {"action": "Reject", "allowed": "Visitor Approver", "next_state": "Rejected", "state": "Awaiting Approval"},
+  {"action": "Check In", "allowed": "Visitor Security Guard", "next_state": "Checked In", "state": "Approved"},
+  {"action": "Check Out", "allowed": "Visitor Security Guard", "next_state": "Checked Out", "state": "Checked In"},
+  {"action": "Archive", "allowed": "VMS System Admin", "next_state": "Archived", "state": "Checked Out"}
+ ],
+ "workflow_name": "Visitor Approval Workflow",
+ "workflow_state_field": "workflow_state"
+}

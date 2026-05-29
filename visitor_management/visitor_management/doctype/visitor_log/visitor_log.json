@@ -32,7 +32,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Aksi",
-   "options": "Check In\nApproved\nRejected\nCompleted\nCheck Out\nCancelled",
+   "options": "Check In\nApproved\nRejected\nCompleted\nCheck Out\nCancelled\nArchived",
    "reqd": 1
   },
   {
@@ -126,6 +126,40 @@
    "report": 1,
    "role": "Visitor Security",
    "share": 1
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "Visitor Security Guard"
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "Visitor Receptionist"
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "Visitor Approver"
+  },
+  {
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "VMS Manager"
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "VMS System Admin",
+   "share": 1,
+   "write": 1
   }
  ],
  "row_format": "Dynamic",
@@ -133,5 +167,8 @@
  "sort_field": "action_time",
  "sort_order": "DESC",
  "states": [],
- "title_field": "visitor"
+ "title_field": "visitor",
+ "search_fields": "visitor,action,status,action_by,remarks",
+ "show_name_in_global_search": 1,
+ "description": "Visitor access history and audit trail."
 }
