@@ -302,7 +302,9 @@ def process_scan(qr_code, action=None):
 	from visitor_management.visitor_management.api import scan_qr
 
 	try:
-		if not action or str(action).lower() in {"auto", "resolve"}:
+		if not action or str(action).lower() in {"resolve", "preview"}:
+			result = scan_qr(qr_code=qr_code, action="resolve")
+		elif str(action).lower() == "auto":
 			result = scan_qr(qr_code=qr_code, action="auto")
 		elif action == "checkIn":
 			result = scan_qr(qr_code=qr_code, action="checkin")

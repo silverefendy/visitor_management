@@ -64,22 +64,16 @@ def validate_duplicate_active(visitor, method=None):
 
 
 def check_in(visitor, gate=None, device_id=None):
-    if visitor.status not in ["Registered", "Checked Out", "Rejected", "Cancelled", "Completed"]:
-        frappe.throw(_("Tidak bisa check-in. Status saat ini: {0}").format(visitor.status))
-
-    # Completed is no longer considered an active visit. If older data still has
-    # an active Visitor Log for a completed visit, close it before creating the
-    # new check-in session so the same QR can be reused.
-    if visitor.status == "Completed":
-        close_active_visitor_logs(visitor.name)
-    elif is_visitor_inside(visitor.name):
+    if visitor.status != "Approved":
+        frappe.throw(_("Tidak bisa check-in. Status saat ini: {0}. Visitor harus Approved.").format(visitor.status))
+    if is_visitor_inside(visitor.name):
         frappe.throw(_("Visitor masih tercatat berada di dalam area"))
 
     validate_blacklist(visitor)
     validate_duplicate_active(visitor)
     gate_name = get_gate_by_device(device_id=device_id, gate=gate)
 
-    _sync_visitor_status(visitor, "Awaiting Approval")
+    _sync_visitor_status(visitor, "Checked In")
     visitor.check_in_time = now_datetime()
     visitor.check_out_time = None
     if visitor.meta.has_field("completed_at"):
@@ -96,7 +90,7 @@ def check_in(visitor, gate=None, device_id=None):
         is_active=1,
     )
     frappe.db.commit()
-    return _visitor_response(visitor, _("Check-in berhasil. Menunggu approval."), next_action="WAIT_FOR_APPROVAL")
+    return _visitor_response(visitor, _("Check-in visitor berhasil."), next_action="CHECK_OUT")
 
 
 def check_out(visitor, gate=None, device_id=None):
@@ -125,17 +119,13 @@ def check_out(visitor, gate=None, device_id=None):
         frappe.throw(_("Tidak ditemukan log aktif untuk visitor ini"))
 
     gate_name = get_gate_by_device(device_id=device_id, gate=gate)
-    _sync_visitor_status(visitor, "Checked Out")
+    _sync_visitor_status(visitor, "Completed")
     visitor.check_out_time = now_datetime()
+    if visitor.meta.has_field("completed_at"):
+        visitor.completed_at = visitor.check_out_time
     visitor.save(ignore_permissions=True)
 
-    frappe.db.set_value(
-        "Visitor Log",
-        {"visitor": visitor.name, "is_active": 1},
-        "is_active",
-        0,
-        update_modified=False,
-    )
+    close_active_visitor_logs(visitor.name)
     create_visitor_log(
         visitor,
         "Check Out",
@@ -146,4 +136,4 @@ def check_out(visitor, gate=None, device_id=None):
         is_active=0,
     )
     frappe.db.commit()
-    return _visitor_response(visitor, _("Check-out berhasil."), next_action="DONE")
+    return _visitor_response(visitor, _("Check-out visitor berhasil. Kunjungan selesai."), next_action="DONE")

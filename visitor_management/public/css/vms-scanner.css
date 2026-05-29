@@ -58,3 +58,6 @@ table tr:hover{background:#f8f9fa}
   .btn-dark,.btn-success,.btn-danger{width:100%}
 }
 
+
+.action-badge{background:#e8f1ff;color:#205493;border:1px solid #b9d3ff;margin-left:8px}
+.btn[disabled],.btn-success[disabled]{cursor:not-allowed;opacity:.6}
