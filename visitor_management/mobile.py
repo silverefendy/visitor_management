@@ -13,15 +13,479 @@
 #   /api/method/visitor_management.mobile.get_pending_approvals
 #   /api/method/visitor_management.mobile.submit_approval
 #   /api/method/visitor_management.mobile.get_recent_activity
-#   /api/method/visitor_management.mobile.process_scan
+#   /api/method/visitor_management.mobile.resolve_scan_action  ← NEW (step 1)
+#   /api/method/visitor_management.mobile.execute_scan_action  ← NEW (step 2)
 #
 # Setelah upload/edit file ini, jalankan di server:
 #   bench clear-cache && bench restart
 # =============================================================================
 
+import json
+
 import frappe
 from frappe import _
-from frappe.utils import today
+from frappe.utils import now_datetime, today
+
+
+# =============================================================================
+# SCAN FLOW — TWO STEP
+#
+# STEP 1: resolve_scan_action(qr_code)
+#   - Parse QR/barcode
+#   - Determine entity type (VISITOR / EMPLOYEE)
+#   - Determine current status
+#   - Determine next_action WITHOUT touching DB
+#   - Return confirmation details for popup
+#
+# STEP 2: execute_scan_action(qr_code, action)
+#   - Validate action matches expected next_action
+#   - Execute the transition
+#   - Save + commit
+#   - Return result
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# INTERNAL HELPERS
+# ---------------------------------------------------------------------------
+
+def _parse_qr(qr_code: str) -> dict:
+	"""
+	Parse QR code string.
+
+	Supported formats:
+	  - JSON: {"visitor_id": "VIS-...", ...}
+	  - JSON: {"type": "employee_entry", "employee": "HR-EMP-..."}
+	  - JSON: {"employee_id": "HR-EMP-..."} / {"employee": "..."}
+	  - Plain string: "VIS-2026-05-00001" (treated as visitor_id)
+	  - Plain string: "EMP:HR-EMP-00001"  (treated as employee barcode)
+	"""
+	if not qr_code:
+		frappe.throw(_("QR code tidak boleh kosong"))
+
+	raw = str(qr_code).strip()
+
+	# Try JSON parse
+	payload = None
+	if raw.startswith("{"):
+		try:
+			payload = json.loads(raw)
+		except (json.JSONDecodeError, ValueError):
+			pass
+
+	if payload and isinstance(payload, dict):
+		# Employee entry type
+		if payload.get("type") == "employee_entry" or payload.get("employee"):
+			return {"entity_type": "EMPLOYEE", "employee": payload.get("employee") or payload.get("employee_id")}
+		# Visitor type
+		if payload.get("visitor_id"):
+			return {"entity_type": "VISITOR", "visitor_id": payload["visitor_id"]}
+
+	# Plain string checks
+	if raw.upper().startswith("EMP:"):
+		return {"entity_type": "EMPLOYEE", "employee": raw.split(":", 1)[1].strip()}
+
+	# If it looks like a visitor ID (VIS-YYYY-MM-NNNNN)
+	if raw.upper().startswith("VIS-"):
+		return {"entity_type": "VISITOR", "visitor_id": raw.upper()}
+
+	# Try to match as an employee ID (HR-EMP-NNNNN)
+	if raw.upper().startswith("HR-EMP-") or raw.upper().startswith("EMP-"):
+		return {"entity_type": "EMPLOYEE", "employee": raw}
+
+	# Last resort: treat as visitor_id
+	return {"entity_type": "VISITOR", "visitor_id": raw.upper()}
+
+
+def _resolve_employee_id(code: str) -> str:
+	"""
+	Resolve employee ID from various input formats.
+	Looks up attendance_device_id, user_id, employee_number as fallback.
+	"""
+	if not code:
+		frappe.throw(_("Kode karyawan tidak boleh kosong"))
+
+	if frappe.db.exists("Employee", code):
+		return code
+
+	for field in ("attendance_device_id", "user_id", "employee_number"):
+		if frappe.get_meta("Employee").has_field(field):
+			emp = frappe.db.get_value("Employee", {field: code}, "name")
+			if emp:
+				return emp
+
+	frappe.throw(_("Karyawan dengan kode {0} tidak ditemukan").format(code))
+
+
+def _get_visitor_next_action(status: str) -> str | None:
+	"""
+	Determine next valid scan action for a visitor.
+
+	Business flow:
+	  Registered        -> CHECK_IN   (visitor arrives at gate)
+	  Awaiting Approval -> None       (waiting, cannot scan again)
+	  Approved          -> None       (inside area, host manages this)
+	  Completed         -> CHECK_OUT  (ready to leave)
+	  Checked Out       -> None       (already left)
+	  Rejected          -> None       (rejected)
+	  Cancelled         -> None       (cancelled)
+	"""
+	mapping = {
+		"Registered": "CHECK_IN",
+		"Completed": "CHECK_OUT",
+	}
+	return mapping.get(status)
+
+
+def _get_visitor_next_action_label(action: str) -> str:
+	labels = {
+		"CHECK_IN": "Check In Visitor",
+		"CHECK_OUT": "Check Out Visitor",
+	}
+	return labels.get(action, action)
+
+
+def _get_employee_next_action(entry_status):
+	"""
+	Determine next valid scan action for an employee.
+
+	Employee flow:
+	  No open entry          -> EMPLOYEE_CHECK_IN
+	  Pending Approval       -> None (waiting for approval)
+	  Approved               -> None (inside area)
+	  Completed              -> EMPLOYEE_CHECK_OUT
+	  Checked Out / Rejected -> EMPLOYEE_CHECK_IN (can re-enter)
+	"""
+	if entry_status is None:
+		return "EMPLOYEE_CHECK_IN"
+	if entry_status == "Completed":
+		return "EMPLOYEE_CHECK_OUT"
+	if entry_status in ("Checked Out", "Rejected"):
+		return "EMPLOYEE_CHECK_IN"
+	# Pending Approval / Approved — no scan action
+	return None
+
+
+# ---------------------------------------------------------------------------
+# STEP 1: resolve_scan_action
+# ---------------------------------------------------------------------------
+
+@frappe.whitelist(allow_guest=False)
+def resolve_scan_action(qr_code):
+	"""
+	STEP 1 of scan flow.
+
+	Parse QR/barcode, determine entity type + current status + next_action.
+	Does NOT modify database.
+
+	Returns dict for mobile confirmation popup.
+
+	Visitor response:
+	{
+	  "success": true,
+	  "entity_type": "VISITOR",
+	  "current_status": "Completed",
+	  "next_action": "CHECK_OUT",
+	  "confirmation_required": true,
+	  "visitor_id": "VIS-2026-05-00001",
+	  "visitor_name": "John Doe",
+	  "company": "ABC Corp",
+	  "host": "Budi Santoso",
+	  "purpose": "Meeting",
+	  "check_in_time": "2026-05-29 09:00",
+	  "action_label": "Check Out Visitor"
+	}
+
+	Employee response:
+	{
+	  "success": true,
+	  "entity_type": "EMPLOYEE",
+	  "current_status": "Outside",
+	  "next_action": "EMPLOYEE_CHECK_IN",
+	  "confirmation_required": true,
+	  "employee_id": "HR-EMP-00001",
+	  "employee_name": "Michael",
+	  "department": "IT",
+	  "entry_id": null,
+	  "action_label": "Employee Check In"
+	}
+
+	Error response:
+	{
+	  "success": false,
+	  "message": "..."
+	}
+	"""
+	try:
+		parsed = _parse_qr(qr_code)
+		entity_type = parsed["entity_type"]
+
+		if entity_type == "VISITOR":
+			visitor_id = parsed.get("visitor_id")
+			if not visitor_id or not frappe.db.exists("Visitor", visitor_id):
+				return {
+					"success": False,
+					"message": _("Visitor {0} tidak ditemukan").format(visitor_id or "-"),
+				}
+
+			v = frappe.get_doc("Visitor", visitor_id)
+			next_action = _get_visitor_next_action(v.status)
+
+			if not next_action:
+				status_messages = {
+					"Awaiting Approval": _("Tamu sedang menunggu approval. Belum bisa scan."),
+					"Approved": _("Tamu sudah berada di dalam area."),
+					"Checked Out": _("Tamu sudah check out. QR tidak valid lagi."),
+					"Rejected": _("Kunjungan tamu telah ditolak."),
+					"Cancelled": _("Kunjungan tamu telah dibatalkan."),
+				}
+				msg = status_messages.get(v.status, _("Status {0} tidak mendukung scan.").format(v.status))
+				return {"success": False, "message": msg}
+
+			return {
+				"success": True,
+				"entity_type": "VISITOR",
+				"current_status": v.status,
+				"next_action": next_action,
+				"confirmation_required": True,
+				"visitor_id": v.name,
+				"visitor_name": v.visitor_name,
+				"company": v.visitor_company or "-",
+				"host": v.host_employee_name or "-",
+				"purpose": v.visit_purpose or "-",
+				"check_in_time": str(v.check_in_time)[:16] if v.check_in_time else "-",
+				"action_label": _get_visitor_next_action_label(next_action),
+			}
+
+		elif entity_type == "EMPLOYEE":
+			raw_emp = parsed.get("employee") or ""
+			employee_id = _resolve_employee_id(raw_emp)
+
+			emp = frappe.db.get_value(
+				"Employee",
+				employee_id,
+				["name", "employee_name", "department", "status"],
+				as_dict=True,
+			)
+			if not emp:
+				return {"success": False, "message": _("Data karyawan tidak ditemukan")}
+			if emp.status != "Active":
+				return {"success": False, "message": _("Karyawan {0} tidak aktif").format(emp.employee_name)}
+
+			open_statuses = ["Pending Approval", "Approved", "Completed"]
+			open_entries = frappe.get_all(
+				"Employee Entry Request",
+				filters={"employee": employee_id, "status": ["in", open_statuses]},
+				fields=["name", "status", "check_in_time"],
+				order_by="modified desc",
+				limit_page_length=1,
+			)
+			open_entry = open_entries[0] if open_entries else None
+			entry_status = open_entry.status if open_entry else None
+
+			next_action = _get_employee_next_action(entry_status)
+
+			if not next_action:
+				status_messages = {
+					"Pending Approval": _("Pengajuan masuk karyawan sedang menunggu approval."),
+					"Approved": _("Karyawan sudah berada di dalam area."),
+				}
+				msg = status_messages.get(entry_status, _("Status {0} tidak mendukung scan.").format(entry_status))
+				return {"success": False, "message": msg}
+
+			action_label = "Employee Check In" if next_action == "EMPLOYEE_CHECK_IN" else "Employee Check Out"
+			current_status = entry_status if entry_status else "Outside"
+
+			return {
+				"success": True,
+				"entity_type": "EMPLOYEE",
+				"current_status": current_status,
+				"next_action": next_action,
+				"confirmation_required": True,
+				"employee_id": emp.name,
+				"employee_name": emp.employee_name,
+				"department": emp.department or "-",
+				"entry_id": open_entry.name if open_entry else None,
+				"check_in_time": str(open_entry.check_in_time)[:16] if open_entry and open_entry.check_in_time else "-",
+				"action_label": _(action_label),
+			}
+
+		else:
+			return {"success": False, "message": _("Tipe entitas tidak dikenali")}
+
+	except frappe.exceptions.ValidationError as exc:
+		return {"success": False, "message": str(exc)}
+	except Exception:
+		frappe.log_error(frappe.get_traceback(), "Mobile resolve_scan_action Error")
+		return {"success": False, "message": _("Terjadi kesalahan server. Coba lagi.")}
+
+
+# ---------------------------------------------------------------------------
+# STEP 2: execute_scan_action
+# ---------------------------------------------------------------------------
+
+@frappe.whitelist(allow_guest=False)
+def execute_scan_action(qr_code, action):
+	"""
+	STEP 2 of scan flow.
+
+	Called ONLY after user presses OK on confirmation popup.
+	action must match what resolve_scan_action() returned as next_action.
+
+	Valid actions:
+	  CHECK_IN           — visitor check in
+	  CHECK_OUT          — visitor check out
+	  EMPLOYEE_CHECK_IN  — employee entry check in
+	  EMPLOYEE_CHECK_OUT — employee entry check out
+
+	Returns:
+	{
+	  "success": true,
+	  "status": "success",
+	  "message": "Check-in berhasil. Menunggu approval."
+	}
+	"""
+	valid_actions = {"CHECK_IN", "CHECK_OUT", "EMPLOYEE_CHECK_IN", "EMPLOYEE_CHECK_OUT"}
+	if action not in valid_actions:
+		return {
+			"success": False,
+			"status": "error",
+			"message": _("Aksi tidak valid: {0}").format(action),
+		}
+
+	try:
+		parsed = _parse_qr(qr_code)
+		entity_type = parsed["entity_type"]
+
+		# ---- VISITOR actions ----
+		if action in ("CHECK_IN", "CHECK_OUT"):
+			if entity_type != "VISITOR":
+				return {
+					"success": False,
+					"status": "error",
+					"message": _("QR bukan untuk visitor."),
+				}
+
+			visitor_id = parsed.get("visitor_id")
+			if not visitor_id or not frappe.db.exists("Visitor", visitor_id):
+				return {
+					"success": False,
+					"status": "error",
+					"message": _("Visitor {0} tidak ditemukan").format(visitor_id or "-"),
+				}
+
+			visitor = frappe.get_doc("Visitor", visitor_id)
+
+			# Double-check latest status (race condition guard)
+			expected_status_for_action = {
+				"CHECK_IN": "Registered",
+				"CHECK_OUT": "Completed",
+			}
+			expected_status = expected_status_for_action[action]
+			if visitor.status != expected_status:
+				actual_next = _get_visitor_next_action(visitor.status)
+				detail = _(" (status terbaru membutuhkan {0})").format(actual_next) if actual_next else ""
+				return {
+					"success": False,
+					"status": "invalid",
+					"message": _(
+						"Tidak bisa {0}. Status visitor saat ini: {1}{2}"
+					).format(action, visitor.status, detail),
+				}
+
+			if action == "CHECK_IN":
+				from visitor_management.visitor_management.services.visitor_service import check_in
+				result = check_in(visitor)
+			else:
+				from visitor_management.visitor_management.services.visitor_service import check_out
+				result = check_out(visitor)
+
+			return {
+				"success": result.get("status") == "success",
+				"status": result.get("status", "error"),
+				"message": result.get("message", ""),
+			}
+
+		# ---- EMPLOYEE actions ----
+		if action in ("EMPLOYEE_CHECK_IN", "EMPLOYEE_CHECK_OUT"):
+			if entity_type != "EMPLOYEE":
+				return {
+					"success": False,
+					"status": "error",
+					"message": _("QR bukan untuk karyawan."),
+				}
+
+			raw_emp = parsed.get("employee") or ""
+			employee_id = _resolve_employee_id(raw_emp)
+
+			emp_status = frappe.db.get_value("Employee", employee_id, "status")
+			if emp_status != "Active":
+				return {
+					"success": False,
+					"status": "error",
+					"message": _("Karyawan tidak aktif"),
+				}
+
+			open_statuses = ["Pending Approval", "Approved", "Completed"]
+			open_entries = frappe.get_all(
+				"Employee Entry Request",
+				filters={"employee": employee_id, "status": ["in", open_statuses]},
+				fields=["name", "status"],
+				order_by="modified desc",
+				limit_page_length=1,
+			)
+			open_entry_data = open_entries[0] if open_entries else None
+			current_entry_status = open_entry_data.status if open_entry_data else None
+
+			expected_action = _get_employee_next_action(current_entry_status)
+			if action != expected_action:
+				return {
+					"success": False,
+					"status": "invalid",
+					"message": _(
+						"Aksi tidak sesuai. Status terbaru membutuhkan {0}, bukan {1}"
+					).format(expected_action or "tidak ada", action),
+				}
+
+			if action == "EMPLOYEE_CHECK_IN":
+				doc = frappe.get_doc({
+					"doctype": "Employee Entry Request",
+					"employee": employee_id,
+					"purpose": "Scan barcode security",
+				})
+				doc.insert(ignore_permissions=True)
+				frappe.db.commit()
+				return {
+					"success": True,
+					"status": "success",
+					"message": _("Pengajuan check-in karyawan dibuat. Menunggu approval."),
+				}
+
+			else:  # EMPLOYEE_CHECK_OUT
+				if not open_entry_data:
+					return {
+						"success": False,
+						"status": "error",
+						"message": _("Tidak ada pengajuan karyawan yang menunggu check-out."),
+					}
+				entry_doc = frappe.get_doc("Employee Entry Request", open_entry_data.name)
+				result = entry_doc.checkout()
+				frappe.db.commit()
+				return {
+					"success": result.get("status") == "success",
+					"status": result.get("status", "error"),
+					"message": result.get("message", ""),
+				}
+
+	except frappe.exceptions.ValidationError as exc:
+		return {"success": False, "status": "error", "message": str(exc)}
+	except Exception:
+		frappe.log_error(frappe.get_traceback(), "Mobile execute_scan_action Error")
+		return {
+			"success": False,
+			"status": "error",
+			"message": _("Terjadi kesalahan server. Coba lagi."),
+		}
+
 
 # =============================================================================
 # NAVIGATION & FEATURE FLAGS
@@ -305,95 +769,36 @@ def get_recent_activity():
 
 
 # =============================================================================
-# SCAN PROCESSING
+# LEGACY COMPAT — process_scan (deprecated, keep for backward compat)
 # =============================================================================
 
 @frappe.whitelist(allow_guest=False)
-def process_scan(qr_code, action=None):
+def process_scan(qr_code, action):
 	"""
-	Endpoint scan utama dari Flutter app.
-	Resolve-only by default so mobile can show OK/Cancel confirmation before any database write.
-	Call execute_confirmed_scan after the user presses OK.
+	DEPRECATED — kept for backward compatibility only.
+	New code must use resolve_scan_action() + execute_scan_action().
+
+	Maps legacy action names to new execute_scan_action() calls.
 	"""
-	from visitor_management.visitor_management.api import scan_qr
-
-	try:
-		if not action or str(action).lower() in {"resolve", "preview"}:
-			result = scan_qr(qr_code=qr_code, action="resolve")
-		elif str(action).lower() == "auto":
-			result = scan_qr(qr_code=qr_code, action="auto")
-		elif action == "checkIn":
-			result = scan_qr(qr_code=qr_code, action="checkin")
-		elif action == "checkOut":
-			result = scan_qr(qr_code=qr_code, action="checkout")
-		elif action == "employeeEntry":
-			result = scan_qr(qr_code=qr_code, action="employeeCheckIn")
-		else:
-			frappe.throw(_("Aksi scan tidak dikenali: {0}").format(action))
-
-		status = result.get("status", "error") if result else "error"
-		message = result.get("message", "Terjadi kesalahan") if result else "Terjadi kesalahan"
-
-		response = {
-			"success": result.get("success", status == "success") if result else False,
-			"status": status,
-			"message": message,
-			"reference_id": result.get("visitor") or result.get("entry") if result else None,
-		}
-		if result:
-			response.update(result)
-		return response
-	except frappe.exceptions.ValidationError as e:
+	action_map = {
+		"checkIn": "CHECK_IN",
+		"checkOut": "CHECK_OUT",
+		"employeeEntry": "EMPLOYEE_CHECK_IN",
+		# New names also accepted
+		"CHECK_IN": "CHECK_IN",
+		"CHECK_OUT": "CHECK_OUT",
+		"EMPLOYEE_CHECK_IN": "EMPLOYEE_CHECK_IN",
+		"EMPLOYEE_CHECK_OUT": "EMPLOYEE_CHECK_OUT",
+	}
+	mapped = action_map.get(action)
+	if not mapped:
 		return {
-			"success": False,
 			"status": "error",
-			"message": str(e),
-			"reference_id": None,
+			"message": _("Aksi tidak dikenali: {0}").format(action),
 		}
-	except Exception:
-		frappe.log_error(frappe.get_traceback(), "Mobile process_scan Error")
-		return {
-			"success": False,
-			"status": "error",
-			"message": "Terjadi kesalahan server. Coba lagi.",
-			"reference_id": None,
-		}
-
-@frappe.whitelist(allow_guest=False)
-def execute_confirmed_scan(qr_code, action, gate=None, device_id=None):
-	"""Execute a scan after mobile confirmation. Cancel should not call this method."""
-	from visitor_management.visitor_management.api import execute_scan_action
-
-	try:
-		result = execute_scan_action(
-			qr_code=qr_code,
-			action=action,
-			gate=gate,
-			device_id=device_id,
-		)
-		status = result.get("status", "error") if result else "error"
-		response = {
-			"success": result.get("success", status == "success") if result else False,
-			"status": status,
-			"message": result.get("message", "Terjadi kesalahan") if result else "Terjadi kesalahan",
-			"reference_id": result.get("visitor") or result.get("entry") if result else None,
-		}
-		if result:
-			response.update(result)
-		return response
-	except frappe.exceptions.ValidationError as e:
-		return {
-			"success": False,
-			"status": "error",
-			"message": str(e),
-			"reference_id": None,
-		}
-	except Exception:
-		frappe.log_error(frappe.get_traceback(), "Mobile execute_confirmed_scan Error")
-		return {
-			"success": False,
-			"status": "error",
-			"message": "Terjadi kesalahan server. Coba lagi.",
-			"reference_id": None,
-		}
-
+	result = execute_scan_action(qr_code=qr_code, action=mapped)
+	return {
+		"status": result.get("status", "error"),
+		"message": result.get("message", ""),
+		"reference_id": None,
+	}
