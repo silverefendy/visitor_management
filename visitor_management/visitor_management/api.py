@@ -179,6 +179,39 @@ def _looks_like_employee_scan(raw_value, payload):
     return raw_value.upper().startswith("EMP:")
 
 
+def _find_employee_from_scan(raw_value, payload=None):
+    payload = payload or {}
+    candidates = [
+        payload.get("employee"),
+        payload.get("employee_id"),
+        payload.get("name") if payload.get("type") in {"employee", "employee_entry", "employee_checkin"} else None,
+        raw_value,
+    ]
+
+    for candidate in candidates:
+        if not candidate:
+            continue
+        employee_code = str(candidate).strip()
+        if employee_code.upper().startswith("EMP:"):
+            employee_code = employee_code.split(":", 1)[1].strip()
+        if not employee_code:
+            continue
+        if frappe.db.exists("Employee", employee_code):
+            return employee_code
+        lookup_filters = []
+        if _employee_has_field("attendance_device_id"):
+            lookup_filters.append({"attendance_device_id": employee_code})
+        if _employee_has_field("user_id"):
+            lookup_filters.append({"user_id": employee_code})
+        if _employee_has_field("employee_number"):
+            lookup_filters.append({"employee_number": employee_code})
+        for filters in lookup_filters:
+            employee = frappe.db.get_value("Employee", filters, "name")
+            if employee:
+                return employee
+    return None
+
+
 def _visitor_scan_response(visitor, next_action, scan_status, message):
     workflow_state = visitor.get("workflow_state") if visitor.meta.has_field("workflow_state") else visitor.status
     return _standard_success(
@@ -214,8 +247,8 @@ def _employee_scan_response(employee, next_action, scan_status, message, entry=N
     )
 
 
-def _resolve_employee_scan(qr_code):
-    employee = _get_employee_from_barcode(qr_code)
+def _resolve_employee_scan(qr_code, employee=None):
+    employee = employee or _get_employee_from_barcode(qr_code)
     emp_status = frappe.db.get_value("Employee", employee, "status")
     if emp_status != "Active":
         frappe.throw(_("Employee {0} tidak aktif").format(employee))
@@ -245,43 +278,57 @@ def _resolve_employee_scan(qr_code):
     )
 
 
+def get_active_visit(visitor):
+    active_statuses = ["Awaiting Approval", "Approved", "Checked In"]
+    if visitor.status in active_statuses:
+        return visitor
+
+    if not visitor.id_number:
+        return None
+
+    active_name = frappe.db.exists(
+        "Visitor",
+        {
+            "id_number": visitor.id_number,
+            "status": ["in", active_statuses],
+            "name": ["!=", visitor.name],
+        },
+    )
+    return frappe.get_doc("Visitor", active_name) if active_name else None
+
+
 def _resolve_visitor_scan(qr_code):
     visitor_id = parse_visitor_qr(qr_code)
     if not frappe.db.exists("Visitor", visitor_id):
         frappe.throw(_("Visitor {0} tidak ditemukan dalam sistem").format(visitor_id))
 
     visitor = frappe.get_doc("Visitor", visitor_id)
-    active_duplicate = frappe.db.exists(
-        "Visitor",
-        {
-            "id_number": visitor.id_number,
-            "status": ["in", ["Awaiting Approval", "Approved", "Checked In", "Completed"]],
-            "name": ["!=", visitor.name],
-        },
-    )
-    if active_duplicate:
-        frappe.throw(_("Visitor dengan ID yang sama masih aktif: {0}").format(active_duplicate))
+    active_visit = get_active_visit(visitor)
 
-    if visitor.status in ["Registered", "Checked Out", "Rejected", "Cancelled"]:
+    if active_visit and active_visit.name != visitor.name:
+        frappe.throw(_("Visitor dengan ID yang sama masih aktif: {0}").format(active_visit.name))
+
+    if active_visit and active_visit.status in ["Approved", "Checked In"]:
         return _visitor_scan_response(
-            visitor,
-            "CHECK_IN",
-            "NO_ACTIVE_VISIT",
-            _("Visitor belum aktif. Lanjutkan check-in."),
-        )
-    if visitor.status in ["Approved", "Checked In", "Completed"]:
-        return _visitor_scan_response(
-            visitor,
+            active_visit,
             "CHECK_OUT",
             "ACTIVE",
             _("Visitor aktif. Lanjutkan check-out."),
         )
-    if visitor.status == "Awaiting Approval":
+    if active_visit and active_visit.status == "Awaiting Approval":
         return _visitor_scan_response(
-            visitor,
+            active_visit,
             "WAIT_FOR_APPROVAL",
             "AWAITING_APPROVAL",
             _("Visitor masih menunggu approval host."),
+        )
+
+    if visitor.status in ["Registered", "Checked Out", "Rejected", "Cancelled", "Completed"]:
+        return _visitor_scan_response(
+            visitor,
+            "CHECK_IN",
+            "NO_ACTIVE_VISIT",
+            _("Tidak ada kunjungan aktif. Siap untuk check-in baru."),
         )
 
     frappe.throw(_("Status visitor tidak dapat diproses: {0}").format(visitor.status))
@@ -374,8 +421,9 @@ def resolve_scan_action(qr_code=None, qr_data=None):
         frappe.throw(_("Data scan tidak boleh kosong"))
 
     try:
-        if _looks_like_employee_scan(raw_value, payload):
-            resolved = _resolve_employee_scan(scan_value)
+        employee = _find_employee_from_scan(raw_value, payload)
+        if employee or _looks_like_employee_scan(raw_value, payload):
+            resolved = _resolve_employee_scan(scan_value, employee=employee)
         else:
             resolved = _resolve_visitor_scan(scan_value)
         frappe.logger("visitor_management").info(
@@ -408,10 +456,14 @@ def scan_qr(qr_code=None, qr_data=None, action="auto", gate=None, device_id=None
         })
         return result
 
-    if normalized_action in {"checkin", "check_in", "checkinvisitor"}:
-        return scan_qr_action(qr_data=scan_value, action="checkin", gate=gate, device_id=device_id)
-    if normalized_action in {"checkout", "check_out", "checkoutvisitor"}:
-        return scan_qr_action(qr_data=scan_value, action="checkout", gate=gate, device_id=device_id)
+    if normalized_action in {"checkin", "check_in", "checkinvisitor", "checkout", "check_out", "checkoutvisitor"}:
+        # Visitor scan modes stay backward compatible, but the backend still
+        # resolves the valid action from the current database state. This avoids
+        # completed visits being forced through the wrong explicit mobile mode.
+        resolved = resolve_scan_action(qr_code=scan_value)
+        if resolved.get("entity_type") != "VISITOR":
+            frappe.throw(_("Barcode terdeteksi sebagai {0}, bukan Visitor.").format(resolved.get("entity_type")))
+        return _execute_resolved_scan(scan_value, resolved, gate=gate, device_id=device_id)
     if normalized_action in {"employeecheckin", "employee_check_in", "employeeentry"}:
         return scan_employee_entry_barcode(qr_data=scan_value, action="checkin")
     if normalized_action in {"employeecheckout", "employee_check_out"}:

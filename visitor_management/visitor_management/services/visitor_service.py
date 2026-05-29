@@ -5,17 +5,28 @@ from frappe.utils import now_datetime
 from visitor_management.visitor_management.services.gate_service import get_gate_by_device
 from visitor_management.visitor_management.services.log_service import create_visitor_log
 
-ACTIVE_STATUSES = ["Awaiting Approval", "Approved", "Checked In", "Completed"]
+ACTIVE_STATUSES = ["Awaiting Approval", "Approved", "Checked In"]
 VISITOR_WORKFLOW_STATE_FIELD = "workflow_state"
 
 # Status yang diizinkan untuk checkout
 # Termasuk "Approved" dan "Checked In" agar security bisa checkout
 # setelah approval tanpa perlu host menekan "Selesai Kunjungan" terlebih dahulu
-CHECKOUT_ALLOWED_STATUSES = ["Approved", "Checked In", "Completed"]
+CHECKOUT_ALLOWED_STATUSES = ["Approved", "Checked In"]
 
 
 def is_visitor_inside(visitor_id):
     return bool(frappe.db.exists("Visitor Log", {"visitor": visitor_id, "is_active": 1}))
+
+
+def close_active_visitor_logs(visitor_id):
+    active_logs = frappe.get_all(
+        "Visitor Log",
+        filters={"visitor": visitor_id, "is_active": 1},
+        pluck="name",
+    )
+    for log_name in active_logs:
+        frappe.db.set_value("Visitor Log", log_name, "is_active", 0, update_modified=False)
+    return len(active_logs)
 
 
 def _sync_visitor_status(visitor, status):
@@ -53,9 +64,15 @@ def validate_duplicate_active(visitor, method=None):
 
 
 def check_in(visitor, gate=None, device_id=None):
-    if visitor.status not in ["Registered", "Checked Out", "Rejected", "Cancelled"]:
+    if visitor.status not in ["Registered", "Checked Out", "Rejected", "Cancelled", "Completed"]:
         frappe.throw(_("Tidak bisa check-in. Status saat ini: {0}").format(visitor.status))
-    if is_visitor_inside(visitor.name):
+
+    # Completed is no longer considered an active visit. If older data still has
+    # an active Visitor Log for a completed visit, close it before creating the
+    # new check-in session so the same QR can be reused.
+    if visitor.status == "Completed":
+        close_active_visitor_logs(visitor.name)
+    elif is_visitor_inside(visitor.name):
         frappe.throw(_("Visitor masih tercatat berada di dalam area"))
 
     validate_blacklist(visitor)
@@ -65,6 +82,8 @@ def check_in(visitor, gate=None, device_id=None):
     _sync_visitor_status(visitor, "Awaiting Approval")
     visitor.check_in_time = now_datetime()
     visitor.check_out_time = None
+    if visitor.meta.has_field("completed_at"):
+        visitor.completed_at = None
     visitor.save(ignore_permissions=True)
 
     create_visitor_log(
@@ -85,8 +104,8 @@ def check_out(visitor, gate=None, device_id=None):
     Proses checkout visitor.
 
     Diizinkan dari status:
-    - Completed  : alur normal, host sudah klik "Selesai Kunjungan"
-    - Approved   : security checkout langsung tanpa perlu host selesaikan dulu
+    - Approved   : security checkout langsung setelah approval
+    - Checked In : status aktif jika dipakai oleh workflow/customisasi site
 
     Status "Awaiting Approval" tidak diizinkan checkout karena kunjungan
     belum disetujui host.
