@@ -14,12 +14,10 @@ import json
 import frappe
 import qrcode
 from frappe import _
-from frappe.utils import today, now_datetime
-from visitor_management.visitor_management.services.visitor_service import check_in, check_out
+from frappe.utils import now_datetime, today
+
 from visitor_management.visitor_management.services.qr_service import parse_visitor_qr
-
-
-
+from visitor_management.visitor_management.services.visitor_service import check_in, check_out
 
 # =============================================================================
 # HELPER FUNCTIONS (private — tidak bisa dipanggil dari browser)
@@ -308,7 +306,7 @@ def get_dashboard_data():
 
     rejected_visitors = frappe.get_all(
         "Visitor",
-        filters=activity_filters + [["status", "=", "Rejected"]],
+        filters=[*activity_filters, ["status", "=", "Rejected"]],
         fields=dashboard_fields,
         order_by="modified desc",
     )
@@ -318,7 +316,7 @@ def get_dashboard_data():
     completed  = len(pending_checkout)
     rejected   = len(rejected_visitors)
     checked_out = frappe.db.count(
-        "Visitor", filters=activity_filters + [["status", "=", "Checked Out"]]
+        "Visitor", filters=[*activity_filters, ["status", "=", "Checked Out"]]
     )
     total = waiting + checked_in + completed + checked_out + rejected
 
@@ -391,7 +389,7 @@ def employee_approval_data():
     ]
 
     pending_filters = {**base_filters, "status": "Awaiting Approval"}
-    active_filters  = {**base_filters, "status": "Approved"}
+    active_filters  = {**base_filters, "status": ["in", ["Approved", "Checked In"]]}
 
     return {
         "user":       user,
@@ -438,7 +436,13 @@ def reject_visitor(visitor_id, reason=""):
 def complete_visit(visitor_id):
     """Tandai kunjungan selesai. Dipanggil dari /vms-approval."""
     visitor = _get_manageable_visitor(visitor_id)
-    return visitor.end_visit()
+    result = visitor.end_visit()
+    frappe.publish_realtime(
+        "vms_visitor_completed",
+        {"visitor": visitor.name, "visitor_name": visitor.visitor_name},
+        after_commit=True,
+    )
+    return result
 
 @frappe.whitelist(allow_guest=False)
 def get_my_employee_barcode():
