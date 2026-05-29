@@ -13,7 +13,6 @@ import frappe
 from frappe import _
 from frappe.utils import today
 
-
 # =============================================================================
 # NAVIGATION & FEATURE FLAGS
 # =============================================================================
@@ -293,36 +292,44 @@ def get_recent_activity():
 # =============================================================================
 
 @frappe.whitelist(allow_guest=False)
-def process_scan(qr_code, action):
+def process_scan(qr_code, action=None):
 	"""
 	Endpoint scan utama dari Flutter app.
-	action: 'checkIn' | 'checkOut' | 'employeeEntry'
+	Backward compatible:
+	- action 'checkIn' | 'checkOut' | 'employeeEntry' keeps the old explicit flow.
+	- action empty/'auto' lets backend resolve and execute the next action.
 	"""
-	from visitor_management.visitor_management.api import (
-		scan_employee_entry_barcode,
-		scan_qr_action,
-	)
+	from visitor_management.visitor_management.api import scan_qr
 
 	try:
-		if action == "checkIn":
-			result = scan_qr_action(qr_data=qr_code, action="checkin")
+		if not action or str(action).lower() in {"resolve", "preview"}:
+			result = scan_qr(qr_code=qr_code, action="resolve")
+		elif str(action).lower() == "auto":
+			result = scan_qr(qr_code=qr_code, action="auto")
+		elif action == "checkIn":
+			result = scan_qr(qr_code=qr_code, action="checkin")
 		elif action == "checkOut":
-			result = scan_qr_action(qr_data=qr_code, action="checkout")
+			result = scan_qr(qr_code=qr_code, action="checkout")
 		elif action == "employeeEntry":
-			result = scan_employee_entry_barcode(qr_data=qr_code, action="checkin")
+			result = scan_qr(qr_code=qr_code, action="employeeCheckIn")
 		else:
 			frappe.throw(_("Aksi scan tidak dikenali: {0}").format(action))
 
 		status = result.get("status", "error") if result else "error"
 		message = result.get("message", "Terjadi kesalahan") if result else "Terjadi kesalahan"
 
-		return {
+		response = {
+			"success": result.get("success", status == "success") if result else False,
 			"status": status,
 			"message": message,
-			"reference_id": None,
+			"reference_id": result.get("visitor") or result.get("entry") if result else None,
 		}
+		if result:
+			response.update(result)
+		return response
 	except frappe.exceptions.ValidationError as e:
 		return {
+			"success": False,
 			"status": "error",
 			"message": str(e),
 			"reference_id": None,
@@ -330,6 +337,7 @@ def process_scan(qr_code, action):
 	except Exception:
 		frappe.log_error(frappe.get_traceback(), "Mobile process_scan Error")
 		return {
+			"success": False,
 			"status": "error",
 			"message": "Terjadi kesalahan server. Coba lagi.",
 			"reference_id": None,
