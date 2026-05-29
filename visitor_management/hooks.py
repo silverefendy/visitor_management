@@ -25,8 +25,11 @@ app_license = "mit"
 # ------------------
 
 # include js, css files in header of desk.html
-# app_include_css = "/assets/visitor_management/css/visitor_management.css"
-# app_include_js = "/assets/visitor_management/js/visitor_management.js"
+app_include_css = "/assets/visitor_management/css/visitor_custom.css"
+app_include_js = [
+    "/assets/visitor_management/js/visitor_preview.js",
+    "/assets/visitor_management/js/vms_navigation.js",
+]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/visitor_management/css/visitor_management.css"
@@ -44,7 +47,7 @@ app_license = "mit"
 
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}
-# doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
+doctype_list_js = {"Visitor": "public/js/visitor_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 
@@ -260,6 +263,23 @@ doc_events = {
 scheduler_events = {
     "hourly": [
         "visitor_management.visitor_management.tasks.auto_checkout_stale_visitors"
-    ]
+    ],
+    "daily": [
+        "visitor_management.visitor_management.tasks.auto_archive_old_visitors"
+    ],
 }
 
+
+
+fixtures = [
+    {
+        "dt": "Role",
+        "filters": [["name", "in", [
+            "Visitor Security Guard",
+            "Visitor Receptionist",
+            "Visitor Approver",
+            "VMS Manager",
+            "VMS System Admin",
+        ]]],
+    }
+]

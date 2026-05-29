@@ -10,11 +10,8 @@ from frappe.model.document import Document
 from frappe.utils import now_datetime
 
 from visitor_management.visitor_management.services.log_service import create_visitor_log
-from visitor_management.visitor_management.services.visitor_service import (
-    check_in,
-    check_out,
-    close_active_visitor_logs,
-)
+from visitor_management.visitor_management.services.settings_service import get_visitor_settings
+from visitor_management.visitor_management.services.visitor_service import check_in, check_out
 
 VISITOR_STATUSES = [
     "Registered",
@@ -25,29 +22,8 @@ VISITOR_STATUSES = [
     "Checked Out",
     "Rejected",
     "Cancelled",
+    "Archived",
 ]
-
-COMPLETABLE_STATUSES = ["Approved", "Checked In"]
-
-from visitor_management.visitor_management.services.log_service import create_visitor_log
-from visitor_management.visitor_management.services.visitor_service import (
-    check_in,
-    check_out,
-    close_active_visitor_logs,
-)
-
-VISITOR_STATUSES = [
-    "Registered",
-    "Awaiting Approval",
-    "Approved",
-    "Checked In",
-    "Completed",
-    "Checked Out",
-    "Rejected",
-    "Cancelled",
-]
-
-COMPLETABLE_STATUSES = ["Approved", "Checked In"]
 
 COMPLETABLE_STATUSES = ["Approved", "Checked In"]
 
@@ -57,18 +33,24 @@ class Visitor(Document):
         self._sync_workflow_state("Registered")
 
     def after_insert(self):
-        self.generate_qr_code()
+        if get_visitor_settings("auto_generate_qr", 1):
+            self.generate_qr_code()
 
     def after_save(self):
-        if not self.qr_code_image:
+        if get_visitor_settings("auto_generate_qr", 1) and not self.qr_code_image:
             self.generate_qr_code()
 
     def validate(self):
+        if get_visitor_settings("require_id_number", 1) and not self.id_number:
+            frappe.throw(_("Nomor ID wajib diisi sesuai Visitor Settings."))
+        if get_visitor_settings("require_visitor_photo", 0) and not self.visitor_photo:
+            frappe.throw(_("Foto tamu wajib diisi sesuai Visitor Settings."))
         if self.host_employee:
             emp_status = frappe.db.get_value("Employee", self.host_employee, "status")
             if emp_status != "Active":
                 frappe.throw(_("Karyawan {0} tidak aktif.").format(self.host_employee))
 
+    @frappe.whitelist()
     def generate_qr_code(self):
         try:
             qr_data = json.dumps({
@@ -99,7 +81,12 @@ class Visitor(Document):
             file_size = os.path.getsize(full_path)
 
             frappe.db.sql(
-                "DELETE FROM `tabFile` WHERE attached_to_doctype='Visitor' AND attached_to_name=%s",
+                """
+                DELETE FROM `tabFile`
+                WHERE attached_to_doctype='Visitor'
+                  AND attached_to_name=%s
+                  AND (attached_to_field='qr_code_image' OR LOWER(file_name) LIKE 'qr%%')
+                """,
                 self.name,
             )
 
@@ -338,6 +325,21 @@ class Visitor(Document):
             completed_at=now_datetime(),
         )
         return self._status_response("Kunjungan selesai. Tamu dapat check-out.")
+
+
+    @frappe.whitelist()
+    def archive_visit(self):
+        if self.status == "Archived":
+            frappe.throw(_("Visitor ini sudah Archived."))
+        self._set_transition_values(
+            "Archived",
+            archived_at=now_datetime(),
+            archived_by=frappe.session.user,
+        )
+        self.save(ignore_permissions=True)
+        self.create_visitor_log("Archived", "Visitor archived by {0}".format(frappe.session.user))
+        frappe.db.commit()
+        return self._status_response("Visitor archived.")
 
     @frappe.whitelist()
     def do_checkout(self):
