@@ -136,7 +136,7 @@ function renderList(id, rows, type) {
 
 function loadData() {
   api("visitor_management.visitor_management.api.employee_approval_data", {}, function(d) {
-    if (d && d.message) showNotice("warning", d.message);
+    if (d && d.warning) showNotice("warning", d.warning);
     var pending = d && d.pending ? d.pending : [];
     var active = d && d.active ? d.active : [];
     document.getElementById("pending-count").textContent = pending.length;
