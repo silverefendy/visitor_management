@@ -2,7 +2,7 @@ import json
 
 import frappe
 from frappe import _
-from frappe.utils import add_days, get_datetime, now_datetime, today
+from frappe.utils import add_to_date, now_datetime, today
 
 CLEANUP_ADMIN_ROLES = {"System Manager", "VMS System Admin"}
 CLEANUP_MANAGER_ROLES = CLEANUP_ADMIN_ROLES | {"Visitor Manager", "VMS Manager"}
@@ -32,7 +32,7 @@ def _cleanup_filters(filters=None):
     if filters.get("to_date"):
         conditions.append(["modified", "<=", filters.get("to_date")])
     if filters.get("older_than_days"):
-        conditions.append(["modified", "<=", add_days(today(), -int(filters.get("older_than_days")))])
+        conditions.append(["modified", "<=", add_to_date(today(), days=-int(filters.get("older_than_days")))])
     if filters.get("status"):
         conditions.append(["status", "=", filters.get("status")])
     if filters.get("checked_out_only"):

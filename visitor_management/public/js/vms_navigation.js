@@ -59,7 +59,7 @@
 		},
 		{
 			label: "VMS Settings",
-			keywords: ["vms settings", "visitor settings", "qr settings", "approval settings", "notification settings"],
+			keywords: ["vms settings", "visitor settings", "qr settings", "approval settings", "vms notification settings"],
 			action: () => frappe.set_route("Form", "Visitor Settings"),
 		},
 		{

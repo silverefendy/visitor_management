@@ -43,7 +43,7 @@ DEFAULTS = {
         "escalation_timeout": 60,
         "multi_level_approval": 0,
     },
-    "Notification Settings": {
+    "VMS Notification Settings": {
         "enable_email_notifications": 0,
         "notify_host_employee": 1,
         "notify_security": 0,

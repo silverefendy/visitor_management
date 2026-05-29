@@ -1,7 +1,7 @@
 {
  "app": "visitor_management",
  "charts": [],
- "content": "[{\"id\":\"vms-title\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h3\\\"><b>Visitor Management</b></span>\",\"col\":12}},{\"id\":\"vms-intro\",\"type\":\"paragraph\",\"data\":{\"text\":\"Enterprise VMS operations hub. Scan QR is the primary entry point; Visitor list filters handle Today, Checked In, Checked Out, Pending, and This Month views.\",\"col\":12}},{\"id\":\"vms-main-ops\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Main Operations</b></span>\",\"col\":12}},{\"id\":\"vms-main-visitor\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Visitor\",\"col\":2}},{\"id\":\"vms-main-scan-qr\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Scan QR\",\"col\":2}},{\"id\":\"vms-main-visitor-logs\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Visitor Logs\",\"col\":2}},{\"id\":\"vms-main-reports\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Reports\",\"col\":2}},{\"id\":\"vms-main-settings\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Settings\",\"col\":2}},{\"id\":\"vms-main-data-cleanup\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Data Cleanup\",\"col\":2}},{\"id\":\"vms-stats\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Live Statistics</b></span>\",\"col\":12}},{\"id\":\"vms-card-total-visitors-today\",\"type\":\"card\",\"data\":{\"card_name\":\"Total Visitors Today\",\"col\":4}},{\"id\":\"vms-card-currently-checked-in\",\"type\":\"card\",\"data\":{\"card_name\":\"Currently Checked In\",\"col\":4}},{\"id\":\"vms-card-checked-out-today\",\"type\":\"card\",\"data\":{\"card_name\":\"Checked Out Today\",\"col\":4}},{\"id\":\"vms-card-pending-approval\",\"type\":\"card\",\"data\":{\"card_name\":\"Pending Approval\",\"col\":4}},{\"id\":\"vms-card-total-visitors-this-month\",\"type\":\"card\",\"data\":{\"card_name\":\"Total Visitors This Month\",\"col\":4}},{\"id\":\"vms-lists\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Operational Lists</b></span>\",\"col\":12}},{\"id\":\"vms-ql-visitor\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Visitor\",\"col\":4}},{\"id\":\"vms-ql-visitor-log\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Visitor Log\",\"col\":4}},{\"id\":\"vms-ql-vms-cleanup-log\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"VMS Cleanup Log\",\"col\":4}},{\"id\":\"vms-settings\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Settings</b></span>\",\"col\":12}},{\"id\":\"vms-setting-visitor-settings\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Visitor Settings\",\"col\":3}},{\"id\":\"vms-setting-qr-settings\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"QR Settings\",\"col\":3}},{\"id\":\"vms-setting-approval-settings\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Approval Settings\",\"col\":3}},{\"id\":\"vms-setting-notification-settings\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Notification Settings\",\"col\":3}},{\"id\":\"vms-setting-gate-configuration\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Gate Configuration\",\"col\":3}}]",
+ "content": "[{\"id\":\"vms-title\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h3\\\"><b>Visitor Management</b></span>\",\"col\":12}},{\"id\":\"vms-intro\",\"type\":\"paragraph\",\"data\":{\"text\":\"Enterprise VMS operations hub. Scan QR is the primary entry point; Visitor list filters handle Today, Checked In, Checked Out, Pending, and This Month views.\",\"col\":12}},{\"id\":\"vms-main-ops\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Main Operations</b></span>\",\"col\":12}},{\"id\":\"vms-main-visitor\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Visitor\",\"col\":2}},{\"id\":\"vms-main-scan-qr\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Scan QR\",\"col\":2}},{\"id\":\"vms-main-visitor-logs\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Visitor Logs\",\"col\":2}},{\"id\":\"vms-main-reports\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Reports\",\"col\":2}},{\"id\":\"vms-main-settings\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Settings\",\"col\":2}},{\"id\":\"vms-main-data-cleanup\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Data Cleanup\",\"col\":2}},{\"id\":\"vms-stats\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Live Statistics</b></span>\",\"col\":12}},{\"id\":\"vms-card-total-visitors-today\",\"type\":\"card\",\"data\":{\"card_name\":\"Total Visitors Today\",\"col\":4}},{\"id\":\"vms-card-currently-checked-in\",\"type\":\"card\",\"data\":{\"card_name\":\"Currently Checked In\",\"col\":4}},{\"id\":\"vms-card-checked-out-today\",\"type\":\"card\",\"data\":{\"card_name\":\"Checked Out Today\",\"col\":4}},{\"id\":\"vms-card-pending-approval\",\"type\":\"card\",\"data\":{\"card_name\":\"Pending Approval\",\"col\":4}},{\"id\":\"vms-card-total-visitors-this-month\",\"type\":\"card\",\"data\":{\"card_name\":\"Total Visitors This Month\",\"col\":4}},{\"id\":\"vms-lists\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Operational Lists</b></span>\",\"col\":12}},{\"id\":\"vms-ql-visitor\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Visitor\",\"col\":4}},{\"id\":\"vms-ql-visitor-log\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Visitor Log\",\"col\":4}},{\"id\":\"vms-ql-vms-cleanup-log\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"VMS Cleanup Log\",\"col\":4}},{\"id\":\"vms-settings\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Settings</b></span>\",\"col\":12}},{\"id\":\"vms-setting-visitor-settings\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Visitor Settings\",\"col\":3}},{\"id\":\"vms-setting-qr-settings\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"QR Settings\",\"col\":3}},{\"id\":\"vms-setting-approval-settings\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Approval Settings\",\"col\":3}},{\"id\":\"vms-setting-vms-notification-settings\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"VMS Notification Settings\",\"col\":3}},{\"id\":\"vms-setting-gate-configuration\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Gate Configuration\",\"col\":3}}]",
  "creation": "2026-05-02 15:55:00.088354",
  "custom_blocks": [],
  "docstatus": 0,
@@ -87,29 +87,9 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Notification Settings",
+   "label": "VMS Notification Settings",
    "link_count": 0,
-   "link_to": "Notification Settings",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Employee Entry Log",
-   "link_count": 0,
-   "link_to": "Employee Entry Log",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Gate",
-   "link_count": 0,
-   "link_to": "Gate",
+   "link_to": "VMS Notification Settings",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -267,9 +247,9 @@
   },
   {
    "color": "Grey",
-   "label": "Notification Settings",
+   "label": "VMS Notification Settings",
    "type": "URL",
-   "url": "/app/notification-settings"
+   "url": "/app/vms-notification-settings"
   },
   {
    "color": "Grey",

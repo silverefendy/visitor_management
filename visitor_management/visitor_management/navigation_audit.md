@@ -14,7 +14,7 @@
 | Configuration | `Visitor Settings` | General visitor behavior, display, QR generation toggle, and retention policy. | Functional Single settings DocType. |
 | Configuration | `QR Settings` | QR generation, scanner, expiry, and duplicate/reuse controls. | Functional Single settings DocType. |
 | Configuration | `Approval Settings` | Approval workflow policy and escalation controls. | Functional Single settings DocType. |
-| Configuration | `Notification Settings` | Email, WhatsApp/SMS, browser, and sound notification toggles. | Functional Single settings DocType. |
+| Configuration | `VMS Notification Settings` | Email, WhatsApp/SMS, browser, and sound notification toggles. | Functional Single settings DocType. |
 | Configuration | `Gate` | Gate/scanner device configuration with gate type and allowed-role metadata. | Configuration-only menu. |
 
 ### Pages and Web Routes
