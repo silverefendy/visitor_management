@@ -133,5 +133,8 @@
  "sort_field": "action_time",
  "sort_order": "DESC",
  "states": [],
- "title_field": "visitor"
+ "title_field": "visitor",
+ "search_fields": "visitor,action,status,action_by,remarks",
+ "show_name_in_global_search": 1,
+ "description": "Visitor access history and audit trail."
 }

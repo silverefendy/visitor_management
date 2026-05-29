@@ -157,5 +157,8 @@
  "sort_order": "DESC",
  "states": [],
  "title_field": "employee_name",
- "track_changes": 1
+ "track_changes": 1,
+ "search_fields": "employee,employee_name,department,status",
+ "show_name_in_global_search": 1,
+ "description": "Employee entry request workflow for security-controlled access."
 }
