@@ -69,6 +69,7 @@ class Visitor(Document):
             if emp_status != "Active":
                 frappe.throw(_("Karyawan {0} tidak aktif.").format(self.host_employee))
 
+    @frappe.whitelist()
     def generate_qr_code(self):
         try:
             qr_data = json.dumps({
@@ -99,7 +100,12 @@ class Visitor(Document):
             file_size = os.path.getsize(full_path)
 
             frappe.db.sql(
-                "DELETE FROM `tabFile` WHERE attached_to_doctype='Visitor' AND attached_to_name=%s",
+                """
+                DELETE FROM `tabFile`
+                WHERE attached_to_doctype='Visitor'
+                  AND attached_to_name=%s
+                  AND (attached_to_field='qr_code_image' OR LOWER(file_name) LIKE 'qr%%')
+                """,
                 self.name,
             )
 

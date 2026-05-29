@@ -23,5 +23,9 @@
  "sort_field": "modified",
  "sort_order": "DESC",
  "title_field": "gate_name",
- "track_changes": 1
+ "track_changes": 1,
+ "search_fields": "gate_name,location,device_id,status",
+ "show_name_in_global_search": 0,
+ "description": "Gate and scanner device configuration for Visitor Management administrators.",
+ "in_create": 0
 }

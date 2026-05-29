@@ -261,5 +261,8 @@
  "sort_order": "DESC",
  "states": [],
  "title_field": "visitor_name",
- "track_changes": 1
+ "track_changes": 1,
+ "search_fields": "visitor_name,visitor_company,visitor_phone,visitor_email,id_number,status",
+ "show_name_in_global_search": 1,
+ "description": "Operational visitor registration, approval, QR, check-in, and check-out record."
 }
