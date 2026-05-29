@@ -61,6 +61,10 @@ function requestApi(method, args, httpMethod, ok, fail) {
         if (fail) fail(getError(d));
         return;
       }
+      if (d.message && (d.message.success === false || d.message.status === "error")) {
+        if (fail) fail(d.message.message || "Request gagal");
+        return;
+      }
       if (ok) ok(d.message);
     })
     .catch(function(e) {
@@ -101,7 +105,7 @@ function card(v, type) {
   var approveActions = type === "pending"
     ? "<button class=\"btn btn-success\" onclick=\"approveVisitor('" + esc(v.name) + "')\">Approve</button>" +
       "<button class=\"btn btn-danger\" onclick=\"rejectVisitor('" + esc(v.name) + "')\">Reject</button>"
-    : "<button class=\"btn btn-primary\" onclick=\"completeVisit('" + esc(v.name) + "')\">Selesai Kunjungan</button>";
+    : "<button class=\"btn btn-primary\" onclick=\"completeVisit('" + esc(v.name) + "', this)\">Selesai Kunjungan</button>";
 
   return "<article class=\"card\">" +
     "<h4>" + esc(v.visitor_name) + "</h4>" +
@@ -136,7 +140,7 @@ function renderList(id, rows, type) {
 
 function loadData() {
   api("visitor_management.visitor_management.api.employee_approval_data", {}, function(d) {
-    if (d && d.message) showNotice("warning", d.message);
+    if (d && d.warning) showNotice("warning", d.warning);
     var pending = d && d.pending ? d.pending : [];
     var active = d && d.active ? d.active : [];
     document.getElementById("pending-count").textContent = pending.length;
@@ -162,11 +166,32 @@ function rejectVisitor(id) {
   });
 }
 
-function completeVisit(id) {
+function setButtonLoading(btn, isLoading, label) {
+  if (!btn) return;
+  if (isLoading) {
+    btn.dataset.originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = label || "Memproses...";
+  } else {
+    btn.disabled = false;
+    btn.textContent = btn.dataset.originalText || btn.textContent;
+  }
+}
+
+function completeVisit(id, btn) {
   if (!confirm("Tandai kunjungan ini selesai? Security dapat check-out setelah ini.")) return;
+  setButtonLoading(btn, true, "Menyelesaikan...");
   api("visitor_management.visitor_management.api.complete_visit", {visitor_id: id}, function(r) {
-    showNotice("success", r && r.message ? r.message : "Kunjungan selesai.");
+    if (!r || r.success === false || r.status === "error") {
+      showNotice("error", r && r.message ? r.message : "Kunjungan gagal diselesaikan.");
+      setButtonLoading(btn, false);
+      return;
+    }
+    showNotice("success", r.message || "Kunjungan selesai.");
     loadData();
+  }, function(error) {
+    setButtonLoading(btn, false);
+    showNotice("error", error || "Kunjungan gagal diselesaikan.");
   });
 }
 

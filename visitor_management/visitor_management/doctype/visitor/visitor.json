@@ -20,10 +20,12 @@
   "department",
   "sec_status",
   "status",
+  "workflow_state",
   "check_in_time",
   "check_out_time",
   "approved_by",
   "approved_at",
+  "completed_at",
   "rejected_reason",
   "sec_qr",
   "qr_code",
@@ -117,7 +119,14 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Status",
-   "options": "Registered\nAwaiting Approval\nApproved\nCompleted\nChecked Out\nRejected\nCancelled",
+   "options": "Registered\nAwaiting Approval\nApproved\nChecked In\nCompleted\nChecked Out\nRejected\nCancelled",
+   "read_only": 1
+  },
+  {
+   "fieldname": "workflow_state",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Workflow State",
    "read_only": 1
   },
   {
@@ -145,6 +154,12 @@
    "fieldname": "approved_at",
    "fieldtype": "Datetime",
    "label": "Waktu Persetujuan",
+   "read_only": 1
+  },
+  {
+   "fieldname": "completed_at",
+   "fieldtype": "Datetime",
+   "label": "Waktu Selesai",
    "read_only": 1
   },
   {
@@ -189,7 +204,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-02 15:45:29.377539",
+ "modified": "2026-05-29 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Visitor Management",
  "name": "Visitor",
