@@ -58,6 +58,16 @@
 			action: () => frappe.set_route("List", "Visitor Log"),
 		},
 		{
+			label: "VMS Settings",
+			keywords: ["vms settings", "visitor settings", "qr settings", "approval settings", "notification settings"],
+			action: () => frappe.set_route("Form", "Visitor Settings"),
+		},
+		{
+			label: "Data Cleanup",
+			keywords: ["data cleanup", "cleanup visitor", "archive visitor", "delete old visitor", "maintenance"],
+			action: () => frappe.set_route("vms-data-cleanup"),
+		},
+		{
 			label: "Visitor Management Workspace",
 			keywords: ["visitor management", "vms", "visitor workspace", "workspace visitor"],
 			action: () => frappe.set_route("Workspaces", "Visitor Management"),

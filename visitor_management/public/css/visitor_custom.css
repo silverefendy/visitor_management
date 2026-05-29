@@ -410,3 +410,40 @@ body.vms-print-body .vms-preview-panel {
 [data-page-route="Workspaces/Visitor%20Management"] .widget-title {
 	font-weight: 800 !important;
 }
+
+/* VMS Data Cleanup page */
+.vms-cleanup-shell {
+	display: grid;
+	gap: 18px;
+}
+
+.vms-cleanup-card {
+	background: var(--card-bg, #fff);
+	border: 1px solid var(--border-color, #e5e7eb);
+	border-radius: 18px;
+	box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+	padding: 18px;
+}
+
+.vms-cleanup-card h3 {
+	font-weight: 800;
+	margin: 0 0 14px;
+}
+
+.vms-cleanup-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+	gap: 12px 16px;
+}
+
+.vms-cleanup-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	margin-top: 16px;
+}
+
+.vms-cleanup-summary {
+	font-weight: 800;
+	margin-bottom: 12px;
+}

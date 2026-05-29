@@ -14,9 +14,10 @@ import json
 import frappe
 import qrcode
 from frappe import _
-from frappe.utils import now_datetime, today
+from frappe.utils import add_to_date, get_datetime, now_datetime, today
 
 from visitor_management.visitor_management.services.qr_service import parse_visitor_qr
+from visitor_management.visitor_management.services.settings_service import get_qr_settings, get_visitor_settings
 from visitor_management.visitor_management.services.visitor_service import check_in, check_out
 
 # =============================================================================
@@ -331,7 +332,9 @@ def _resolve_employee_scan(qr_code, employee=None):
 
 
 def get_active_visit(visitor):
-    active_statuses = ["Awaiting Approval", "Approved", "Completed"]
+    if get_visitor_settings("allow_multiple_active_visits", 0):
+        return None
+    active_statuses = ["Awaiting Approval", "Approved", "Checked In", "Completed"]
     if visitor.status in active_statuses:
         return visitor
 
@@ -348,6 +351,16 @@ def get_active_visit(visitor):
     )
     return frappe.get_doc("Visitor", active_name) if active_name else None
 
+
+
+def _is_visitor_qr_expired(visitor):
+    if not get_qr_settings("validate_qr_expiry", 0):
+        return False
+    expiry_hours = int(get_qr_settings("qr_expiry_duration", 24) or 24)
+    base_time = visitor.get("creation") or visitor.get("check_in_time")
+    if not base_time:
+        return False
+    return now_datetime() > add_to_date(get_datetime(base_time), hours=expiry_hours)
 
 def _resolve_visitor_scan(qr_code):
     """Resolve visitor QR state without changing the database.
@@ -367,6 +380,15 @@ def _resolve_visitor_scan(qr_code):
     if active_visit and active_visit.name != visitor.name:
         frappe.throw(_("Visitor dengan ID yang sama masih aktif: {0}").format(active_visit.name))
 
+    if _is_visitor_qr_expired(visitor):
+        return _visitor_scan_response(
+            visitor,
+            "INVALID",
+            "EXPIRED",
+            _("QR sudah kedaluwarsa sesuai QR Settings."),
+            qr_code=qr_code,
+        )
+
     status = visitor.status
     if status == "Registered":
         return _visitor_scan_response(
@@ -384,20 +406,12 @@ def _resolve_visitor_scan(qr_code):
             _("Visitor masih menunggu approval host."),
             qr_code=qr_code,
         )
-    if status == "Approved":
+    if status in ["Approved", "Checked In"]:
         return _visitor_scan_response(
             visitor,
-            "WAIT_INSIDE",
-            "APPROVED",
-            _("Tamu masih di area"),
-            qr_code=qr_code,
-        )
-    if status in ["Checked In"]:
-        return _visitor_scan_response(
-            visitor,
-            "WAIT_INSIDE",
-            "CHECKED_IN",
-            _("Tamu masih di area"),
+            "CHECK_OUT",
+            status.upper().replace(" ", "_"),
+            _("Visitor sudah berada di area. Konfirmasi check-out visitor."),
             qr_code=qr_code,
         )
     if status == "Completed":
@@ -416,7 +430,7 @@ def _resolve_visitor_scan(qr_code):
             _("QR sudah tidak berlaku. Visitor sudah check-out."),
             qr_code=qr_code,
         )
-    if status in ["Rejected", "Cancelled"]:
+    if status in ["Rejected", "Cancelled", "Archived"]:
         return _visitor_scan_response(
             visitor,
             "INVALID",

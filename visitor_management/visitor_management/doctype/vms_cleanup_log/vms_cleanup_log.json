@@ -1,0 +1,109 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "action",
+  "reference_doctype",
+  "reference_name",
+  "status_before",
+  "performed_by",
+  "performed_at",
+  "filters_json",
+  "remarks"
+ ],
+ "fields": [
+  {
+   "fieldname": "action",
+   "fieldtype": "Select",
+   "label": "Action",
+   "options": "Preview\nArchive\nDelete",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "reference_doctype",
+   "fieldtype": "Link",
+   "label": "Reference DocType",
+   "options": "DocType",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "reference_name",
+   "fieldtype": "Dynamic Link",
+   "label": "Reference Name",
+   "options": "reference_doctype",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "status_before",
+   "fieldtype": "Data",
+   "label": "Status Before"
+  },
+  {
+   "fieldname": "performed_by",
+   "fieldtype": "Link",
+   "label": "Performed By",
+   "options": "User",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "performed_at",
+   "fieldtype": "Datetime",
+   "label": "Performed At",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "filters_json",
+   "fieldtype": "Code",
+   "label": "Filters JSON",
+   "options": "JSON"
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  }
+ ],
+ "module": "Visitor Management",
+ "name": "VMS Cleanup Log",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1
+  },
+  {
+   "role": "VMS System Admin",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1
+  },
+  {
+   "role": "Visitor Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  }
+ ],
+ "sort_field": "performed_at",
+ "sort_order": "DESC",
+ "title_field": "reference_name",
+ "track_changes": 0,
+ "search_fields": "action,reference_doctype,reference_name,performed_by"
+}

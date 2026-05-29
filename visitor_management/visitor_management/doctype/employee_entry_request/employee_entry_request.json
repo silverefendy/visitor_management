@@ -151,6 +151,44 @@
    "role": "Employee",
    "share": 1,
    "write": 1
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "Visitor Security Guard"
+  },
+  {
+   "create": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Visitor Receptionist",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "Visitor Approver",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "VMS Manager"
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "VMS System Admin",
+   "share": 1,
+   "write": 1
   }
  ],
  "sort_field": "modified",

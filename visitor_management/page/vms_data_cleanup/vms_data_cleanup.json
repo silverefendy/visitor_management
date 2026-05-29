@@ -1,0 +1,15 @@
+{
+ "creation": "2026-05-29 00:00:00",
+ "doctype": "Page",
+ "module": "Visitor Management",
+ "name": "vms-data-cleanup",
+ "page_name": "vms-data-cleanup",
+ "roles": [
+  {"role": "System Manager"},
+  {"role": "VMS System Admin"},
+  {"role": "Visitor Manager"},
+  {"role": "VMS Manager"}
+ ],
+ "standard": "Yes",
+ "title": "VMS Data Cleanup"
+}

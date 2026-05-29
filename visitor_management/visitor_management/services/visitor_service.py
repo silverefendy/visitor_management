@@ -3,6 +3,7 @@ from frappe import _
 from frappe.utils import now_datetime
 
 from visitor_management.visitor_management.services.gate_service import get_gate_by_device
+from visitor_management.visitor_management.services.settings_service import get_approval_settings, get_visitor_settings
 from visitor_management.visitor_management.services.log_service import create_visitor_log
 
 ACTIVE_STATUSES = ["Awaiting Approval", "Approved", "Completed"]
@@ -10,7 +11,7 @@ VISITOR_WORKFLOW_STATE_FIELD = "workflow_state"
 
 # Status yang diizinkan untuk checkout. Completed berarti aktivitas selesai
 # dan visitor siap keluar; Checked Out adalah status final/invalid.
-CHECKOUT_ALLOWED_STATUSES = ["Completed"]
+CHECKOUT_ALLOWED_STATUSES = ["Approved", "Checked In", "Completed"]
 
 
 def is_visitor_inside(visitor_id):
@@ -53,6 +54,8 @@ def validate_blacklist(visitor, method=None):
 
 
 def validate_duplicate_active(visitor, method=None):
+    if get_visitor_settings("allow_multiple_active_visits", 0):
+        return
     dup = frappe.db.exists("Visitor", {
         "id_number": visitor.id_number,
         "status": ["in", ACTIVE_STATUSES],
@@ -72,7 +75,8 @@ def check_in(visitor, gate=None, device_id=None):
     validate_duplicate_active(visitor)
     gate_name = get_gate_by_device(device_id=device_id, gate=gate)
 
-    _sync_visitor_status(visitor, "Awaiting Approval")
+    target_status = "Awaiting Approval" if get_approval_settings("enable_approval_workflow", 1) else "Approved"
+    _sync_visitor_status(visitor, target_status)
     visitor.check_in_time = now_datetime()
     visitor.check_out_time = None
     if visitor.meta.has_field("completed_at"):
@@ -89,7 +93,9 @@ def check_in(visitor, gate=None, device_id=None):
         is_active=1,
     )
     frappe.db.commit()
-    return _visitor_response(visitor, _("Check-in berhasil. Menunggu approval."), next_action="WAIT_FOR_APPROVAL")
+    if visitor.status == "Awaiting Approval":
+        return _visitor_response(visitor, _("Check-in berhasil. Menunggu approval."), next_action="WAIT_FOR_APPROVAL")
+    return _visitor_response(visitor, _("Check-in berhasil."), next_action="INSIDE")
 
 
 def check_out(visitor, gate=None, device_id=None):
@@ -107,8 +113,6 @@ def check_out(visitor, gate=None, device_id=None):
                 "Visitor masih menunggu approval dari host. "
                 "Minta host untuk approve atau reject terlebih dahulu."
             ))
-        if visitor.status == "Approved":
-            frappe.throw(_("Tamu masih di area"))
         frappe.throw(_(
             "Tidak bisa check-out. Status saat ini: {0}. "
             "Status yang diizinkan: {1}."

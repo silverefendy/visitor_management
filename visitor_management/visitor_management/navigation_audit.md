@@ -1,60 +1,57 @@
-# Visitor Management Navigation Audit
+# Visitor Management Structural Navigation Audit
 
 ## Inventory
 
 ### Custom DocTypes
 
-| Category | DocType | Purpose | Workspace | Awesome Bar |
-| --- | --- | --- | --- | --- |
-| Main Operations | `Visitor` | Visitor registration, approval, QR, check-in, and check-out record. | Primary shortcut, quick list, KPI source | Prioritized with search fields and VMS shortcuts |
-| Main Operations | `Employee Entry Request` | Employee access request workflow used by the VMS scanner and employee entry portal. | Operational quick list and report shortcut | Searchable, but secondary to Visitor |
-| Logs / History | `Visitor Log` | Visitor access audit trail and IN/OUT history. | Primary log shortcut and quick list | Searchable for audit lookup |
-| Logs / History | `Employee Entry Log` | Employee entry audit history. | Operational quick list/report area | Lower priority in global search |
-| Configuration | `Gate` | Gate/device configuration for scanner locations. | Configuration section only | Hidden from global search priority |
+| Category | DocType | Purpose | Navigation Decision |
+| --- | --- | --- | --- |
+| Main Operations | `Visitor` | Visitor registration, QR identity, status, and operational record. | Keep as the single visitor list. List-view buttons provide Today, Checked In, Checked Out, Pending, and This Month filters instead of duplicate menu pages. |
+| Main Operations | `Visitor Log` | Immutable-ish visitor access history for scan/approval events. | Keep as the single operational log menu. |
+| Main Operations | `Employee Entry Request` | Employee access request workflow used by scanner/employee entry route. | Secondary operational DocType; not part of the simplified main VMS menu. |
+| Logs / History | `Employee Entry Log` | Employee entry audit history. | Kept for administrators/managers; lower Awesome Bar priority. |
+| Logs / Maintenance | `VMS Cleanup Log` | Audit trail for archive/delete maintenance actions. | Visible in workspace quick lists for managers/admins. |
+| Configuration | `Visitor Settings` | General visitor behavior, display, QR generation toggle, and retention policy. | Functional Single settings DocType. |
+| Configuration | `QR Settings` | QR generation, scanner, expiry, and duplicate/reuse controls. | Functional Single settings DocType. |
+| Configuration | `Approval Settings` | Approval workflow policy and escalation controls. | Functional Single settings DocType. |
+| Configuration | `Notification Settings` | Email, WhatsApp/SMS, browser, and sound notification toggles. | Functional Single settings DocType. |
+| Configuration | `Gate` | Gate/scanner device configuration with gate type and allowed-role metadata. | Configuration-only menu. |
 
 ### Pages and Web Routes
 
 | Route | File | Audience | Navigation Decision |
 | --- | --- | --- | --- |
-| `/vms-scanner` | `www/vms-scanner.html` / `www/vms-scanner.py` | Security / receptionist | Primary Scan QR, Check In, and Check Out shortcuts |
-| `/vms-approval` | `www/vms-approval.html` / `www/vms-approval.py` | Visitor Manager / host approval users | Main Operations shortcut |
-| `/employee-entry` | `www/employee-entry.html` / `www/employee-entry.py` | Employees / HR | Secondary operational list/report path |
-| `/app/visitor-scanner` | `page/visitor_scanner` | Desk scanner page | Kept available for roles, but `/vms-scanner` is preferred for operations |
+| `/vms-scanner` | `www/vms-scanner.html` / `www/vms-scanner.py` | Security / receptionist | Primary operational entry point. Check In and Check Out aliases route here instead of separate workspace menus. |
+| `/vms-approval` | `www/vms-approval.html` / `www/vms-approval.py` | Approver / manager | Kept as an approval workbench, accessible by role and Awesome Bar/workflow use. |
+| `/employee-entry` | `www/employee-entry.html` / `www/employee-entry.py` | Employees / HR | Secondary employee access flow. |
+| `/app/vms-data-cleanup` | `page/vms_data_cleanup` | Manager / system admin | Dedicated maintenance page with preview, select, archive, delete confirmation, and cleanup audit logs. |
+| `/app/visitor-scanner` | `page/visitor_scanner` | Desk users | Legacy Desk scanner page retained, but `/vms-scanner` is the preferred operations route. |
 
-### Reports, Dashboards, Print Formats, Child Tables
+## Duplicate Menu Cleanup
 
-No standard Query Report, Script Report, Dashboard, Print Format, or child-table DocTypes were found in this app tree. Workspace report shortcuts therefore route to filtered DocType list/report views instead of non-existent report records.
+The workspace main menu was reduced to six production operations:
 
-## Visibility Decisions
+1. Visitor
+2. Scan QR
+3. Visitor Logs
+4. Reports
+5. Settings
+6. Data Cleanup
 
-### Show Prominently
+Removed as separate workspace menu concepts:
 
-- Visitor
-- Visitor Log
-- Scan QR / VMS Scanner
-- Check In / Check Out scanner intents
-- Today's Visitors and operational filtered Visitor lists
-- Pending Approval / Approval panel
+- `Check In` and `Check Out`: both are operational scan outcomes handled through `Scan QR`.
+- `Today's Visitors`: now a built-in Visitor list filter, not a separate menu/page.
+- Duplicate checked-in/checked-out/pending shortcuts: now list-view filters and Awesome Bar aliases.
 
-### Show as Secondary Operations
+## Role-Based Intent
 
-- Employee Entry Request
-- Employee Entry Log
-- Employee Visit Report view
+- Security Guard: scan QR and view visitor status/logs only.
+- Receptionist: create/edit visitors, scan QR, and view logs.
+- Approver: approve/reject visitor requests and view pending approvals.
+- Manager: reports, statistics, export, and cleanup preview/archive.
+- VMS System Admin/System Manager: settings, data cleanup deletion, permissions, and full logs.
 
-### Show Only Under Configuration
+## Cleanup Safety
 
-- Gate
-- Visitor Settings / QR Settings / Approval Settings / Notification Settings placeholders, grouped in the smaller Configuration section until dedicated settings DocTypes exist.
-
-### Hide or De-prioritize for Normal Search
-
-- Gate is configuration-only and not shown in global search priority.
-- Employee Entry Log is audit/system history and not shown in global search priority.
-- No child tables were found, so no child-table Awesome Bar cleanup was required.
-
-## Role-Based Navigation Intent
-
-- Receptionist / Visitor Security: workspace focuses on Visitor, Scan QR, Check In, Check Out, active/pending/today filters, and logs.
-- Visitor Manager / System Manager: additionally sees configuration links and all operational/audit lists through role permissions.
-- Employee: workspace remains accessible for employee-related access flows but operational VMS shortcuts are grouped first for clarity.
+The Data Cleanup page requires privileged roles, supports preview before action, checkbox selection, archive instead of delete, a typed `DELETE` confirmation for destructive actions, and writes `VMS Cleanup Log` records for auditability.

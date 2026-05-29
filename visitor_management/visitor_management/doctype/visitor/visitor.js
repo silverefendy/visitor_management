@@ -34,15 +34,37 @@ frappe.ui.form.on("Visitor", {
 			});
 		}
 
+		if (["Approved", "Checked In", "Completed"].includes(frm.doc.status)) {
+			frm.add_custom_button(__("Check Out"), () => {
+				frappe.confirm(__("Check out this visitor now?"), () => {
+					frm.call("do_checkout").then((r) => {
+						if (r.message) frappe.msgprint(r.message.message || __("Visitor checked out."));
+						frm.reload_doc();
+					});
+				});
+			}).addClass("btn-primary");
+		}
+
 		if (frm.doc.status === "Approved") {
 			frm.add_custom_button(__("Selesai Kunjungan"), () => {
-				frappe.confirm(__("Tandai kunjungan ini selesai? Setelah itu security dapat melakukan check-out."), () => {
+				frappe.confirm(__("Tandai kunjungan ini selesai?"), () => {
 					frm.call("end_visit").then((r) => {
 						if (r.message) frappe.msgprint(r.message.message || __("Kunjungan selesai."));
 						frm.reload_doc();
 					});
 				});
-			}).addClass("btn-primary");
+			});
+		}
+
+		if (!["Archived"].includes(frm.doc.status)) {
+			frm.add_custom_button(__("Archive"), () => {
+				frappe.confirm(__("Archive this visitor record?"), () => {
+					frm.call("archive_visit").then((r) => {
+						if (r.message) frappe.msgprint(r.message.message || __("Visitor archived."));
+						frm.reload_doc();
+					});
+				});
+			}, __("Actions"));
 		}
 	},
 

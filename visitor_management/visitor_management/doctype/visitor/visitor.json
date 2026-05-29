@@ -27,6 +27,8 @@
   "approved_at",
   "completed_at",
   "rejected_reason",
+  "archived_at",
+  "archived_by",
   "sec_qr",
   "qr_code",
   "qr_code_image",
@@ -57,7 +59,8 @@
   {
    "fieldname": "visitor_company",
    "fieldtype": "Data",
-   "label": "Perusahaan"
+   "label": "Perusahaan",
+   "in_standard_filter": 1
   },
   {
    "fieldname": "id_type",
@@ -119,7 +122,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Status",
-   "options": "Registered\nAwaiting Approval\nApproved\nChecked In\nCompleted\nChecked Out\nRejected\nCancelled",
+   "options": "Registered\nAwaiting Approval\nApproved\nChecked In\nCompleted\nChecked Out\nRejected\nCancelled\nArchived",
    "read_only": 1
   },
   {
@@ -134,14 +137,16 @@
    "fieldtype": "Datetime",
    "in_list_view": 1,
    "label": "Waktu Check In",
-   "read_only": 1
+   "read_only": 1,
+   "in_standard_filter": 1
   },
   {
    "fieldname": "check_out_time",
    "fieldtype": "Datetime",
    "in_list_view": 1,
    "label": "Waktu Check Out",
-   "read_only": 1
+   "read_only": 1,
+   "in_standard_filter": 1
   },
   {
    "fieldname": "approved_by",
@@ -166,6 +171,19 @@
    "fieldname": "rejected_reason",
    "fieldtype": "Small Text",
    "label": "Alasan Penolakan",
+   "read_only": 1
+  },
+  {
+   "fieldname": "archived_at",
+   "fieldtype": "Datetime",
+   "label": "Archived At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "archived_by",
+   "fieldtype": "Link",
+   "label": "Archived By",
+   "options": "User",
    "read_only": 1
   },
   {
@@ -251,6 +269,51 @@
    "read": 1,
    "report": 1,
    "role": "Employee",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "print": 1,
+   "role": "Visitor Security Guard"
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Visitor Receptionist",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Visitor Approver",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "VMS Manager",
+   "share": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "VMS System Admin",
    "share": 1,
    "write": 1
   }
