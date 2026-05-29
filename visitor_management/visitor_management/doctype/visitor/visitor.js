@@ -1,5 +1,7 @@
 frappe.ui.form.on("Visitor", {
 	refresh(frm) {
+		render_visitor_preview(frm);
+
 		if (frm.is_new()) return;
 
 		if (frm.doc.status === "Awaiting Approval") {
@@ -43,4 +45,18 @@ frappe.ui.form.on("Visitor", {
 			}).addClass("btn-primary");
 		}
 	},
+
+	visitor_name: render_visitor_preview,
+	visitor_company: render_visitor_preview,
+	status: render_visitor_preview,
+	check_in_time: render_visitor_preview,
+	check_out_time: render_visitor_preview,
+	visitor_photo: render_visitor_preview,
+	qr_code_image: render_visitor_preview,
 });
+
+function render_visitor_preview(frm) {
+	if (window.visitor_management && window.visitor_management.visitor_preview) {
+		window.visitor_management.visitor_preview.render(frm);
+	}
+}
