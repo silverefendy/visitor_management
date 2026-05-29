@@ -1,19 +1,40 @@
 import frappe
 from frappe import _
 from frappe.utils import now_datetime
-from visitor_management.visitor_management.services.log_service import create_visitor_log
+
 from visitor_management.visitor_management.services.gate_service import get_gate_by_device
+from visitor_management.visitor_management.services.log_service import create_visitor_log
 
 ACTIVE_STATUSES = ["Awaiting Approval", "Approved", "Checked In", "Completed"]
+VISITOR_WORKFLOW_STATE_FIELD = "workflow_state"
 
 # Status yang diizinkan untuk checkout
-# Termasuk "Approved" agar security bisa checkout langsung tanpa perlu
-# host menekan "Selesai Kunjungan" terlebih dahulu
-CHECKOUT_ALLOWED_STATUSES = ["Approved", "Completed"]
+# Termasuk "Approved" dan "Checked In" agar security bisa checkout
+# setelah approval tanpa perlu host menekan "Selesai Kunjungan" terlebih dahulu
+CHECKOUT_ALLOWED_STATUSES = ["Approved", "Checked In", "Completed"]
 
 
 def is_visitor_inside(visitor_id):
     return bool(frappe.db.exists("Visitor Log", {"visitor": visitor_id, "is_active": 1}))
+
+
+def _sync_visitor_status(visitor, status):
+    visitor.status = status
+    if visitor.meta and visitor.meta.has_field(VISITOR_WORKFLOW_STATE_FIELD):
+        visitor.workflow_state = status
+
+
+def _visitor_response(visitor, message, next_action=None):
+    workflow_state = visitor.get(VISITOR_WORKFLOW_STATE_FIELD) if visitor.meta.has_field(VISITOR_WORKFLOW_STATE_FIELD) else visitor.status
+    return {
+        "success": True,
+        "status": "success",
+        "message": message,
+        "visitor": visitor.name,
+        "visitor_status": visitor.status,
+        "workflow_state": workflow_state,
+        "next_action": next_action,
+    }
 
 
 def validate_blacklist(visitor, method=None):
@@ -41,7 +62,7 @@ def check_in(visitor, gate=None, device_id=None):
     validate_duplicate_active(visitor)
     gate_name = get_gate_by_device(device_id=device_id, gate=gate)
 
-    visitor.status = "Awaiting Approval"
+    _sync_visitor_status(visitor, "Awaiting Approval")
     visitor.check_in_time = now_datetime()
     visitor.check_out_time = None
     visitor.save(ignore_permissions=True)
@@ -55,7 +76,8 @@ def check_in(visitor, gate=None, device_id=None):
         check_in_time=visitor.check_in_time,
         is_active=1,
     )
-    return {"status": "success", "message": _("Check-in berhasil. Menunggu approval.")}
+    frappe.db.commit()
+    return _visitor_response(visitor, _("Check-in berhasil. Menunggu approval."), next_action="WAIT_FOR_APPROVAL")
 
 
 def check_out(visitor, gate=None, device_id=None):
@@ -84,7 +106,7 @@ def check_out(visitor, gate=None, device_id=None):
         frappe.throw(_("Tidak ditemukan log aktif untuk visitor ini"))
 
     gate_name = get_gate_by_device(device_id=device_id, gate=gate)
-    visitor.status = "Checked Out"
+    _sync_visitor_status(visitor, "Checked Out")
     visitor.check_out_time = now_datetime()
     visitor.save(ignore_permissions=True)
 
@@ -104,4 +126,5 @@ def check_out(visitor, gate=None, device_id=None):
         check_out_time=visitor.check_out_time,
         is_active=0,
     )
-    return {"status": "success", "message": _("Check-out berhasil.")}
+    frappe.db.commit()
+    return _visitor_response(visitor, _("Check-out berhasil."), next_action="DONE")
