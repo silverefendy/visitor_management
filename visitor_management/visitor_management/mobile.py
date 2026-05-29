@@ -293,34 +293,23 @@ def get_recent_activity():
 
 @frappe.whitelist(allow_guest=False)
 def process_scan(qr_code, action=None):
+	"""Resolve-only compatibility endpoint for Flutter scanner.
+
+	Even if old clients pass checkIn/checkOut/employeeEntry, this function does
+	not mutate data. It returns the backend-provided next_action so the app can
+	show OK/Cancel and call execute_confirmed_scan after OK.
 	"""
-	Endpoint scan utama dari Flutter app.
-	Resolve-only by default so mobile can show OK/Cancel confirmation before any database write.
-	Call execute_confirmed_scan after the user presses OK.
-	"""
-	from visitor_management.visitor_management.api import scan_qr
+	from visitor_management.visitor_management.api import resolve_scan_action
 
 	try:
-		if not action or str(action).lower() in {"resolve", "preview"}:
-			result = scan_qr(qr_code=qr_code, action="resolve")
-		elif str(action).lower() == "auto":
-			result = scan_qr(qr_code=qr_code, action="auto")
-		elif action == "checkIn":
-			result = scan_qr(qr_code=qr_code, action="checkin")
-		elif action == "checkOut":
-			result = scan_qr(qr_code=qr_code, action="checkout")
-		elif action == "employeeEntry":
-			result = scan_qr(qr_code=qr_code, action="employeeCheckIn")
-		else:
-			frappe.throw(_("Aksi scan tidak dikenali: {0}").format(action))
-
+		result = resolve_scan_action(qr_code=qr_code)
+		if action and result.get("success"):
+			result["legacy_action_ignored"] = action
 		status = result.get("status", "error") if result else "error"
-		message = result.get("message", "Terjadi kesalahan") if result else "Terjadi kesalahan"
-
 		response = {
 			"success": result.get("success", status == "success") if result else False,
 			"status": status,
-			"message": message,
+			"message": result.get("message", "Terjadi kesalahan") if result else "Terjadi kesalahan",
 			"reference_id": result.get("visitor") or result.get("entry") if result else None,
 		}
 		if result:

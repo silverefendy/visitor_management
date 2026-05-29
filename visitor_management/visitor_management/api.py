@@ -212,27 +212,61 @@ def _find_employee_from_scan(raw_value, payload=None):
     return None
 
 
-def _visitor_scan_response(visitor, next_action, scan_status, message):
+
+def _scan_action_label(next_action, entity_type=None):
+    labels = {
+        "CHECK_IN": _("Check In Visitor"),
+        "CHECK_OUT": _("Check Out Visitor"),
+        "EMPLOYEE_CHECK_IN": _("Employee Check In"),
+        "EMPLOYEE_CHECK_OUT": _("Employee Check Out"),
+        "WAIT_FOR_APPROVAL": _("Menunggu Approval"),
+        "WAIT_INSIDE": _("Tamu masih di area"),
+        "INVALID": _("QR Tidak Berlaku"),
+    }
+    return labels.get(next_action, next_action or _("Tidak ada aksi"))
+
+
+def _scan_confirmation_title(next_action, entity_type=None):
+    titles = {
+        "CHECK_IN": _("Check In Visitor?"),
+        "CHECK_OUT": _("Check Out Visitor?"),
+        "EMPLOYEE_CHECK_IN": _("Employee Check In?"),
+        "EMPLOYEE_CHECK_OUT": _("Employee Check Out?"),
+    }
+    return titles.get(
+        next_action,
+        _("Konfirmasi Scan Karyawan") if entity_type == "EMPLOYEE" else _("Konfirmasi Scan Tamu"),
+    )
+
+def _visitor_scan_response(visitor, next_action, scan_status, message, qr_code=None):
     workflow_state = visitor.get("workflow_state") if visitor.meta.has_field("workflow_state") else visitor.status
+    confirmation_required = next_action in ["CHECK_IN", "CHECK_OUT"]
     return _standard_success(
         message,
         entity_type="VISITOR",
         visitor=visitor.name,
+        visitor_id=visitor.name,
+        qr_code=qr_code,
         visitor_name=visitor.visitor_name,
         company=visitor.visitor_company,
         visitor_company=visitor.visitor_company,
         employee_name=visitor.host_employee_name,
         host_employee_name=visitor.host_employee_name,
+        purpose=visitor.visit_purpose,
+        visit_purpose=visitor.visit_purpose,
         current_status=visitor.status,
         status=scan_status,
         visitor_status=visitor.status,
         workflow_state=workflow_state,
         next_action=next_action,
-        requires_confirmation=next_action not in ["WAIT_FOR_APPROVAL", "WAIT_INSIDE", "INVALID"],
+        action_label=_scan_action_label(next_action, "VISITOR"),
+        confirmation_title=_scan_confirmation_title(next_action, "VISITOR"),
+        confirmation_required=confirmation_required,
+        requires_confirmation=confirmation_required,
     )
 
 
-def _employee_scan_response(employee, next_action, scan_status, message, entry=None):
+def _employee_scan_response(employee, next_action, scan_status, message, entry=None, qr_code=None):
     emp = frappe.db.get_value(
         "Employee",
         employee,
@@ -243,15 +277,21 @@ def _employee_scan_response(employee, next_action, scan_status, message, entry=N
         message,
         entity_type="EMPLOYEE",
         employee=employee,
+        employee_id=employee,
+        qr_code=qr_code,
         employee_name=emp.employee_name if emp else None,
         department=emp.department if emp else None,
         employee_status=emp.status if emp else None,
         entry=entry.name if entry else None,
+        entry_id=entry.name if entry else None,
         entry_status=entry.status if entry else None,
-        current_status=entry.status if entry else "No Active Entry",
+        current_status=entry.status if entry else "Outside",
         status=scan_status,
         next_action=next_action,
-        requires_confirmation=True,
+        action_label=_scan_action_label(next_action, "EMPLOYEE"),
+        confirmation_title=_scan_confirmation_title(next_action, "EMPLOYEE"),
+        confirmation_required=next_action in ["EMPLOYEE_CHECK_IN", "EMPLOYEE_CHECK_OUT"],
+        requires_confirmation=next_action in ["EMPLOYEE_CHECK_IN", "EMPLOYEE_CHECK_OUT"],
     )
 
 
@@ -269,6 +309,7 @@ def _resolve_employee_scan(qr_code, employee=None):
             "EMPLOYEE_CHECK_IN",
             "NO_ACTIVE_ENTRY",
             _("Karyawan terdeteksi. Pengajuan check-in dapat dibuat."),
+            qr_code=qr_code,
         )
     if open_entry.status == "Completed":
         return _employee_scan_response(
@@ -277,6 +318,7 @@ def _resolve_employee_scan(qr_code, employee=None):
             "READY_FOR_CHECK_OUT",
             _("Karyawan sudah selesai dan siap check-out."),
             entry=open_entry,
+            qr_code=qr_code,
         )
     return _employee_scan_response(
         employee,
@@ -284,6 +326,7 @@ def _resolve_employee_scan(qr_code, employee=None):
         open_entry.status,
         _("Pengajuan karyawan masih aktif dengan status {0}.").format(open_entry.status),
         entry=open_entry,
+        qr_code=qr_code,
     )
 
 
@@ -331,6 +374,7 @@ def _resolve_visitor_scan(qr_code):
             "CHECK_IN",
             "REGISTERED",
             _("Visitor terdaftar. Konfirmasi check-in visitor."),
+            qr_code=qr_code,
         )
     if status == "Awaiting Approval":
         return _visitor_scan_response(
@@ -338,6 +382,7 @@ def _resolve_visitor_scan(qr_code):
             "WAIT_FOR_APPROVAL",
             "AWAITING_APPROVAL",
             _("Visitor masih menunggu approval host."),
+            qr_code=qr_code,
         )
     if status == "Approved":
         return _visitor_scan_response(
@@ -345,6 +390,7 @@ def _resolve_visitor_scan(qr_code):
             "WAIT_INSIDE",
             "APPROVED",
             _("Tamu masih di area"),
+            qr_code=qr_code,
         )
     if status in ["Checked In"]:
         return _visitor_scan_response(
@@ -352,6 +398,7 @@ def _resolve_visitor_scan(qr_code):
             "WAIT_INSIDE",
             "CHECKED_IN",
             _("Tamu masih di area"),
+            qr_code=qr_code,
         )
     if status == "Completed":
         return _visitor_scan_response(
@@ -359,6 +406,7 @@ def _resolve_visitor_scan(qr_code):
             "CHECK_OUT",
             "COMPLETED",
             _("Check Out Visitor?"),
+            qr_code=qr_code,
         )
     if status == "Checked Out":
         return _visitor_scan_response(
@@ -366,6 +414,7 @@ def _resolve_visitor_scan(qr_code):
             "INVALID",
             "CHECKED_OUT",
             _("QR sudah tidak berlaku. Visitor sudah check-out."),
+            qr_code=qr_code,
         )
     if status in ["Rejected", "Cancelled"]:
         return _visitor_scan_response(
@@ -373,6 +422,7 @@ def _resolve_visitor_scan(qr_code):
             "INVALID",
             status,
             _("QR belum dapat digunakan. Status saat ini: {0}.").format(status),
+            qr_code=qr_code,
         )
 
     frappe.throw(_("Status visitor tidak dapat diproses: {0}").format(status))
@@ -490,68 +540,52 @@ def resolve_scan_action(qr_code=None, qr_data=None):
 
 @frappe.whitelist(allow_guest=False)
 def scan_qr(qr_code=None, qr_data=None, action="auto", gate=None, device_id=None):
-    """Compatibility wrapper for scanner clients.
+    """Compatibility wrapper that only resolves scans.
 
-    New clients must call resolve_scan_action first, show confirmation, then call
-    execute_scan_action. To prevent accidental database writes, auto/resolve modes
-    now only return the resolved action preview. Explicit execution is still routed
-    through execute_scan_action so status is re-resolved immediately before commit.
+    This endpoint is intentionally non-mutating for production safety. Legacy
+    clients that still pass action=checkin/checkOut receive the backend-resolved
+    ``next_action`` and must call execute_scan_action only after user
+    confirmation.
     """
     scan_value = qr_code or qr_data
-    normalized_action = str(action or "auto").strip().lower()
-    if normalized_action in {"auto", "resolve", "preview", ""}:
-        return resolve_scan_action(qr_code=scan_value)
-
-    action_map = {
-        "checkin": "CHECK_IN",
-        "check_in": "CHECK_IN",
-        "checkinvisitor": "CHECK_IN",
-        "checkout": "CHECK_OUT",
-        "check_out": "CHECK_OUT",
-        "checkoutvisitor": "CHECK_OUT",
-        "employeecheckin": "EMPLOYEE_CHECK_IN",
-        "employee_check_in": "EMPLOYEE_CHECK_IN",
-        "employeeentry": "EMPLOYEE_CHECK_IN",
-        "employeecheckout": "EMPLOYEE_CHECK_OUT",
-        "employee_check_out": "EMPLOYEE_CHECK_OUT",
-    }
-    expected_action = action_map.get(normalized_action)
-    if expected_action:
-        return execute_scan_action(
-            qr_code=scan_value,
-            action=expected_action,
-            gate=gate,
-            device_id=device_id,
-        )
-
-    frappe.throw(_("Aksi scan tidak dikenali: {0}").format(action))
+    resolved = resolve_scan_action(qr_code=scan_value)
+    normalized_action = str(action or "auto").strip()
+    if normalized_action.lower() not in {"auto", "resolve", "preview", ""}:
+        resolved["legacy_action_ignored"] = normalized_action
+        resolved["message"] = resolved.get("message") or _("Konfirmasi diperlukan sebelum menjalankan aksi scan.")
+    return resolved
 
 
 @frappe.whitelist(allow_guest=False)
 def execute_scan_action(qr_code=None, qr_data=None, action=None, gate=None, device_id=None):
     """Execute a previously resolved scan action after frontend confirmation."""
     scan_value = qr_code or qr_data
-    if not action:
+    confirmed_action = str(action or "").strip().upper()
+    if not confirmed_action:
         frappe.throw(_("Aksi konfirmasi wajib diisi"))
+
+    valid_actions = {"CHECK_IN", "CHECK_OUT", "EMPLOYEE_CHECK_IN", "EMPLOYEE_CHECK_OUT"}
+    if confirmed_action not in valid_actions:
+        frappe.throw(_("Aksi scan tidak dikenali: {0}").format(action))
 
     resolved = resolve_scan_action(qr_code=scan_value)
     expected_action = resolved.get("next_action")
-    if expected_action == "INVALID":
-        frappe.throw(resolved.get("message") or _("QR tidak dapat digunakan."))
-    if expected_action != action:
-        frappe.throw(_("Aksi tidak sesuai. Status terbaru membutuhkan {0}, bukan {1}.").format(expected_action, action))
+    if expected_action in {"INVALID", "WAIT_FOR_APPROVAL", "WAIT_INSIDE"}:
+        frappe.throw(resolved.get("message") or _("Scan belum dapat diproses."))
+    if expected_action != confirmed_action:
+        frappe.throw(_("Aksi tidak sesuai. Status terbaru membutuhkan {0}, bukan {1}.").format(expected_action, confirmed_action))
 
     frappe.logger("visitor_management").info(
         "Executing confirmed scan action",
         extra={
             "entity_type": resolved.get("entity_type"),
-            "action": action,
+            "action": confirmed_action,
             "status": resolved.get("status"),
         },
     )
     result = _execute_resolved_scan(scan_value, resolved, gate=gate, device_id=device_id)
     result.update({
-        "confirmed_action": action,
+        "confirmed_action": confirmed_action,
         "entity_type": resolved.get("entity_type"),
     })
     return result
@@ -856,6 +890,7 @@ def scan_employee_entry_barcode(qr_data, action):
             "purpose": "Scan barcode security",
         })
         doc.insert(ignore_permissions=True)
+        doc.save(ignore_permissions=True)
         frappe.db.commit()
         return _employee_entry_response(doc, _("Pengajuan check-in karyawan dibuat. Menunggu approval."))
 
@@ -864,7 +899,10 @@ def scan_employee_entry_barcode(qr_data, action):
             frappe.throw(_("Tidak ada pengajuan karyawan yang menunggu check-out."))
         if open_entry.status != "Completed":
             frappe.throw(_("Belum bisa check-out. Status saat ini: {0}").format(open_entry.status))
-        return open_entry.checkout()
+        result = open_entry.checkout()
+        open_entry.save(ignore_permissions=True)
+        frappe.db.commit()
+        return result
 
     frappe.throw(_("Aksi tidak dikenali"))
 

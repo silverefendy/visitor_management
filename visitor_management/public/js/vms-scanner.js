@@ -126,17 +126,9 @@ function resolveScan(input) {
       if (!resolved) { alert2("error", "Scan tidak valid"); return; }
       resolved.qr_code = qr;
       pendingResolution = resolved;
-      if (resolved.next_action === "INVALID") {
-        visitor = null;
-        pendingResolution = null;
-        renderResolved(resolved, false);
-        alert2("error", resolved.message || "QR tidak berlaku");
-        feedback(false);
-        return;
-      }
       visitor = resolved;
-      renderResolved(resolved, true);
-      feedback(true);
+      renderResolved(resolved, resolved.confirmation_required === true || resolved.requires_confirmation === true);
+      feedback(resolved.confirmation_required === true || resolved.requires_confirmation === true);
     },
     function(e) {
       processing = false;
@@ -192,12 +184,12 @@ function stopScanner() {
   document.getElementById("camera-status").textContent = "Scanner berhenti.";
 }
 
-function tampil(record) { renderResolved(record, record.next_action !== "INVALID"); }
+function tampil(record) { renderResolved(record, record.confirmation_required === true || record.requires_confirmation === true); }
 
 function renderResolved(data, canProcess) {
   var isEmployee = data.entity_type === "EMPLOYEE";
   var status = data.current_status || data.visitor_status || data.entry_status || data.status || "-";
-  var actionLabel = labelForAction(data.next_action, isEmployee);
+  var actionLabel = labelForAction(data.next_action, isEmployee, data);
   var c = colorForStatus(status);
 
   document.getElementById("record-card-title").textContent = isEmployee ? "Konfirmasi Scan Karyawan" : "Konfirmasi Scan Tamu";
@@ -223,20 +215,12 @@ function renderResolved(data, canProcess) {
     return "<div class=\"info-item\"><label>" + esc(r[0]) + "</label><span>" + esc(r[1]) + "</span></div>";
   }).join("");
 
-  updateProcessButton(canProcess && data.requires_confirmation !== false, status, actionLabel);
+  updateProcessButton(canProcess && (data.confirmation_required === true || data.requires_confirmation === true), status, actionLabel);
 }
 
-function labelForAction(action, isEmployee) {
-  var labels = {
-    CHECK_IN: "Check In Visitor",
-    CHECK_OUT: "Check Out Visitor",
-    EMPLOYEE_CHECK_IN: "Employee Check In",
-    EMPLOYEE_CHECK_OUT: "Employee Check Out",
-    WAIT_FOR_APPROVAL: "Menunggu Approval",
-    WAIT_INSIDE: "Tamu Masih di Area",
-    INVALID: "QR Tidak Berlaku"
-  };
-  return labels[action] || (isEmployee ? "Proses Karyawan" : "Proses Visitor");
+function labelForAction(action, isEmployee, data) {
+  data = data || pendingResolution || {};
+  return data.action_label || data.confirmation_title || action || (isEmployee ? "Proses Karyawan" : "Proses Visitor");
 }
 
 function colorForStatus(status) {
@@ -259,12 +243,12 @@ function colorForStatus(status) {
 
 function updateProcessButton(canProcess, status, label) {
   var btnOk = document.getElementById("btn-ok");
-  if (canProcess && !["WAIT_FOR_APPROVAL", "WAIT_INSIDE", "INVALID"].includes(pendingResolution && pendingResolution.next_action)) {
+  if (canProcess) {
     btnOk.textContent = "Konfirmasi " + label;
     btnOk.disabled = false;
     btnOk.style.opacity = "1";
   } else {
-    btnOk.textContent = pendingResolution && pendingResolution.next_action === "WAIT_FOR_APPROVAL" ? "Menunggu Approval" : (pendingResolution && pendingResolution.next_action === "WAIT_INSIDE" ? "Tamu masih di area" : "Tidak bisa proses - Status: " + status);
+    btnOk.textContent = (pendingResolution && (pendingResolution.action_label || pendingResolution.message)) || ("Tidak bisa proses - Status: " + status);
     btnOk.disabled = true;
     btnOk.style.opacity = "0.5";
   }
@@ -274,16 +258,18 @@ function updateProcessButton(canProcess, status, label) {
 
 function proses() {
   if (!pendingResolution || processing) return;
-  if (!["CHECK_IN", "CHECK_OUT", "EMPLOYEE_CHECK_IN", "EMPLOYEE_CHECK_OUT"].includes(pendingResolution.next_action)) return;
+  if (!pendingResolution.confirmation_required && !pendingResolution.requires_confirmation) return;
   showConfirmation(pendingResolution);
 }
 
 function showConfirmation(data) {
   var isEmployee = data.entity_type === "EMPLOYEE";
-  setText("confirm-title", isEmployee ? "Konfirmasi Scan Karyawan" : confirmationTitle(data));
+  setText("confirm-title", isEmployee ? confirmationTitle(data) : confirmationTitle(data));
   setText("confirm-name", isEmployee ? data.employee_name : data.visitor_name);
-  setText("confirm-company", isEmployee ? ((data.employee || "-") + " / " + (data.department || "-")) : (data.company || data.visitor_company || "-"));
-  setText("confirm-action", labelForAction(data.next_action, isEmployee));
+  setText("confirm-company", isEmployee ? (data.department || "-") : (data.company || data.visitor_company || "-"));
+  setText("confirm-host", isEmployee ? "-" : (data.employee_name || data.host_employee_name || "-"));
+  setText("confirm-purpose", isEmployee ? "-" : (data.purpose || data.visit_purpose || "-"));
+  setText("confirm-action", labelForAction(data.next_action, isEmployee, data));
   var modal = document.getElementById("confirm-modal");
   modal.className = "confirm-modal open";
   modal.setAttribute("aria-hidden", "false");
@@ -291,9 +277,7 @@ function showConfirmation(data) {
 }
 
 function confirmationTitle(data) {
-  if (data.next_action === "CHECK_OUT") return "Check Out Visitor?";
-  if (data.next_action === "CHECK_IN") return "Check In Visitor?";
-  return "Konfirmasi Scan Tamu";
+  return data.confirmation_title || data.action_label || (data.entity_type === "EMPLOYEE" ? "Konfirmasi Scan Karyawan" : "Konfirmasi Scan Tamu");
 }
 
 function cancelConfirmation() {
