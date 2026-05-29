@@ -19,25 +19,29 @@
    "fieldtype": "Data",
    "label": "Gate Name",
    "reqd": 1,
-   "in_list_view": 1
+   "in_list_view": 1,
+   "description": "Human-readable gate or checkpoint name."
   },
   {
    "fieldname": "location",
    "fieldtype": "Data",
    "label": "Location",
-   "in_list_view": 1
+   "in_list_view": 1,
+   "description": "Physical location of this gate."
   },
   {
    "fieldname": "device_id",
    "fieldtype": "Data",
    "label": "Device ID",
    "in_list_view": 1,
-   "in_standard_filter": 1
+   "in_standard_filter": 1,
+   "description": "Scanner/device identifier used to resolve scans from this gate."
   },
   {
    "fieldname": "ip_address",
    "fieldtype": "Data",
-   "label": "IP Address"
+   "label": "IP Address",
+   "description": "Optional scanner device IP address."
   },
   {
    "fieldname": "status",
@@ -45,7 +49,8 @@
    "label": "Status",
    "options": "Active\nInactive",
    "default": "Active",
-   "in_list_view": 1
+   "in_list_view": 1,
+   "description": "Only Active gates should be used by scanner flows."
   },
   {
    "fieldname": "gate_type",
@@ -54,18 +59,20 @@
    "options": "Main Entrance\nLobby\nWarehouse\nParking\nRestricted Area\nOther",
    "default": "Main Entrance",
    "in_list_view": 1,
-   "in_standard_filter": 1
+   "in_standard_filter": 1,
+   "description": "Classifies this checkpoint for reporting and operations."
   },
   {
    "fieldname": "scanner_device",
    "fieldtype": "Data",
-   "label": "Scanner Device"
+   "label": "Scanner Device",
+   "description": "Optional scanner hardware name/model."
   },
   {
    "fieldname": "allowed_roles",
    "fieldtype": "Small Text",
    "label": "Allowed Roles",
-   "description": "Optional comma-separated role names allowed to use this gate."
+   "description": "Optional comma-separated role names allowed to operate this gate."
   }
  ],
  "module": "Visitor Management",
@@ -132,6 +139,6 @@
  "track_changes": 1,
  "search_fields": "gate_name,location,device_id,status",
  "show_name_in_global_search": 0,
- "description": "Gate and scanner device configuration for Visitor Management administrators.",
+ "description": "Gate settings for scanner location, device mapping, and role guidance.",
  "in_create": 0
 }

@@ -79,3 +79,7 @@ def get_qr_settings(fieldname: str, default=None):
 
 def get_approval_settings(fieldname: str, default=None):
     return get_vms_setting("Approval Settings", fieldname, default)
+
+
+def get_notification_settings(fieldname: str, default=None):
+    return get_vms_setting("VMS Notification Settings", fieldname, default)

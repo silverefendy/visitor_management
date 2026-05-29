@@ -27,31 +27,36 @@
    "fieldname": "enable_email_notifications",
    "fieldtype": "Check",
    "label": "Enable Email Notifications",
-   "default": 0
+   "default": 0,
+   "description": "Master toggle for VMS email notifications."
   },
   {
    "fieldname": "notify_host_employee",
    "fieldtype": "Check",
    "label": "Notify Host Employee",
-   "default": 1
+   "default": 1,
+   "description": "Notify host employee about visitor arrival/approval needs."
   },
   {
    "fieldname": "notify_security",
    "fieldtype": "Check",
    "label": "Notify Security",
-   "default": 0
+   "default": 0,
+   "description": "Notify security operators for relevant events."
   },
   {
    "fieldname": "send_check_in_email",
    "fieldtype": "Check",
    "label": "Send Check-In Email",
-   "default": 0
+   "default": 0,
+   "description": "Send an email when visitors check in."
   },
   {
    "fieldname": "send_check_out_email",
    "fieldtype": "Check",
    "label": "Send Check-Out Email",
-   "default": 0
+   "default": 0,
+   "description": "Send an email when visitors check out."
   },
   {
    "fieldname": "messaging_section",
@@ -62,13 +67,15 @@
    "fieldname": "enable_whatsapp_notification",
    "fieldtype": "Check",
    "label": "Enable WhatsApp Notification",
-   "default": 0
+   "default": 0,
+   "description": "Enable WhatsApp notification integration when configured externally."
   },
   {
    "fieldname": "enable_sms_notification",
    "fieldtype": "Check",
    "label": "Enable SMS Notification",
-   "default": 0
+   "default": 0,
+   "description": "Enable SMS notification integration when configured externally."
   },
   {
    "fieldname": "system_section",
@@ -79,13 +86,15 @@
    "fieldname": "browser_notifications",
    "fieldtype": "Check",
    "label": "Browser Notifications",
-   "default": 1
+   "default": 1,
+   "description": "Enable browser notifications for VMS pages."
   },
   {
    "fieldname": "sound_alert_on_arrival",
    "fieldtype": "Check",
    "label": "Sound Alert on Arrival",
-   "default": 1
+   "default": 1,
+   "description": "Play sound alert on visitor arrival in supported pages."
   }
  ],
  "issingle": 1,

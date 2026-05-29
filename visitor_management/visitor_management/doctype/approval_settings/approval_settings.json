@@ -21,32 +21,37 @@
    "fieldname": "enable_approval_workflow",
    "fieldtype": "Check",
    "label": "Enable Approval Workflow",
-   "default": 1
+   "default": 1,
+   "description": "When enabled, visitor check-in requires host/approver approval."
   },
   {
    "fieldname": "approval_required_for",
    "fieldtype": "Select",
    "label": "Approval Required For",
    "options": "All Visitors\nExternal Visitors\nVIP Visitors\nSpecific Departments",
-   "default": "All Visitors"
+   "default": "All Visitors",
+   "description": "Defines which visitor category requires approval."
   },
   {
    "fieldname": "auto_approve_internal_visitors",
    "fieldtype": "Check",
    "label": "Auto Approve Internal Visitors",
-   "default": 0
+   "default": 0,
+   "description": "Automatically approve internal visitor categories when supported."
   },
   {
    "fieldname": "escalation_timeout",
    "fieldtype": "Int",
    "label": "Escalation Timeout (Minutes)",
-   "default": 60
+   "default": 60,
+   "description": "Minutes before pending approvals are considered overdue."
   },
   {
    "fieldname": "multi_level_approval",
    "fieldtype": "Check",
    "label": "Multi-Level Approval",
-   "default": 0
+   "default": 0,
+   "description": "Reserve multi-level approval behavior for deployments that need it."
   }
  ],
  "issingle": 1,
