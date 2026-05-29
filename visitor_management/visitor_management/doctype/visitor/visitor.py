@@ -3,7 +3,7 @@ import json
 import os
 import uuid
 
-import frappe
+import frappehttps://github.com/silverefendy/visitor_management/pull/20/conflict?name=visitor_management%252Fvisitor_management%252Fdoctype%252Fvisitor%252Fvisitor.py&ancestor_oid=192f4f80270c183f4e61069d257ed4b3949b0eac&base_oid=1d2f812d76c4f64617d97ed3357c88f58219c6f7&head_oid=0bbad1852c2c2b7b750f8cd09546d091066a447f
 import qrcode
 from frappe import _
 from frappe.model.document import Document
@@ -29,6 +29,7 @@ VISITOR_STATUSES = [
 
 COMPLETABLE_STATUSES = ["Approved", "Checked In"]
 
+COMPLETABLE_STATUSES = ["Approved", "Checked In"]
 
 class Visitor(Document):
     def before_insert(self):
