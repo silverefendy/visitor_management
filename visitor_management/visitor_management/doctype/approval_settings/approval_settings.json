@@ -1,0 +1,94 @@
+{
+ "actions": [],
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "approval_section",
+  "enable_approval_workflow",
+  "approval_required_for",
+  "auto_approve_internal_visitors",
+  "escalation_timeout",
+  "multi_level_approval"
+ ],
+ "fields": [
+  {
+   "fieldname": "approval_section",
+   "fieldtype": "Section Break",
+   "label": "Approval Workflow"
+  },
+  {
+   "fieldname": "enable_approval_workflow",
+   "fieldtype": "Check",
+   "label": "Enable Approval Workflow",
+   "default": 1
+  },
+  {
+   "fieldname": "approval_required_for",
+   "fieldtype": "Select",
+   "label": "Approval Required For",
+   "options": "All Visitors\nExternal Visitors\nVIP Visitors\nSpecific Departments",
+   "default": "All Visitors"
+  },
+  {
+   "fieldname": "auto_approve_internal_visitors",
+   "fieldtype": "Check",
+   "label": "Auto Approve Internal Visitors",
+   "default": 0
+  },
+  {
+   "fieldname": "escalation_timeout",
+   "fieldtype": "Int",
+   "label": "Escalation Timeout (Minutes)",
+   "default": 60
+  },
+  {
+   "fieldname": "multi_level_approval",
+   "fieldtype": "Check",
+   "label": "Multi-Level Approval",
+   "default": 0
+  }
+ ],
+ "issingle": 1,
+ "module": "Visitor Management",
+ "name": "Approval Settings",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1
+  },
+  {
+   "role": "VMS System Admin",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1
+  },
+  {
+   "role": "Visitor Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1,
+ "description": "Configuration for Approval Settings."
+}
