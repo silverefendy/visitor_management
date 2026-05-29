@@ -1,0 +1,166 @@
+{
+ "actions": [],
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "general_section",
+  "enable_visitor_approval",
+  "require_visitor_photo",
+  "require_id_number",
+  "auto_generate_qr",
+  "auto_check_out_end_of_day",
+  "default_visit_duration",
+  "allow_multiple_active_visits",
+  "display_section",
+  "show_visitor_photo",
+  "show_qr_preview",
+  "enable_badge_printing",
+  "retention_section",
+  "retention_period_days",
+  "auto_archive_old_records"
+ ],
+ "fields": [
+  {
+   "fieldname": "general_section",
+   "fieldtype": "Section Break",
+   "label": "General"
+  },
+  {
+   "fieldname": "enable_visitor_approval",
+   "fieldtype": "Check",
+   "label": "Enable Visitor Approval",
+   "default": 1,
+   "description": "When enabled, scans move visitors to Awaiting Approval before entry is fully approved."
+  },
+  {
+   "fieldname": "require_visitor_photo",
+   "fieldtype": "Check",
+   "label": "Require Visitor Photo",
+   "default": 0,
+   "description": "Require a visitor photo before saving Visitor records."
+  },
+  {
+   "fieldname": "require_id_number",
+   "fieldtype": "Check",
+   "label": "Require ID Number",
+   "default": 1,
+   "description": "Require ID number before saving Visitor records."
+  },
+  {
+   "fieldname": "auto_generate_qr",
+   "fieldtype": "Check",
+   "label": "Auto Generate QR",
+   "default": 1,
+   "description": "Generate a QR image automatically when a Visitor is created."
+  },
+  {
+   "fieldname": "auto_check_out_end_of_day",
+   "fieldtype": "Check",
+   "label": "Auto Check Out at End of Day",
+   "default": 0,
+   "description": "Allow scheduler to check out stale active visitors after the default duration."
+  },
+  {
+   "fieldname": "default_visit_duration",
+   "fieldtype": "Int",
+   "label": "Default Visit Duration (Hours)",
+   "default": 8,
+   "description": "Used by auto checkout to decide when active visits are stale."
+  },
+  {
+   "fieldname": "allow_multiple_active_visits",
+   "fieldtype": "Check",
+   "label": "Allow Multiple Active Visits",
+   "default": 0,
+   "description": "Allow the same ID number to have more than one active visit."
+  },
+  {
+   "fieldname": "display_section",
+   "fieldtype": "Section Break",
+   "label": "Display"
+  },
+  {
+   "fieldname": "show_visitor_photo",
+   "fieldtype": "Check",
+   "label": "Show Visitor Photo",
+   "default": 1,
+   "description": "Show photo in the Visitor form preview panel."
+  },
+  {
+   "fieldname": "show_qr_preview",
+   "fieldtype": "Check",
+   "label": "Show QR Preview",
+   "default": 1,
+   "description": "Show QR image in the Visitor form preview panel."
+  },
+  {
+   "fieldname": "enable_badge_printing",
+   "fieldtype": "Check",
+   "label": "Enable Badge Printing",
+   "default": 1,
+   "description": "Enable visitor badge print action in the preview panel."
+  },
+  {
+   "fieldname": "retention_section",
+   "fieldtype": "Section Break",
+   "label": "Retention"
+  },
+  {
+   "fieldname": "retention_period_days",
+   "fieldtype": "Int",
+   "label": "Retention Period (Days)",
+   "default": 365,
+   "description": "Number of days to keep completed records before auto archive can process them."
+  },
+  {
+   "fieldname": "auto_archive_old_records",
+   "fieldtype": "Check",
+   "label": "Auto Archive Old Records",
+   "default": 0,
+   "description": "Allow daily scheduler to archive old checked-out/rejected/cancelled visitors."
+  }
+ ],
+ "issingle": 1,
+ "module": "Visitor Management",
+ "name": "Visitor Settings",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1
+  },
+  {
+   "role": "VMS System Admin",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1
+  },
+  {
+   "role": "Visitor Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1,
+ "description": "Configuration for Visitor Settings."
+}

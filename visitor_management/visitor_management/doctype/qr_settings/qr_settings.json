@@ -1,0 +1,159 @@
+{
+ "actions": [],
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "qr_generation_section",
+  "qr_prefix",
+  "qr_expiry_duration",
+  "qr_size",
+  "qr_error_correction_level",
+  "scanner_section",
+  "enable_mobile_scanner",
+  "enable_desktop_scanner",
+  "auto_open_camera",
+  "auto_scan_delay",
+  "security_section",
+  "prevent_duplicate_scan",
+  "validate_qr_expiry",
+  "prevent_reuse"
+ ],
+ "fields": [
+  {
+   "fieldname": "qr_generation_section",
+   "fieldtype": "Section Break",
+   "label": "QR Generation"
+  },
+  {
+   "fieldname": "qr_prefix",
+   "fieldtype": "Data",
+   "label": "QR Prefix",
+   "default": "VMS",
+   "description": "Prefix reserved for future generated QR identifiers."
+  },
+  {
+   "fieldname": "qr_expiry_duration",
+   "fieldtype": "Int",
+   "label": "QR Expiry Duration (Hours)",
+   "default": 24,
+   "description": "Number of hours before QR is considered expired when validation is enabled."
+  },
+  {
+   "fieldname": "qr_size",
+   "fieldtype": "Int",
+   "label": "QR Size",
+   "default": 10,
+   "description": "QR box size used when generating QR images."
+  },
+  {
+   "fieldname": "qr_error_correction_level",
+   "fieldtype": "Select",
+   "label": "QR Error Correction Level",
+   "options": "L\nM\nQ\nH",
+   "default": "M",
+   "description": "Error correction level for generated QR images."
+  },
+  {
+   "fieldname": "scanner_section",
+   "fieldtype": "Section Break",
+   "label": "Scanner"
+  },
+  {
+   "fieldname": "enable_mobile_scanner",
+   "fieldtype": "Check",
+   "label": "Enable Mobile Scanner",
+   "default": 1,
+   "description": "Allow mobile scanner routes for QR operations."
+  },
+  {
+   "fieldname": "enable_desktop_scanner",
+   "fieldtype": "Check",
+   "label": "Enable Desktop Scanner",
+   "default": 1,
+   "description": "Allow desktop scanner routes for QR operations."
+  },
+  {
+   "fieldname": "auto_open_camera",
+   "fieldtype": "Check",
+   "label": "Auto Open Camera",
+   "default": 0,
+   "description": "Open scanner camera automatically where browser permissions allow."
+  },
+  {
+   "fieldname": "auto_scan_delay",
+   "fieldtype": "Int",
+   "label": "Auto Scan Delay (ms)",
+   "default": 750,
+   "description": "Delay in milliseconds before accepting repeated scans."
+  },
+  {
+   "fieldname": "security_section",
+   "fieldtype": "Section Break",
+   "label": "Security"
+  },
+  {
+   "fieldname": "prevent_duplicate_scan",
+   "fieldtype": "Check",
+   "label": "Prevent Duplicate Scan",
+   "default": 1,
+   "description": "Prevent duplicate scan submissions in a short time window."
+  },
+  {
+   "fieldname": "validate_qr_expiry",
+   "fieldtype": "Check",
+   "label": "Validate QR Expiry",
+   "default": 0,
+   "description": "Reject scans when the QR has passed its configured expiry."
+  },
+  {
+   "fieldname": "prevent_reuse",
+   "fieldtype": "Check",
+   "label": "Prevent Reuse",
+   "default": 1,
+   "description": "Reject reuse after visitor has checked out."
+  }
+ ],
+ "issingle": 1,
+ "module": "Visitor Management",
+ "name": "QR Settings",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1
+  },
+  {
+   "role": "VMS System Admin",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1
+  },
+  {
+   "role": "Visitor Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1,
+ "description": "Configuration for QR Settings."
+}

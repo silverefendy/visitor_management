@@ -3,25 +3,142 @@
  "allow_rename": 1,
  "doctype": "DocType",
  "engine": "InnoDB",
- "field_order": ["gate_name", "location", "device_id", "ip_address", "status"],
+ "field_order": [
+  "gate_name",
+  "location",
+  "device_id",
+  "ip_address",
+  "status",
+  "gate_type",
+  "scanner_device",
+  "allowed_roles"
+ ],
  "fields": [
-  {"fieldname": "gate_name", "fieldtype": "Data", "label": "Gate Name", "reqd": 1, "in_list_view": 1},
-  {"fieldname": "location", "fieldtype": "Data", "label": "Location", "in_list_view": 1},
-  {"fieldname": "device_id", "fieldtype": "Data", "label": "Device ID", "in_list_view": 1, "in_standard_filter": 1},
-  {"fieldname": "ip_address", "fieldtype": "Data", "label": "IP Address"},
-  {"fieldname": "status", "fieldtype": "Select", "label": "Status", "options": "Active\nInactive", "default": "Active", "in_list_view": 1}
+  {
+   "fieldname": "gate_name",
+   "fieldtype": "Data",
+   "label": "Gate Name",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "Human-readable gate or checkpoint name."
+  },
+  {
+   "fieldname": "location",
+   "fieldtype": "Data",
+   "label": "Location",
+   "in_list_view": 1,
+   "description": "Physical location of this gate."
+  },
+  {
+   "fieldname": "device_id",
+   "fieldtype": "Data",
+   "label": "Device ID",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "description": "Scanner/device identifier used to resolve scans from this gate."
+  },
+  {
+   "fieldname": "ip_address",
+   "fieldtype": "Data",
+   "label": "IP Address",
+   "description": "Optional scanner device IP address."
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Active\nInactive",
+   "default": "Active",
+   "in_list_view": 1,
+   "description": "Only Active gates should be used by scanner flows."
+  },
+  {
+   "fieldname": "gate_type",
+   "fieldtype": "Select",
+   "label": "Gate Type",
+   "options": "Main Entrance\nLobby\nWarehouse\nParking\nRestricted Area\nOther",
+   "default": "Main Entrance",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "description": "Classifies this checkpoint for reporting and operations."
+  },
+  {
+   "fieldname": "scanner_device",
+   "fieldtype": "Data",
+   "label": "Scanner Device",
+   "description": "Optional scanner hardware name/model."
+  },
+  {
+   "fieldname": "allowed_roles",
+   "fieldtype": "Small Text",
+   "label": "Allowed Roles",
+   "description": "Optional comma-separated role names allowed to operate this gate."
+  }
  ],
  "module": "Visitor Management",
  "name": "Gate",
  "naming_rule": "By fieldname",
  "autoname": "field:gate_name",
  "permissions": [
-  {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1, "print": 1, "email": 1, "share": 1},
-  {"role": "Visitor Manager", "read": 1, "write": 1, "create": 1, "report": 1},
-  {"role": "Visitor Security", "read": 1}
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1
+  },
+  {
+   "role": "Visitor Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "report": 1
+  },
+  {
+   "role": "Visitor Security",
+   "read": 1
+  },
+  {
+   "read": 1,
+   "role": "Visitor Security Guard"
+  },
+  {
+   "read": 1,
+   "role": "Visitor Receptionist"
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "VMS Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "VMS System Admin",
+   "share": 1,
+   "write": 1
+  }
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
  "title_field": "gate_name",
- "track_changes": 1
+ "track_changes": 1,
+ "search_fields": "gate_name,location,device_id,status",
+ "show_name_in_global_search": 0,
+ "description": "Gate settings for scanner location, device mapping, and role guidance.",
+ "in_create": 0
 }

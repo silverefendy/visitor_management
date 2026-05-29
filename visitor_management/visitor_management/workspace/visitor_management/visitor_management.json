@@ -1,15 +1,15 @@
 {
  "app": "visitor_management",
  "charts": [],
- "content": "[{\"id\":\"4RYg8kuFEp\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Welcome to the Visitor Management workspace</span>\",\"col\":12}},{\"id\":\"_ag5a2rFt2\",\"type\":\"paragraph\",\"data\":{\"text\":\"Click on \\n\\t\\t\\t\\n\\t\\t\\t\\n\\t\\t to edit\",\"col\":12}},{\"id\":\"oiJxIXs0X4\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"VMS Approval\",\"col\":3}},{\"id\":\"ax0ZCic8hA\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Visitor Scanner\",\"col\":5}},{\"id\":\"_e5uYugJ28\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Employee Entry\",\"col\":3}},{\"id\":\"BfrB41Xdtr\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Visitor Management</b></span>\",\"col\":12}},{\"id\":\"Alu1600LE8\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Employee Entry\",\"col\":4}},{\"id\":\"loqhSgtD2l\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Visitor Log\",\"col\":4}},{\"id\":\"A3zWVqQz2i\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Visitor\",\"col\":4}}]",
+ "content": "[{\"id\":\"vms-title\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h3\\\"><b>Visitor Management</b></span>\",\"col\":12}},{\"id\":\"vms-intro\",\"type\":\"paragraph\",\"data\":{\"text\":\"Enterprise VMS operations hub. Scan QR is the operational entry point; day/status filtering lives inside the Visitor list view.\",\"col\":12}},{\"id\":\"vms-main-ops\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Main Operations</b></span>\",\"col\":12}},{\"id\":\"vms-main-visitor\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Visitor\",\"col\":4}},{\"id\":\"vms-main-scan-qr\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Scan QR\",\"col\":4}},{\"id\":\"vms-main-visitor-logs\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Visitor Logs\",\"col\":4}},{\"id\":\"vms-reports\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Reports</b></span>\",\"col\":12}},{\"id\":\"vms-reports-shortcut\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Reports\",\"col\":4}},{\"id\":\"vms-admin\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Administration</b></span>\",\"col\":12}},{\"id\":\"vms-admin-settings\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Settings\",\"col\":4}},{\"id\":\"vms-admin-data-cleanup\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Data Cleanup\",\"col\":4}},{\"id\":\"vms-stats\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Live Statistics</b></span>\",\"col\":12}},{\"id\":\"vms-card-total-visitors-today\",\"type\":\"card\",\"data\":{\"card_name\":\"Total Visitors Today\",\"col\":4}},{\"id\":\"vms-card-currently-checked-in\",\"type\":\"card\",\"data\":{\"card_name\":\"Currently Checked In\",\"col\":4}},{\"id\":\"vms-card-checked-out-today\",\"type\":\"card\",\"data\":{\"card_name\":\"Checked Out Today\",\"col\":4}},{\"id\":\"vms-card-pending-approval\",\"type\":\"card\",\"data\":{\"card_name\":\"Pending Approval\",\"col\":4}},{\"id\":\"vms-card-total-visitors-this-month\",\"type\":\"card\",\"data\":{\"card_name\":\"Total Visitors This Month\",\"col\":4}},{\"id\":\"vms-lists\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Operational Lists</b></span>\",\"col\":12}},{\"id\":\"vms-ql-visitor\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Visitor\",\"col\":6}},{\"id\":\"vms-ql-visitor-log\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Visitor Log\",\"col\":6}}]",
  "creation": "2026-05-02 15:55:00.088354",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
  "hide_custom": 0,
- "icon": "users",
+ "icon": "organization",
  "idx": 0,
- "indicator_color": "green",
+ "indicator_color": "blue",
  "is_hidden": 0,
  "label": "Visitor Management",
  "link_type": "DocType",
@@ -33,31 +33,52 @@
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Employee Entry Request",
-   "link_count": 0,
-   "link_to": "Employee Entry Request",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
   }
  ],
- "modified": "2026-05-07 12:56:40.250890",
+ "modified": "2026-05-29 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Visitor Management",
  "name": "Visitor Management",
- "number_cards": [],
+ "number_cards": [
+  {
+   "label": "Total Visitors Today",
+   "document_type": "Visitor",
+   "function": "Count",
+   "aggregate_function_based_on": null,
+   "filters_json": "[[\"Visitor\",\"check_in_time\",\"Timespan\",\"today\",false]]"
+  },
+  {
+   "label": "Currently Checked In",
+   "document_type": "Visitor",
+   "function": "Count",
+   "aggregate_function_based_on": null,
+   "filters_json": "[[\"Visitor\",\"status\",\"in\",[\"Approved\",\"Checked In\",\"Completed\"],false]]"
+  },
+  {
+   "label": "Checked Out Today",
+   "document_type": "Visitor",
+   "function": "Count",
+   "aggregate_function_based_on": null,
+   "filters_json": "[[\"Visitor\",\"status\",\"=\",\"Checked Out\",false],[\"Visitor\",\"check_out_time\",\"Timespan\",\"today\",false]]"
+  },
+  {
+   "label": "Pending Approval",
+   "document_type": "Visitor",
+   "function": "Count",
+   "aggregate_function_based_on": null,
+   "filters_json": "[[\"Visitor\",\"status\",\"=\",\"Awaiting Approval\",false]]"
+  },
+  {
+   "label": "Total Visitors This Month",
+   "document_type": "Visitor",
+   "function": "Count",
+   "aggregate_function_based_on": null,
+   "filters_json": "[[\"Visitor\",\"check_in_time\",\"Timespan\",\"this month\",false]]"
+  }
+ ],
  "owner": "Administrator",
  "public": 1,
  "quick_lists": [
-  {
-   "document_type": "Employee Entry Request",
-   "label": "Employee Entry",
-   "quick_list_filter": "[]"
-  },
   {
    "document_type": "Visitor",
    "label": "Visitor",
@@ -74,7 +95,22 @@
    "role": "System Manager"
   },
   {
+   "role": "VMS System Admin"
+  },
+  {
    "role": "Visitor Manager"
+  },
+  {
+   "role": "VMS Manager"
+  },
+  {
+   "role": "Visitor Security Guard"
+  },
+  {
+   "role": "Visitor Receptionist"
+  },
+  {
+   "role": "Visitor Approver"
   },
   {
    "role": "Visitor Security"
@@ -86,25 +122,43 @@
  "sequence_id": 0.0,
  "shortcuts": [
   {
-   "color": "Grey",
+   "color": "Blue",
    "doc_view": "List",
-   "label": "Employee Entry",
+   "label": "Visitor",
+   "type": "DocType",
+   "link_to": "Visitor"
+  },
+  {
+   "color": "Purple",
+   "label": "Scan QR",
    "type": "URL",
-   "url": "http://10.1.0.30:8001/desk/employee-entry-request"
+   "url": "/vms-scanner"
   },
   {
    "color": "Grey",
    "doc_view": "List",
-   "label": "Visitor Scanner",
-   "type": "URL",
-   "url": "http://10.1.0.30:8001/vms-scanner"
+   "label": "Visitor Logs",
+   "type": "DocType",
+   "link_to": "Visitor Log"
+  },
+  {
+   "color": "Cyan",
+   "doc_view": "Report",
+   "label": "Reports",
+   "type": "DocType",
+   "link_to": "Visitor"
   },
   {
    "color": "Grey",
-   "doc_view": "List",
-   "label": "VMS Approval",
+   "label": "Settings",
    "type": "URL",
-   "url": "http://10.1.0.30:8001/vms-approval"
+   "url": "/app/visitor-settings"
+  },
+  {
+   "color": "Red",
+   "label": "Data Cleanup",
+   "type": "URL",
+   "url": "/app/vms-data-cleanup"
   }
  ],
  "title": "Visitor Management",

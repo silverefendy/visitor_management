@@ -1,0 +1,183 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "allow_import": 0,
+ "autoname": "hash",
+ "doctype": "DocType",
+ "editable_grid": 0,
+ "engine": "InnoDB",
+ "field_order": [
+  "performed_at",
+  "performed_by",
+  "cleanup_action",
+  "target_doctype",
+  "cleanup_method",
+  "total_records",
+  "date_range",
+  "older_than_days",
+  "status_filter",
+  "gate",
+  "company",
+  "visitor_type",
+  "checked_out_only",
+  "filter_summary",
+  "affected_records",
+  "details"
+ ],
+ "fields": [
+  {
+   "fieldname": "performed_at",
+   "fieldtype": "Datetime",
+   "label": "Performed At",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "performed_by",
+   "fieldtype": "Link",
+   "label": "Performed By",
+   "options": "User",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "cleanup_action",
+   "fieldtype": "Select",
+   "label": "Cleanup Action",
+   "options": "Preview\nArchive\nDelete",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "target_doctype",
+   "fieldtype": "Link",
+   "label": "Target DocType",
+   "options": "DocType",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "cleanup_method",
+   "fieldtype": "Select",
+   "label": "Cleanup Method",
+   "options": "Selected Records\nFiltered Records\nOld Records",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_records",
+   "fieldtype": "Int",
+   "label": "Total Records",
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "date_range",
+   "fieldtype": "Data",
+   "label": "Date Range",
+   "read_only": 1
+  },
+  {
+   "fieldname": "older_than_days",
+   "fieldtype": "Int",
+   "label": "Older Than X Days",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status_filter",
+   "fieldtype": "Data",
+   "label": "Status Filter",
+   "read_only": 1
+  },
+  {
+   "fieldname": "gate",
+   "fieldtype": "Link",
+   "label": "Gate",
+   "options": "Gate",
+   "read_only": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Data",
+   "label": "Company",
+   "read_only": 1
+  },
+  {
+   "fieldname": "visitor_type",
+   "fieldtype": "Data",
+   "label": "Visitor Type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "checked_out_only",
+   "fieldtype": "Check",
+   "label": "Checked Out Only",
+   "read_only": 1
+  },
+  {
+   "fieldname": "filter_summary",
+   "fieldtype": "Small Text",
+   "label": "Filter Summary",
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "affected_records",
+   "fieldtype": "Long Text",
+   "label": "Affected Records",
+   "read_only": 1,
+   "description": "Readable list of affected record IDs."
+  },
+  {
+   "fieldname": "details",
+   "fieldtype": "Small Text",
+   "label": "Details",
+   "read_only": 1
+  }
+ ],
+ "hide_toolbar": 1,
+ "in_create": 0,
+ "module": "Visitor Management",
+ "name": "VMS Cleanup Log",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1
+  },
+  {
+   "role": "VMS System Admin",
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1
+  },
+  {
+   "role": "Visitor Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "VMS Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  }
+ ],
+ "sort_field": "performed_at",
+ "sort_order": "DESC",
+ "title_field": "filter_summary",
+ "track_changes": 0,
+ "search_fields": "cleanup_action,target_doctype,cleanup_method,performed_by,filter_summary,affected_records",
+ "description": "System-generated audit history for VMS archive/delete cleanup actions. Records are created only by the Data Cleanup tool.",
+ "show_name_in_global_search": 0,
+ "is_virtual": 0
+}
