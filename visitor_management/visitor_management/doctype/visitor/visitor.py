@@ -286,8 +286,6 @@ class Visitor(Document):
             frappe.throw(_("Gagal menyimpan status {0}. Silakan coba lagi.").format(target_status))
 
         self.create_visitor_log(log_action, log_remarks)
-        if target_status == "Completed":
-            close_active_visitor_logs(self.name)
         frappe.db.commit()
 
     @frappe.whitelist()

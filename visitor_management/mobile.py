@@ -312,9 +312,8 @@ def get_recent_activity():
 def process_scan(qr_code, action=None):
 	"""
 	Endpoint scan utama dari Flutter app.
-	Backward compatible:
-	- action 'checkIn' | 'checkOut' | 'employeeEntry' keeps the old explicit flow.
-	- action empty/'auto' lets backend resolve and execute the next action.
+	Resolve-only by default so mobile can show OK/Cancel confirmation before any database write.
+	Call execute_confirmed_scan after the user presses OK.
 	"""
 	from visitor_management.visitor_management.api import scan_qr
 
@@ -359,3 +358,42 @@ def process_scan(qr_code, action=None):
 			"message": "Terjadi kesalahan server. Coba lagi.",
 			"reference_id": None,
 		}
+
+@frappe.whitelist(allow_guest=False)
+def execute_confirmed_scan(qr_code, action, gate=None, device_id=None):
+	"""Execute a scan after mobile confirmation. Cancel should not call this method."""
+	from visitor_management.visitor_management.api import execute_scan_action
+
+	try:
+		result = execute_scan_action(
+			qr_code=qr_code,
+			action=action,
+			gate=gate,
+			device_id=device_id,
+		)
+		status = result.get("status", "error") if result else "error"
+		response = {
+			"success": result.get("success", status == "success") if result else False,
+			"status": status,
+			"message": result.get("message", "Terjadi kesalahan") if result else "Terjadi kesalahan",
+			"reference_id": result.get("visitor") or result.get("entry") if result else None,
+		}
+		if result:
+			response.update(result)
+		return response
+	except frappe.exceptions.ValidationError as e:
+		return {
+			"success": False,
+			"status": "error",
+			"message": str(e),
+			"reference_id": None,
+		}
+	except Exception:
+		frappe.log_error(frappe.get_traceback(), "Mobile execute_confirmed_scan Error")
+		return {
+			"success": False,
+			"status": "error",
+			"message": "Terjadi kesalahan server. Coba lagi.",
+			"reference_id": None,
+		}
+

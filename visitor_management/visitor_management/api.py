@@ -307,6 +307,12 @@ def get_active_visit(visitor):
 
 
 def _resolve_visitor_scan(qr_code):
+    """Resolve visitor QR state without changing the database.
+
+    Visitor business flow is intentionally linear:
+    Registered --security check-in--> Awaiting Approval --host approve-->
+    Approved --host complete--> Completed --security check-out--> Checked Out.
+    """
     visitor_id = parse_visitor_qr(qr_code)
     frappe.logger("visitor_management").info("Visitor scan detected", extra={"visitor": visitor_id})
     if not frappe.db.exists("Visitor", visitor_id):
@@ -318,45 +324,58 @@ def _resolve_visitor_scan(qr_code):
     if active_visit and active_visit.name != visitor.name:
         frappe.throw(_("Visitor dengan ID yang sama masih aktif: {0}").format(active_visit.name))
 
-    if active_visit and active_visit.status == "Approved":
+    status = visitor.status
+    if status == "Registered":
         return _visitor_scan_response(
-            active_visit,
-            "WAIT_INSIDE",
-            "APPROVED",
-            _("Tamu masih di area."),
+            visitor,
+            "CHECK_IN",
+            "REGISTERED",
+            _("Visitor terdaftar. Konfirmasi check-in visitor."),
         )
-    if active_visit and active_visit.status == "Completed":
+    if status == "Awaiting Approval":
         return _visitor_scan_response(
-            active_visit,
-            "CHECK_OUT",
-            "COMPLETED",
-            _("Kunjungan selesai. Konfirmasi check-out visitor."),
-        )
-    if active_visit and active_visit.status == "Awaiting Approval":
-        return _visitor_scan_response(
-            active_visit,
+            visitor,
             "WAIT_FOR_APPROVAL",
             "AWAITING_APPROVAL",
             _("Visitor masih menunggu approval host."),
         )
-
-    if visitor.status == "Checked Out":
+    if status == "Approved":
+        return _visitor_scan_response(
+            visitor,
+            "WAIT_INSIDE",
+            "APPROVED",
+            _("Tamu masih di area"),
+        )
+    if status in ["Checked In"]:
+        return _visitor_scan_response(
+            visitor,
+            "WAIT_INSIDE",
+            "CHECKED_IN",
+            _("Tamu masih di area"),
+        )
+    if status == "Completed":
+        return _visitor_scan_response(
+            visitor,
+            "CHECK_OUT",
+            "COMPLETED",
+            _("Check Out Visitor?"),
+        )
+    if status == "Checked Out":
         return _visitor_scan_response(
             visitor,
             "INVALID",
             "CHECKED_OUT",
             _("QR sudah tidak berlaku. Visitor sudah check-out."),
         )
-
-    if visitor.status in ["Registered", "Rejected", "Cancelled"]:
+    if status in ["Rejected", "Cancelled"]:
         return _visitor_scan_response(
             visitor,
             "INVALID",
-            visitor.status,
-            _("QR belum dapat digunakan. Status saat ini: {0}.").format(visitor.status),
+            status,
+            _("QR belum dapat digunakan. Status saat ini: {0}.").format(status),
         )
 
-    frappe.throw(_("Status visitor tidak dapat diproses: {0}").format(visitor.status))
+    frappe.throw(_("Status visitor tidak dapat diproses: {0}").format(status))
 
 
 def _execute_resolved_scan(qr_code, resolved, gate=None, device_id=None):
@@ -471,30 +490,39 @@ def resolve_scan_action(qr_code=None, qr_data=None):
 
 @frappe.whitelist(allow_guest=False)
 def scan_qr(qr_code=None, qr_data=None, action="auto", gate=None, device_id=None):
-    """Central intelligent scan handler for visitor and employee QR/barcode scans."""
+    """Compatibility wrapper for scanner clients.
+
+    New clients must call resolve_scan_action first, show confirmation, then call
+    execute_scan_action. To prevent accidental database writes, auto/resolve modes
+    now only return the resolved action preview. Explicit execution is still routed
+    through execute_scan_action so status is re-resolved immediately before commit.
+    """
     scan_value = qr_code or qr_data
     normalized_action = str(action or "auto").strip().lower()
-    if normalized_action in {"auto", "resolve", ""}:
-        resolved = resolve_scan_action(qr_code=scan_value)
-        if normalized_action == "resolve":
-            return resolved
-        result = _execute_resolved_scan(scan_value, resolved, gate=gate, device_id=device_id)
-        result.update({
-            "resolved_next_action": resolved.get("next_action"),
-            "entity_type": resolved.get("entity_type"),
-        })
-        return result
+    if normalized_action in {"auto", "resolve", "preview", ""}:
+        return resolve_scan_action(qr_code=scan_value)
 
-    if normalized_action in {"checkin", "check_in", "checkinvisitor", "checkout", "check_out", "checkoutvisitor"}:
-        # Backward compatibility: explicit visitor modes still use the central
-        # resolver. Employee barcodes are allowed through so mobile clients that
-        # only have a generic scanner are not rejected as "bukan Visitor".
-        resolved = resolve_scan_action(qr_code=scan_value)
-        return _execute_resolved_scan(scan_value, resolved, gate=gate, device_id=device_id)
-    if normalized_action in {"employeecheckin", "employee_check_in", "employeeentry"}:
-        return scan_employee_entry_barcode(qr_data=scan_value, action="checkin")
-    if normalized_action in {"employeecheckout", "employee_check_out"}:
-        return scan_employee_entry_barcode(qr_data=scan_value, action="checkout")
+    action_map = {
+        "checkin": "CHECK_IN",
+        "check_in": "CHECK_IN",
+        "checkinvisitor": "CHECK_IN",
+        "checkout": "CHECK_OUT",
+        "check_out": "CHECK_OUT",
+        "checkoutvisitor": "CHECK_OUT",
+        "employeecheckin": "EMPLOYEE_CHECK_IN",
+        "employee_check_in": "EMPLOYEE_CHECK_IN",
+        "employeeentry": "EMPLOYEE_CHECK_IN",
+        "employeecheckout": "EMPLOYEE_CHECK_OUT",
+        "employee_check_out": "EMPLOYEE_CHECK_OUT",
+    }
+    expected_action = action_map.get(normalized_action)
+    if expected_action:
+        return execute_scan_action(
+            qr_code=scan_value,
+            action=expected_action,
+            gate=gate,
+            device_id=device_id,
+        )
 
     frappe.throw(_("Aksi scan tidak dikenali: {0}").format(action))
 
