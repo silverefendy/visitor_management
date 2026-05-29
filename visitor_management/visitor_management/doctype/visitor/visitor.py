@@ -29,6 +29,27 @@ VISITOR_STATUSES = [
 
 COMPLETABLE_STATUSES = ["Approved", "Checked In"]
 
+from visitor_management.visitor_management.services.log_service import create_visitor_log
+from visitor_management.visitor_management.services.visitor_service import (
+    check_in,
+    check_out,
+    close_active_visitor_logs,
+)
+
+VISITOR_STATUSES = [
+    "Registered",
+    "Awaiting Approval",
+    "Approved",
+    "Checked In",
+    "Completed",
+    "Checked Out",
+    "Rejected",
+    "Cancelled",
+]
+
+COMPLETABLE_STATUSES = ["Approved", "Checked In"]
+
+COMPLETABLE_STATUSES = ["Approved", "Checked In"]
 
 class Visitor(Document):
     def before_insert(self):
