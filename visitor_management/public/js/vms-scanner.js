@@ -233,6 +233,7 @@ function labelForAction(action, isEmployee) {
     EMPLOYEE_CHECK_IN: "Employee Check In",
     EMPLOYEE_CHECK_OUT: "Employee Check Out",
     WAIT_FOR_APPROVAL: "Menunggu Approval",
+    WAIT_INSIDE: "Tamu Masih di Area",
     INVALID: "QR Tidak Berlaku"
   };
   return labels[action] || (isEmployee ? "Proses Karyawan" : "Proses Visitor");
@@ -258,12 +259,12 @@ function colorForStatus(status) {
 
 function updateProcessButton(canProcess, status, label) {
   var btnOk = document.getElementById("btn-ok");
-  if (canProcess && !["WAIT_FOR_APPROVAL", "INVALID"].includes(pendingResolution && pendingResolution.next_action)) {
+  if (canProcess && !["WAIT_FOR_APPROVAL", "WAIT_INSIDE", "INVALID"].includes(pendingResolution && pendingResolution.next_action)) {
     btnOk.textContent = "Konfirmasi " + label;
     btnOk.disabled = false;
     btnOk.style.opacity = "1";
   } else {
-    btnOk.textContent = pendingResolution && pendingResolution.next_action === "WAIT_FOR_APPROVAL" ? "Menunggu Approval" : "Tidak bisa proses - Status: " + status;
+    btnOk.textContent = pendingResolution && pendingResolution.next_action === "WAIT_FOR_APPROVAL" ? "Menunggu Approval" : (pendingResolution && pendingResolution.next_action === "WAIT_INSIDE" ? "Tamu masih di area" : "Tidak bisa proses - Status: " + status);
     btnOk.disabled = true;
     btnOk.style.opacity = "0.5";
   }

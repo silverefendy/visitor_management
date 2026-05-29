@@ -228,7 +228,7 @@ def _visitor_scan_response(visitor, next_action, scan_status, message):
         visitor_status=visitor.status,
         workflow_state=workflow_state,
         next_action=next_action,
-        requires_confirmation=next_action not in ["WAIT_FOR_APPROVAL", "INVALID"],
+        requires_confirmation=next_action not in ["WAIT_FOR_APPROVAL", "WAIT_INSIDE", "INVALID"],
     )
 
 
@@ -288,7 +288,7 @@ def _resolve_employee_scan(qr_code, employee=None):
 
 
 def get_active_visit(visitor):
-    active_statuses = ["Awaiting Approval", "Approved", "Checked In"]
+    active_statuses = ["Awaiting Approval", "Approved", "Completed"]
     if visitor.status in active_statuses:
         return visitor
 
@@ -321,16 +321,16 @@ def _resolve_visitor_scan(qr_code):
     if active_visit and active_visit.status == "Approved":
         return _visitor_scan_response(
             active_visit,
-            "CHECK_IN",
+            "WAIT_INSIDE",
             "APPROVED",
-            _("Visitor sudah approved. Konfirmasi check-in saat tiba."),
+            _("Tamu masih di area."),
         )
-    if active_visit and active_visit.status == "Checked In":
+    if active_visit and active_visit.status == "Completed":
         return _visitor_scan_response(
             active_visit,
             "CHECK_OUT",
-            "ACTIVE",
-            _("Visitor sudah check-in. Konfirmasi check-out saat keluar."),
+            "COMPLETED",
+            _("Kunjungan selesai. Konfirmasi check-out visitor."),
         )
     if active_visit and active_visit.status == "Awaiting Approval":
         return _visitor_scan_response(
@@ -338,14 +338,6 @@ def _resolve_visitor_scan(qr_code):
             "WAIT_FOR_APPROVAL",
             "AWAITING_APPROVAL",
             _("Visitor masih menunggu approval host."),
-        )
-
-    if visitor.status == "Completed":
-        return _visitor_scan_response(
-            visitor,
-            "INVALID",
-            "COMPLETED",
-            _("QR sudah tidak berlaku. Kunjungan telah selesai."),
         )
 
     if visitor.status == "Checked Out":
@@ -373,6 +365,8 @@ def _execute_resolved_scan(qr_code, resolved, gate=None, device_id=None):
         return scan_qr_action(qr_data=qr_code, action="checkin", gate=gate, device_id=device_id)
     if next_action == "CHECK_OUT":
         return scan_qr_action(qr_data=qr_code, action="checkout", gate=gate, device_id=device_id)
+    if next_action == "WAIT_INSIDE":
+        frappe.throw(resolved.get("message") or _("Tamu masih di area."))
     if next_action == "INVALID":
         frappe.throw(resolved.get("message") or _("QR tidak dapat digunakan."))
     if next_action == "EMPLOYEE_CHECK_IN":
@@ -492,12 +486,10 @@ def scan_qr(qr_code=None, qr_data=None, action="auto", gate=None, device_id=None
         return result
 
     if normalized_action in {"checkin", "check_in", "checkinvisitor", "checkout", "check_out", "checkoutvisitor"}:
-        # Visitor scan modes stay backward compatible, but the backend still
-        # resolves the valid action from the current database state. This avoids
-        # completed visits being forced through the wrong explicit mobile mode.
+        # Backward compatibility: explicit visitor modes still use the central
+        # resolver. Employee barcodes are allowed through so mobile clients that
+        # only have a generic scanner are not rejected as "bukan Visitor".
         resolved = resolve_scan_action(qr_code=scan_value)
-        if resolved.get("entity_type") != "VISITOR":
-            frappe.throw(_("Barcode terdeteksi sebagai {0}, bukan Visitor.").format(resolved.get("entity_type")))
         return _execute_resolved_scan(scan_value, resolved, gate=gate, device_id=device_id)
     if normalized_action in {"employeecheckin", "employee_check_in", "employeeentry"}:
         return scan_employee_entry_barcode(qr_data=scan_value, action="checkin")

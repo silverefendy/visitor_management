@@ -5,13 +5,12 @@ from frappe.utils import now_datetime
 from visitor_management.visitor_management.services.gate_service import get_gate_by_device
 from visitor_management.visitor_management.services.log_service import create_visitor_log
 
-ACTIVE_STATUSES = ["Awaiting Approval", "Approved", "Checked In"]
+ACTIVE_STATUSES = ["Awaiting Approval", "Approved", "Completed"]
 VISITOR_WORKFLOW_STATE_FIELD = "workflow_state"
 
-# Status yang diizinkan untuk checkout
-# Termasuk "Approved" dan "Checked In" agar security bisa checkout
-# setelah approval tanpa perlu host menekan "Selesai Kunjungan" terlebih dahulu
-CHECKOUT_ALLOWED_STATUSES = ["Approved", "Checked In"]
+# Status yang diizinkan untuk checkout. Completed berarti aktivitas selesai
+# dan visitor siap keluar; Checked Out adalah status final/invalid.
+CHECKOUT_ALLOWED_STATUSES = ["Completed"]
 
 
 def is_visitor_inside(visitor_id):
@@ -73,7 +72,7 @@ def check_in(visitor, gate=None, device_id=None):
     validate_duplicate_active(visitor)
     gate_name = get_gate_by_device(device_id=device_id, gate=gate)
 
-    _sync_visitor_status(visitor, "Checked In")
+    _sync_visitor_status(visitor, "Awaiting Approval")
     visitor.check_in_time = now_datetime()
     visitor.check_out_time = None
     if visitor.meta.has_field("completed_at"):
@@ -90,7 +89,7 @@ def check_in(visitor, gate=None, device_id=None):
         is_active=1,
     )
     frappe.db.commit()
-    return _visitor_response(visitor, _("Check-in visitor berhasil."), next_action="CHECK_OUT")
+    return _visitor_response(visitor, _("Check-in berhasil. Menunggu approval."), next_action="WAIT_FOR_APPROVAL")
 
 
 def check_out(visitor, gate=None, device_id=None):
@@ -98,11 +97,9 @@ def check_out(visitor, gate=None, device_id=None):
     Proses checkout visitor.
 
     Diizinkan dari status:
-    - Approved   : security checkout langsung setelah approval
-    - Checked In : status aktif jika dipakai oleh workflow/customisasi site
+    - Completed : aktivitas kunjungan selesai dan visitor siap keluar.
 
-    Status "Awaiting Approval" tidak diizinkan checkout karena kunjungan
-    belum disetujui host.
+    Status Approved berarti visitor masih berada di area dan belum boleh checkout.
     """
     if visitor.status not in CHECKOUT_ALLOWED_STATUSES:
         if visitor.status == "Awaiting Approval":
@@ -110,6 +107,8 @@ def check_out(visitor, gate=None, device_id=None):
                 "Visitor masih menunggu approval dari host. "
                 "Minta host untuk approve atau reject terlebih dahulu."
             ))
+        if visitor.status == "Approved":
+            frappe.throw(_("Tamu masih di area. Selesaikan kunjungan terlebih dahulu sebelum check-out."))
         frappe.throw(_(
             "Tidak bisa check-out. Status saat ini: {0}. "
             "Status yang diizinkan: {1}."
@@ -119,7 +118,7 @@ def check_out(visitor, gate=None, device_id=None):
         frappe.throw(_("Tidak ditemukan log aktif untuk visitor ini"))
 
     gate_name = get_gate_by_device(device_id=device_id, gate=gate)
-    _sync_visitor_status(visitor, "Completed")
+    _sync_visitor_status(visitor, "Checked Out")
     visitor.check_out_time = now_datetime()
     if visitor.meta.has_field("completed_at"):
         visitor.completed_at = visitor.check_out_time
@@ -136,4 +135,4 @@ def check_out(visitor, gate=None, device_id=None):
         is_active=0,
     )
     frappe.db.commit()
-    return _visitor_response(visitor, _("Check-out visitor berhasil. Kunjungan selesai."), next_action="DONE")
+    return _visitor_response(visitor, _("Check-out visitor berhasil."), next_action="DONE")
