@@ -26,12 +26,10 @@ VISITOR_STATUSES = [
 COMPLETABLE_STATUSES = ["Approved", "Checked In"]
 
 
-
-
 class Visitor(Document):
-
     def before_insert(self):
         self.status = "Registered"
+        self._sync_workflow_state("Registered")
 
     def after_insert(self):
         self.generate_qr_code()
@@ -77,7 +75,7 @@ class Visitor(Document):
 
             frappe.db.sql(
                 "DELETE FROM `tabFile` WHERE attached_to_doctype='Visitor' AND attached_to_name=%s",
-                self.name
+                self.name,
             )
 
             file_doc_name = uuid.uuid4().hex[:10]
@@ -93,7 +91,7 @@ class Visitor(Document):
 
             frappe.db.sql(
                 "UPDATE `tabVisitor` SET qr_code=%s, qr_code_image=%s WHERE name=%s",
-                (qr_data, file_url, self.name)
+                (qr_data, file_url, self.name),
             )
 
             frappe.db.commit()
@@ -108,47 +106,68 @@ class Visitor(Document):
     def _has_field(self, fieldname):
         return bool(self.meta and self.meta.has_field(fieldname))
 
-    def _get_workflow_state_field(self):
-        """Return the configured workflow-state field, when a Visitor Workflow exists."""
-        workflow_state_field = None
-
+    def _get_active_workflow(self):
         try:
-            workflow_name = frappe.db.get_value(
-                "Workflow",
-                {"document_type": self.doctype, "is_active": 1},
-                "name",
-            )
-            if workflow_name:
-                workflow_state_field = frappe.db.get_value(
-                    "Workflow",
-                    workflow_name,
-                    "workflow_state_field",
-                )
+            from frappe.model.workflow import get_workflow, get_workflow_name
+
+            workflow_name = get_workflow_name(self.doctype)
+            return get_workflow(self.doctype) if workflow_name else None
         except Exception:
             frappe.log_error(message=frappe.get_traceback(), title="VMS Workflow Lookup Error")
+            return None
 
+    def _get_workflow_state_field(self, workflow=None):
+        workflow_state_field = getattr(workflow, "workflow_state_field", None)
         if workflow_state_field and self._has_field(workflow_state_field):
             return workflow_state_field
         if self._has_field("workflow_state"):
             return "workflow_state"
         return None
 
-    def _set_transition_values(self, target_status, **extra_values):
+    def _sync_workflow_state(self, target_status, workflow=None):
+        workflow_state_field = self._get_workflow_state_field(workflow=workflow)
+        if workflow_state_field and workflow_state_field != "status":
+            self.set(workflow_state_field, target_status)
+
+    def _set_transition_values(self, target_status, workflow=None, **extra_values):
         if target_status not in VISITOR_STATUSES:
             frappe.throw(_("Status visitor tidak dikenali: {0}").format(target_status))
 
         self.status = target_status
-        workflow_state_field = self._get_workflow_state_field()
-        if workflow_state_field and workflow_state_field != "status":
-            self.set(workflow_state_field, target_status)
+        self._sync_workflow_state(target_status, workflow=workflow)
 
         for fieldname, value in extra_values.items():
             if self._has_field(fieldname):
                 self.set(fieldname, value)
 
-    def _db_set_transition_values(self, target_status, **extra_values):
+    def _get_workflow_action_for_target(self, workflow, target_status):
+        from frappe.model.workflow import get_transitions
+
+        transitions = get_transitions(self, workflow=workflow)
+        for transition in transitions:
+            if transition.get("next_state") == target_status:
+                return transition.get("action")
+        return None
+
+    def _apply_workflow_transition(self, workflow, target_status):
+        from frappe.model.workflow import apply_workflow
+
+        action = self._get_workflow_action_for_target(workflow, target_status)
+        if not action:
+            frappe.throw(_(
+                "Tidak ada workflow action yang valid dari {0} ke {1} untuk user {2}."
+            ).format(self.status, target_status, frappe.session.user))
+
+        frappe.logger("visitor_management").info(
+            "Applying Visitor workflow action",
+            extra={"visitor": self.name, "action": action, "target_status": target_status},
+        )
+        return apply_workflow(self.as_dict(), action)
+
+    def _persist_status_sync(self, target_status, workflow=None, **extra_values):
+        """Persist status mirrors after a workflow action changed the workflow field."""
         values = {"status": target_status}
-        workflow_state_field = self._get_workflow_state_field()
+        workflow_state_field = self._get_workflow_state_field(workflow=workflow)
         if workflow_state_field and workflow_state_field != "status":
             values[workflow_state_field] = target_status
 
@@ -159,47 +178,90 @@ class Visitor(Document):
         frappe.db.set_value(self.doctype, self.name, values, update_modified=True)
         self.reload()
 
-    def _can_use_db_set_fallback(self, error):
-        """Only bypass save for workflow/docstatus blockers, not data validation."""
-        error_name = error.__class__.__name__.lower()
-        error_text = str(error).lower()
-        fallback_markers = (
-            "workflow",
-            "transition",
-            "not permitted",
-            "permission",
-            "submitted",
-            "docstatus",
-            "update after submit",
-            "read only",
-        )
-        return any(marker in error_name or marker in error_text for marker in fallback_markers)
+    def _status_response(self, message):
+        workflow_state_field = self._get_workflow_state_field()
+        workflow_state = self.get(workflow_state_field) if workflow_state_field else self.status
+        return {
+            "success": True,
+            "status": "success",
+            "message": message,
+            "visitor": self.name,
+            "visitor_status": self.status,
+            "workflow_state": workflow_state,
+        }
 
     def _save_status_transition(self, target_status, log_action, log_remarks, **extra_values):
-        """Persist a status transition and keep custom workflow-state fields in sync.
+        """Persist a Visitor transition using Frappe Workflow when one is active.
 
-        Some customer sites add a Frappe Workflow on top of this custom status
-        field. The VMS approval endpoints already enforce their own ownership /
-        manager checks. If a site Workflow/docstatus rule blocks the direct save,
-        we log that failure and persist the synchronized status fields with
-        db_set. Other validation errors are re-raised so bad data is not hidden.
+        The custom app owns the business permission check before this method is
+        called. If a site has an active Workflow, use its configured transition so
+        workflow actions, tasks, comments, and docstatus logic still run. Then
+        verify and mirror `status`/`workflow_state` because this app historically
+        uses `status` for filtering custom pages and mobile APIs.
         """
-        self._set_transition_values(target_status, **extra_values)
+        workflow = self._get_active_workflow()
         self.flags.ignore_permissions = True
         self.flags.ignore_validate_update_after_submit = True
+        frappe.logger("visitor_management").info(
+            "Visitor status transition attempt",
+            extra={
+                "visitor": self.name,
+                "from_status": self.status,
+                "target_status": target_status,
+                "workflow": getattr(workflow, "name", None),
+            },
+        )
 
         try:
-            self.save(ignore_permissions=True)
-        except Exception as error:
+            if workflow:
+                workflow_state_field = self._get_workflow_state_field(workflow=workflow)
+                if (
+                    workflow_state_field
+                    and workflow_state_field != "status"
+                    and self.get(workflow_state_field) != self.status
+                ):
+                    frappe.logger("visitor_management").info(
+                        "Synchronizing stale Visitor workflow state before transition",
+                        extra={
+                            "visitor": self.name,
+                            "status": self.status,
+                            "workflow_state": self.get(workflow_state_field),
+                        },
+                    )
+                    frappe.db.set_value(
+                        self.doctype,
+                        self.name,
+                        workflow_state_field,
+                        self.status,
+                        update_modified=True,
+                    )
+                    self.reload()
+
+                self._apply_workflow_transition(workflow, target_status)
+                self.reload()
+                self._persist_status_sync(target_status, workflow=workflow, **extra_values)
+            else:
+                self._set_transition_values(target_status, **extra_values)
+                self.save(ignore_permissions=True)
+                self.reload()
+        except Exception:
+            frappe.log_error(message=frappe.get_traceback(), title="VMS Visitor Transition Error")
+            raise
+
+        workflow_state_field = self._get_workflow_state_field(workflow=workflow)
+        workflow_state = self.get(workflow_state_field) if workflow_state_field else self.status
+        if self.status != target_status or workflow_state != target_status:
             frappe.log_error(
-                message=frappe.get_traceback(),
-                title="VMS Visitor Transition Save Error",
+                message=(
+                    "Visitor transition verification failed for {0}: "
+                    "status={1}, workflow_state={2}, expected={3}"
+                ).format(self.name, self.status, workflow_state, target_status),
+                title="VMS Visitor Transition Verification Error",
             )
-            if not self._can_use_db_set_fallback(error):
-                frappe.throw(_("Gagal mengubah status visitor: {0}").format(error))
-            self._db_set_transition_values(target_status, **extra_values)
+            frappe.throw(_("Gagal menyimpan status {0}. Silakan coba lagi.").format(target_status))
 
         self.create_visitor_log(log_action, log_remarks)
+        frappe.db.commit()
 
     @frappe.whitelist()
     def approve_visit(self):
@@ -214,7 +276,7 @@ class Visitor(Document):
             approved_by=frappe.session.user,
             approved_at=approved_at,
         )
-        return {"status": "success", "message": "Kunjungan disetujui.", "visitor_status": self.status}
+        return self._status_response("Kunjungan disetujui.")
 
     @frappe.whitelist()
     def reject_visit(self, reason=""):
@@ -232,10 +294,12 @@ class Visitor(Document):
             approved_by=frappe.session.user,
             approved_at=approved_at,
         )
-        return {"status": "success", "message": "Kunjungan ditolak.", "visitor_status": self.status}
+        return self._status_response("Kunjungan ditolak.")
 
     @frappe.whitelist()
     def end_visit(self):
+        if self.status == "Completed":
+            frappe.throw(_("Kunjungan ini sudah Completed."))
         if self.status not in COMPLETABLE_STATUSES:
             frappe.throw(_(
                 "Tidak bisa menyelesaikan kunjungan. Status saat ini: {0}. "
@@ -248,11 +312,7 @@ class Visitor(Document):
             "Kunjungan selesai",
             completed_at=now_datetime(),
         )
-        return {
-            "status": "success",
-            "message": "Kunjungan selesai. Tamu dapat check-out.",
-            "visitor_status": self.status,
-        }
+        return self._status_response("Kunjungan selesai. Tamu dapat check-out.")
 
     @frappe.whitelist()
     def do_checkout(self):
@@ -300,14 +360,3 @@ def checkout_by_qr(qr_data):
         return visitor.do_checkout()
     except json.JSONDecodeError:
         frappe.throw(_("Format QR tidak dikenali"))
-
-
-@frappe.whitelist()
-def get_visitor_info(visitor_id):
-    visitor = frappe.get_doc("Visitor", visitor_id)
-    return {
-        "name": visitor.name,
-        "visitor_name": visitor.visitor_name,
-        "status": visitor.status,
-        "qr_code_image": visitor.qr_code_image,
-    }
