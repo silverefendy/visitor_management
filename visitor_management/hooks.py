@@ -113,12 +113,6 @@ doctype_list_js = {"Visitor": "public/js/visitor_list.js"}
 # before_app_uninstall = "visitor_management.utils.before_app_uninstall"
 # after_app_uninstall = "visitor_management.utils.after_app_uninstall"
 
-# Desk Notifications
-# ------------------
-# See frappe.core.notifications.get_notification_config
-
-# notification_config = "visitor_management.notifications.get_notification_config"
-
 # Permissions
 # -----------
 # Permissions evaluated in scripted ways
