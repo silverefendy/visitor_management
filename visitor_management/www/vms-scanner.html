@@ -86,6 +86,22 @@
   </section>
 </main>
 
+
+<div class="confirm-modal" id="confirm-modal" aria-hidden="true">
+  <div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+    <h2 id="confirm-title">Konfirmasi Scan</h2>
+    <div class="confirm-grid">
+      <label>Nama</label><strong id="confirm-name">-</strong>
+      <label>Company/Employee</label><strong id="confirm-company">-</strong>
+      <label>Action</label><strong id="confirm-action">-</strong>
+    </div>
+    <div class="confirm-actions">
+      <button type="button" class="btn btn-light" id="confirm-cancel" onclick="cancelConfirmation()">Cancel</button>
+      <button type="button" class="btn btn-dark" id="confirm-ok" onclick="executePendingScan()">OK</button>
+    </div>
+  </div>
+</div>
+
 <script>
 window.csrf_token = '{{ csrf_token }}';
 </script>

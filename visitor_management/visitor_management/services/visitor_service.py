@@ -63,8 +63,8 @@ def validate_duplicate_active(visitor, method=None):
 
 
 def check_in(visitor, gate=None, device_id=None):
-    if visitor.status != "Approved":
-        frappe.throw(_("Tidak bisa check-in. Status saat ini: {0}. Visitor harus Approved.").format(visitor.status))
+    if visitor.status != "Registered":
+        frappe.throw(_("Tidak bisa check-in. Status saat ini: {0}. Visitor harus Registered.").format(visitor.status))
     if is_visitor_inside(visitor.name):
         frappe.throw(_("Visitor masih tercatat berada di dalam area"))
 
@@ -108,14 +108,11 @@ def check_out(visitor, gate=None, device_id=None):
                 "Minta host untuk approve atau reject terlebih dahulu."
             ))
         if visitor.status == "Approved":
-            frappe.throw(_("Tamu masih di area. Selesaikan kunjungan terlebih dahulu sebelum check-out."))
+            frappe.throw(_("Tamu masih di area"))
         frappe.throw(_(
             "Tidak bisa check-out. Status saat ini: {0}. "
             "Status yang diizinkan: {1}."
         ).format(visitor.status, ", ".join(CHECKOUT_ALLOWED_STATUSES)))
-
-    if not is_visitor_inside(visitor.name):
-        frappe.throw(_("Tidak ditemukan log aktif untuk visitor ini"))
 
     gate_name = get_gate_by_device(device_id=device_id, gate=gate)
     _sync_visitor_status(visitor, "Checked Out")

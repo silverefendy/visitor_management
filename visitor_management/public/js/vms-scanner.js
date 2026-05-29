@@ -275,10 +275,42 @@ function updateProcessButton(canProcess, status, label) {
 function proses() {
   if (!pendingResolution || processing) return;
   if (!["CHECK_IN", "CHECK_OUT", "EMPLOYEE_CHECK_IN", "EMPLOYEE_CHECK_OUT"].includes(pendingResolution.next_action)) return;
+  showConfirmation(pendingResolution);
+}
 
-  var message = confirmationMessage(pendingResolution);
-  if (!confirm(message)) return;
+function showConfirmation(data) {
+  var isEmployee = data.entity_type === "EMPLOYEE";
+  setText("confirm-title", isEmployee ? "Konfirmasi Scan Karyawan" : confirmationTitle(data));
+  setText("confirm-name", isEmployee ? data.employee_name : data.visitor_name);
+  setText("confirm-company", isEmployee ? ((data.employee || "-") + " / " + (data.department || "-")) : (data.company || data.visitor_company || "-"));
+  setText("confirm-action", labelForAction(data.next_action, isEmployee));
+  var modal = document.getElementById("confirm-modal");
+  modal.className = "confirm-modal open";
+  modal.setAttribute("aria-hidden", "false");
+  document.getElementById("confirm-ok").focus();
+}
 
+function confirmationTitle(data) {
+  if (data.next_action === "CHECK_OUT") return "Check Out Visitor?";
+  if (data.next_action === "CHECK_IN") return "Check In Visitor?";
+  return "Konfirmasi Scan Tamu";
+}
+
+function cancelConfirmation() {
+  closeConfirmation();
+  reset();
+}
+
+function closeConfirmation() {
+  var modal = document.getElementById("confirm-modal");
+  if (!modal) return;
+  modal.className = "confirm-modal";
+  modal.setAttribute("aria-hidden", "true");
+}
+
+function executePendingScan() {
+  if (!pendingResolution || processing) return;
+  closeConfirmation();
   processing = true;
   setLoading(true, "Memproses konfirmasi...");
   api(
@@ -306,20 +338,16 @@ function proses() {
   );
 }
 
-function confirmationMessage(data) {
-  if (data.entity_type === "EMPLOYEE") {
-    return labelForAction(data.next_action, true) + "?\n\nNama:\n" + (data.employee_name || "-") + "\n\nDepartemen:\n" + (data.department || "-");
-  }
-  if (data.next_action === "CHECK_IN") {
-    return "Check In Visitor?\n\nNama:\n" + (data.visitor_name || "-") + "\n\nPerusahaan:\n" + (data.company || data.visitor_company || "-") + "\n\nTujuan:\n" + (data.employee_name || data.host_employee_name || "-");
-  }
-  return "Check Out Visitor?\n\nNama:\n" + (data.visitor_name || "-") + "\n\nPerusahaan:\n" + (data.company || data.visitor_company || "-");
+function setText(id, value) {
+  var el = document.getElementById(id);
+  if (el) el.textContent = value || "-";
 }
 
 function prosesVisitor() { proses(); }
 function prosesEmployee() { proses(); }
 
 function reset() {
+  closeConfirmation();
   visitor = null;
   pendingResolution = null;
   processing = false;
