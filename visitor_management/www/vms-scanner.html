@@ -20,8 +20,8 @@
     <button class="target-btn" id="target-employee" onclick="setScanTarget('employee')">Scan Karyawan</button>
   </div>
   <div class="mode-bar">
-    <button type="button" class="mode-btn active-in" id="btn-in">CHECK IN</button>
-    <button type="button" class="mode-btn" id="btn-out">CHECK OUT</button>
+    <button type="button" class="mode-btn active-in" id="btn-in">Aksi Backend</button>
+    <button type="button" class="mode-btn" id="btn-out">Konfirmasi</button>
   </div>
 
   <div class="alert" id="alert-box"></div>
@@ -92,8 +92,10 @@
     <h2 id="confirm-title">Konfirmasi Scan</h2>
     <div class="confirm-grid">
       <label>Nama</label><strong id="confirm-name">-</strong>
-      <label>Company/Employee</label><strong id="confirm-company">-</strong>
-      <label>Action</label><strong id="confirm-action">-</strong>
+      <label>Perusahaan / Departemen</label><strong id="confirm-company">-</strong>
+      <label>Tujuan</label><strong id="confirm-purpose">-</strong>
+      <label>Karyawan Dituju</label><strong id="confirm-host">-</strong>
+      <label>Aksi</label><strong id="confirm-action">-</strong>
     </div>
     <div class="confirm-actions">
       <button type="button" class="btn btn-light" id="confirm-cancel" onclick="cancelConfirmation()">Cancel</button>
