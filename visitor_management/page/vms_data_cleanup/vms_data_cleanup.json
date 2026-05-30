@@ -5,11 +5,16 @@
  "name": "vms-data-cleanup",
  "page_name": "vms-data-cleanup",
  "roles": [
-  {"role": "System Manager"},
-  {"role": "VMS System Admin"},
-  {"role": "Visitor Manager"},
-  {"role": "VMS Manager"}
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "VMS System Admin"
+  },
+  {
+   "role": "VMS Manager"
+  }
  ],
  "standard": "Yes",
- "title": "VMS Data Cleanup"
+ "title": "VMS Cleanup Tool"
 }

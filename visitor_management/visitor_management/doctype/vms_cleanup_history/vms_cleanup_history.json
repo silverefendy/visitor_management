@@ -1,10 +1,8 @@
 {
  "actions": [],
- "allow_rename": 0,
- "allow_import": 0,
- "autoname": "hash",
+ "allow_rename": 1,
  "doctype": "DocType",
- "editable_grid": 0,
+ "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
   "performed_at",
@@ -22,6 +20,7 @@
   "checked_out_only",
   "filter_summary",
   "affected_records",
+  "job_id",
   "details"
  ],
  "fields": [
@@ -46,7 +45,7 @@
    "fieldname": "cleanup_action",
    "fieldtype": "Select",
    "label": "Cleanup Action",
-   "options": "Preview\nArchive\nDelete",
+   "options": "Preview\nDry Run\nDelete",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "read_only": 1
@@ -64,9 +63,8 @@
    "fieldname": "cleanup_method",
    "fieldtype": "Select",
    "label": "Cleanup Method",
-   "options": "Selected Records\nFiltered Records\nOld Records",
+   "options": "Selected Records\nFiltered Records\nAll Filtered Records\nDry Run\nBackground Job",
    "in_list_view": 1,
-   "in_standard_filter": 1,
    "read_only": 1
   },
   {
@@ -131,7 +129,13 @@
    "fieldtype": "Long Text",
    "label": "Affected Records",
    "read_only": 1,
-   "description": "Readable list of affected record IDs."
+   "description": "Readable list of affected record IDs; no manual JSON entry is required."
+  },
+  {
+   "fieldname": "job_id",
+   "fieldtype": "Data",
+   "label": "Background Job ID",
+   "read_only": 1
   },
   {
    "fieldname": "details",
@@ -140,44 +144,47 @@
    "read_only": 1
   }
  ],
- "hide_toolbar": 1,
- "in_create": 0,
  "module": "Visitor Management",
- "name": "VMS Cleanup Log",
+ "name": "VMS Cleanup History",
  "permissions": [
   {
    "role": "System Manager",
    "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
    "report": 1,
    "export": 1,
-   "print": 1
+   "print": 1,
+   "email": 1,
+   "share": 1
   },
   {
    "role": "VMS System Admin",
    "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
    "report": 1,
    "export": 1,
-   "print": 1
-  },
-  {
-   "role": "Visitor Manager",
-   "read": 1,
-   "report": 1,
-   "export": 1
+   "print": 1,
+   "email": 1,
+   "share": 1
   },
   {
    "role": "VMS Manager",
    "read": 1,
    "report": 1,
-   "export": 1
+   "export": 1,
+   "print": 1
   }
  ],
- "sort_field": "performed_at",
+ "sort_field": "modified",
  "sort_order": "DESC",
+ "track_changes": 1,
+ "autoname": "hash",
  "title_field": "filter_summary",
- "track_changes": 0,
- "search_fields": "cleanup_action,target_doctype,cleanup_method,performed_by,filter_summary,affected_records",
- "description": "System-generated audit history for VMS archive/delete cleanup actions. Records are created only by the Data Cleanup tool.",
- "show_name_in_global_search": 0,
- "is_virtual": 0
+ "search_fields": "cleanup_action,target_doctype,cleanup_method,performed_by,filter_summary,affected_records,job_id",
+ "in_create": 0,
+ "hide_toolbar": 1
 }

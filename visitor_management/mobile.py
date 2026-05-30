@@ -84,7 +84,7 @@ def execute_scan_action(qr_code=None, qr_data=None, action=None, gate=None, devi
 def get_mobile_navigation():
 	"""Menu navigasi dinamis untuk Flutter app."""
 	roles = frappe.get_roles(frappe.session.user)
-	is_manager = "Visitor Manager" in roles or "System Manager" in roles
+	is_manager = "VMS Manager" in roles or "System Manager" in roles
 
 	menu_items = [
 		{
@@ -149,7 +149,7 @@ def get_feature_flags():
 	"""Feature flags untuk kontrol fitur di Flutter app."""
 	roles = frappe.get_roles(frappe.session.user)
 	is_manager = (
-		"Visitor Manager" in roles
+		"VMS Manager" in roles
 		or "System Manager" in roles
 		or "HR Manager" in roles
 	)
@@ -278,7 +278,7 @@ def get_pending_approvals():
 	"""Daftar visitor yang menunggu approval."""
 	user = frappe.session.user
 	roles = frappe.get_roles(user)
-	is_manager = "System Manager" in roles or "Visitor Manager" in roles
+	is_manager = "System Manager" in roles or "VMS Manager" in roles
 
 	filters = {"status": "Awaiting Approval"}
 	if not is_manager:

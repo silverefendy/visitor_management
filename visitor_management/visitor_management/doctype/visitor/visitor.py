@@ -355,7 +355,7 @@ class Visitor(Document):
 def get_permission_query_conditions(user):
     if not user:
         user = frappe.session.user
-    if "System Manager" in frappe.get_roles(user) or "Visitor Manager" in frappe.get_roles(user):
+    if "System Manager" in frappe.get_roles(user) or "VMS Manager" in frappe.get_roles(user):
         return ""
     employee = frappe.db.get_value("Employee", {"user_id": user}, "name")
     if employee:

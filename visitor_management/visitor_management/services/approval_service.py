@@ -5,7 +5,7 @@ from frappe.utils import now_datetime
 APPROVAL_STEPS = [
     ("Supervisor", "Supervisor Approval"),
     ("HR Manager", "Manager Approval"),
-    ("Visitor Security", "Security Approval"),
+    ("Visitor Security Guard", "Security Approval"),
 ]
 
 
