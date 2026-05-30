@@ -1,15 +1,15 @@
 {
  "app": "visitor_management",
  "charts": [],
- "content": "[{\"id\":\"vms-title\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h3\\\"><b>Visitor Management</b></span>\",\"col\":12}},{\"id\":\"vms-intro\",\"type\":\"paragraph\",\"data\":{\"text\":\"Enterprise VMS operations hub. Scan QR is the primary entry point; cleanup and settings are VMS-owned and do not override Frappe core Notification Settings.\",\"col\":12}},{\"id\":\"vms-main-ops\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Main Operations</b></span>\",\"col\":12}},{\"id\":\"vms-visitor\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Visitor\",\"col\":4}},{\"id\":\"vms-scan-qr\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Scan QR\",\"col\":4}},{\"id\":\"vms-visitor-log\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Visitor Log\",\"col\":4}},{\"id\":\"vms-visitor-appointment\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Visitor Appointment\",\"col\":4}},{\"id\":\"vms-visitor-approval\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Visitor Approval\",\"col\":4}},{\"id\":\"vms-visitor-blacklist\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Visitor Blacklist\",\"col\":4}},{\"id\":\"vms-masters\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Masters</b></span>\",\"col\":12}},{\"id\":\"vms-visitor-company\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Visitor Company\",\"col\":4}},{\"id\":\"vms-visitor-purpose\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Visitor Purpose\",\"col\":4}},{\"id\":\"vms-settings\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Settings</b></span>\",\"col\":12}},{\"id\":\"vms-visitor-settings\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Visitor Settings\",\"col\":4}},{\"id\":\"vms-qr-settings\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"QR Settings\",\"col\":4}},{\"id\":\"vms-approval-settings\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Approval Settings\",\"col\":4}},{\"id\":\"vms-notification-settings\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Notification Settings\",\"col\":4}},{\"id\":\"vms-gate-settings\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Gate Settings\",\"col\":4}},{\"id\":\"vms-admin\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Administration & Reports</b></span>\",\"col\":12}},{\"id\":\"vms-vms-cleanup-tool\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"VMS Cleanup Tool\",\"col\":4}},{\"id\":\"vms-vms-cleanup-history\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"VMS Cleanup History\",\"col\":4}},{\"id\":\"vms-visitor-reports\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Visitor Reports\",\"col\":4}},{\"id\":\"vms-stats\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Live Statistics</b></span>\",\"col\":12}},{\"id\":\"vms-card-total-visitors-today\",\"type\":\"card\",\"data\":{\"card_name\":\"Total Visitors Today\",\"col\":4}},{\"id\":\"vms-card-currently-checked-in\",\"type\":\"card\",\"data\":{\"card_name\":\"Currently Checked In\",\"col\":4}},{\"id\":\"vms-card-checked-out-today\",\"type\":\"card\",\"data\":{\"card_name\":\"Checked Out Today\",\"col\":4}},{\"id\":\"vms-card-pending-approval\",\"type\":\"card\",\"data\":{\"card_name\":\"Pending Approval\",\"col\":4}},{\"id\":\"vms-card-total-visitors-this-month\",\"type\":\"card\",\"data\":{\"card_name\":\"Total Visitors This Month\",\"col\":4}},{\"id\":\"vms-lists\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Operational Lists</b></span>\",\"col\":12}},{\"id\":\"vms-ql-visitor\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Visitor\",\"col\":6}},{\"id\":\"vms-ql-visitor-log\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Visitor Log\",\"col\":6}},{\"id\":\"vms-ql-vms-cleanup-history\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"VMS Cleanup History\",\"col\":6}}]",
+ "content": "[{\"id\":\"vms-title\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h3\\\"><b>Visitor Management</b></span>\",\"col\":12}},{\"id\":\"vms-intro\",\"type\":\"paragraph\",\"data\":{\"text\":\"Professional operations dashboard for receptionist, security, and visitor administration workflows.\",\"col\":12}},{\"id\":\"vms-main-ops\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Main Operations</b></span>\",\"col\":12}},{\"id\":\"sc-new-visitor\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Visitor\",\"col\":3}},{\"id\":\"sc-visitor-list\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Visitor List\",\"col\":3}},{\"id\":\"sc-scan-qr\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Scan QR\",\"col\":3}},{\"id\":\"sc-visitor-log\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Visitor Log\",\"col\":3}},{\"id\":\"sc-check-in\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Check In\",\"col\":3}},{\"id\":\"sc-check-out\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Check Out\",\"col\":3}},{\"id\":\"sc-today-visitors\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Today's Visitors\",\"col\":3}},{\"id\":\"sc-vms-approval\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"VMS Approval\",\"col\":3}},{\"id\":\"vms-stats\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Live Statistics</b></span>\",\"col\":12}},{\"id\":\"card-total-today\",\"type\":\"card\",\"data\":{\"card_name\":\"Total Visitors Today\",\"col\":4}},{\"id\":\"card-checked-in\",\"type\":\"card\",\"data\":{\"card_name\":\"Currently Checked In\",\"col\":4}},{\"id\":\"card-checked-out\",\"type\":\"card\",\"data\":{\"card_name\":\"Checked Out Today\",\"col\":4}},{\"id\":\"card-pending\",\"type\":\"card\",\"data\":{\"card_name\":\"Pending Approval\",\"col\":4}},{\"id\":\"card-month\",\"type\":\"card\",\"data\":{\"card_name\":\"Total Visitors This Month\",\"col\":4}},{\"id\":\"vms-quick-filters\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Quick Filters</b></span>\",\"col\":12}},{\"id\":\"sc-active-visitors\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Active Visitors\",\"col\":3}},{\"id\":\"sc-checked-out-visitors\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Checked Out Visitors\",\"col\":3}},{\"id\":\"sc-pending-visitors\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Pending Visitors\",\"col\":3}},{\"id\":\"sc-visitor-appointment\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Visitor Appointment\",\"col\":3}},{\"id\":\"vms-operational-lists\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Operational Lists</b></span>\",\"col\":12}},{\"id\":\"ql-visitor\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Visitor\",\"col\":4}},{\"id\":\"ql-visitor-log\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Visitor Log\",\"col\":4}},{\"id\":\"ql-employee-entry\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Employee Entry Request\",\"col\":4}},{\"id\":\"ql-employee-entry-log\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Employee Entry Log\",\"col\":4}},{\"id\":\"vms-reports\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Reports</b></span>\",\"col\":12}},{\"id\":\"sc-daily-visitor\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Daily Visitor Report\",\"col\":3}},{\"id\":\"sc-monthly-visitor\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Monthly Visitor Report\",\"col\":3}},{\"id\":\"sc-employee-visit\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Employee Visit Report\",\"col\":3}},{\"id\":\"sc-visitor-history\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Visitor History\",\"col\":3}},{\"id\":\"vms-config\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Configuration</b></span>\",\"col\":12}},{\"id\":\"sc-gate-config\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Gate Configuration\",\"col\":3}},{\"id\":\"sc-visitor-settings\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Visitor Settings\",\"col\":3}},{\"id\":\"sc-qr-settings\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"QR Settings\",\"col\":3}},{\"id\":\"sc-approval-settings\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Approval Settings\",\"col\":3}},{\"id\":\"sc-vms-notification-settings\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"VMS Notification Settings\",\"col\":3}}]",
  "creation": "2026-05-02 15:55:00.088354",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
  "hide_custom": 0,
- "icon": "organization",
+ "icon": "users",
  "idx": 0,
- "indicator_color": "blue",
+ "indicator_color": "green",
  "is_hidden": 0,
  "label": "Visitor Management",
  "link_type": "DocType",
@@ -27,9 +27,19 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Visitor Company",
+   "label": "Visitor Log",
    "link_count": 0,
-   "link_to": "Visitor Company",
+   "link_to": "Visitor Log",
+   "link_type": "DocType",
+   "onboard": 1,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Employee Entry Request",
+   "link_count": 0,
+   "link_to": "Employee Entry Request",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -37,19 +47,9 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Visitor Purpose",
+   "label": "Employee Entry Log",
    "link_count": 0,
-   "link_to": "Visitor Purpose",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Visitor Blacklist",
-   "link_count": 0,
-   "link_to": "Visitor Blacklist",
+   "link_to": "Employee Entry Log",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -77,9 +77,39 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Visitor Log",
+   "label": "Visitor Blacklist",
    "link_count": 0,
-   "link_to": "Visitor Log",
+   "link_to": "Visitor Blacklist",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Visitor Company",
+   "link_count": 0,
+   "link_to": "Visitor Company",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Visitor Purpose",
+   "link_count": 0,
+   "link_to": "Visitor Purpose",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Gate",
+   "link_count": 0,
+   "link_to": "Gate",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -117,16 +147,6 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Notification Settings",
-   "link_count": 0,
-   "link_to": "Notification Settings",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
    "label": "Gate Settings",
    "link_count": 0,
    "link_to": "Gate Settings",
@@ -137,15 +157,15 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "VMS Cleanup History",
+   "label": "VMS Notification Settings",
    "link_count": 0,
-   "link_to": "VMS Cleanup History",
+   "link_to": "VMS Notification Settings",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
   }
  ],
- "modified": "2026-05-29 00:00:00.000000",
+ "modified": "2026-05-30 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Visitor Management",
  "name": "Visitor Management",
@@ -162,7 +182,7 @@
    "document_type": "Visitor",
    "function": "Count",
    "aggregate_function_based_on": null,
-   "filters_json": "[[\"Visitor\",\"status\",\"in\",[\"Approved\",\"Checked In\",\"Completed\"],false]]"
+   "filters_json": "[[\"Visitor\",\"status\",\"in\",[\"Approved\",\"Checked In\",\"Awaiting Approval\",\"Completed\"],false]]"
   },
   {
    "label": "Checked Out Today",
@@ -200,8 +220,13 @@
    "quick_list_filter": "[]"
   },
   {
-   "document_type": "VMS Cleanup History",
-   "label": "VMS Cleanup History",
+   "document_type": "Employee Entry Request",
+   "label": "Employee Entry Request",
+   "quick_list_filter": "[]"
+  },
+  {
+   "document_type": "Employee Entry Log",
+   "label": "Employee Entry Log",
    "quick_list_filter": "[]"
   }
  ],
@@ -210,74 +235,33 @@
    "role": "System Manager"
   },
   {
-   "role": "VMS System Admin"
+   "role": "Visitor Manager"
   },
   {
-   "role": "VMS Manager"
-  },
-  {
-   "role": "Visitor Security Guard"
-  },
-  {
-   "role": "Visitor Receptionist"
-  },
-  {
-   "role": "Visitor Approver"
+   "role": "Visitor Security"
   },
   {
    "role": "Employee"
+  },
+  {
+   "role": "HR Manager"
   }
  ],
  "sequence_id": 0.0,
  "shortcuts": [
   {
    "color": "Blue",
-   "doc_view": "List",
-   "label": "Visitor",
+   "label": "New Visitor",
    "type": "DocType",
-   "link_to": "Visitor"
+   "link_to": "Visitor",
+   "doc_view": "New"
   },
   {
    "color": "Blue",
-   "doc_view": "List",
-   "label": "Visitor Company",
+   "label": "Visitor List",
    "type": "DocType",
-   "link_to": "Visitor Company"
-  },
-  {
-   "color": "Blue",
-   "doc_view": "List",
-   "label": "Visitor Purpose",
-   "type": "DocType",
-   "link_to": "Visitor Purpose"
-  },
-  {
-   "color": "Red",
-   "doc_view": "List",
-   "label": "Visitor Blacklist",
-   "type": "DocType",
-   "link_to": "Visitor Blacklist"
-  },
-  {
-   "color": "Cyan",
-   "doc_view": "List",
-   "label": "Visitor Appointment",
-   "type": "DocType",
-   "link_to": "Visitor Appointment"
-  },
-  {
-   "color": "Orange",
-   "doc_view": "List",
-   "label": "Visitor Approval",
-   "type": "DocType",
-   "link_to": "Visitor Approval"
-  },
-  {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "Visitor Log",
-   "type": "DocType",
-   "link_to": "Visitor Log"
+   "link_to": "Visitor",
+   "doc_view": "List"
   },
   {
    "color": "Purple",
@@ -286,58 +270,133 @@
    "url": "/vms-scanner"
   },
   {
-   "color": "Green",
-   "doc_view": "List",
-   "label": "Visitor Settings",
-   "type": "DocType",
-   "link_to": "Visitor Settings"
-  },
-  {
-   "color": "Green",
-   "doc_view": "List",
-   "label": "QR Settings",
-   "type": "DocType",
-   "link_to": "QR Settings"
-  },
-  {
-   "color": "Green",
-   "doc_view": "List",
-   "label": "Approval Settings",
-   "type": "DocType",
-   "link_to": "Approval Settings"
-  },
-  {
-   "color": "Green",
-   "doc_view": "List",
-   "label": "Notification Settings",
-   "type": "DocType",
-   "link_to": "Notification Settings"
-  },
-  {
-   "color": "Green",
-   "doc_view": "List",
-   "label": "Gate Settings",
-   "type": "DocType",
-   "link_to": "Gate Settings"
-  },
-  {
-   "color": "Red",
-   "label": "VMS Cleanup Tool",
-   "type": "URL",
-   "url": "/app/vms-data-cleanup"
-  },
-  {
    "color": "Grey",
-   "doc_view": "List",
-   "label": "VMS Cleanup History",
+   "label": "Visitor Log",
    "type": "DocType",
-   "link_to": "VMS Cleanup History"
+   "link_to": "Visitor Log",
+   "doc_view": "List"
+  },
+  {
+   "color": "Green",
+   "label": "Check In",
+   "type": "URL",
+   "url": "/vms-scanner?mode=checkin"
+  },
+  {
+   "color": "Orange",
+   "label": "Check Out",
+   "type": "URL",
+   "url": "/vms-scanner?mode=checkout"
   },
   {
    "color": "Cyan",
-   "label": "Visitor Reports",
+   "label": "Today's Visitors",
+   "type": "DocType",
+   "link_to": "Visitor",
+   "doc_view": "List",
+   "filters_json": "[[\"Visitor\",\"check_in_time\",\"Timespan\",\"today\",false]]"
+  },
+  {
+   "color": "Orange",
+   "label": "VMS Approval",
    "type": "URL",
-   "url": "/app/query-report?reference_doctype=Visitor"
+   "url": "/vms-approval"
+  },
+  {
+   "color": "Green",
+   "label": "Active Visitors",
+   "type": "DocType",
+   "link_to": "Visitor",
+   "doc_view": "List",
+   "filters_json": "[[\"Visitor\",\"status\",\"in\",[\"Awaiting Approval\",\"Approved\",\"Checked In\",\"Completed\"],false]]"
+  },
+  {
+   "color": "Grey",
+   "label": "Checked Out Visitors",
+   "type": "DocType",
+   "link_to": "Visitor",
+   "doc_view": "List",
+   "filters_json": "[[\"Visitor\",\"status\",\"=\",\"Checked Out\",false]]"
+  },
+  {
+   "color": "Red",
+   "label": "Pending Visitors",
+   "type": "DocType",
+   "link_to": "Visitor",
+   "doc_view": "List",
+   "filters_json": "[[\"Visitor\",\"status\",\"=\",\"Awaiting Approval\",false]]"
+  },
+  {
+   "color": "Cyan",
+   "label": "Visitor Appointment",
+   "type": "DocType",
+   "link_to": "Visitor Appointment",
+   "doc_view": "List"
+  },
+  {
+   "color": "Cyan",
+   "label": "Daily Visitor Report",
+   "type": "DocType",
+   "link_to": "Visitor",
+   "doc_view": "List",
+   "filters_json": "[[\"Visitor\",\"check_in_time\",\"Timespan\",\"today\",false]]"
+  },
+  {
+   "color": "Cyan",
+   "label": "Monthly Visitor Report",
+   "type": "DocType",
+   "link_to": "Visitor",
+   "doc_view": "List",
+   "filters_json": "[[\"Visitor\",\"check_in_time\",\"Timespan\",\"this month\",false]]"
+  },
+  {
+   "color": "Cyan",
+   "label": "Employee Visit Report",
+   "type": "DocType",
+   "link_to": "Employee Entry Request",
+   "doc_view": "List"
+  },
+  {
+   "color": "Grey",
+   "label": "Visitor History",
+   "type": "DocType",
+   "link_to": "Visitor Log",
+   "doc_view": "List"
+  },
+  {
+   "color": "Grey",
+   "label": "Gate Configuration",
+   "type": "DocType",
+   "link_to": "Gate",
+   "doc_view": "List"
+  },
+  {
+   "color": "Green",
+   "label": "Visitor Settings",
+   "type": "DocType",
+   "link_to": "Visitor Settings",
+   "doc_view": "List"
+  },
+  {
+   "color": "Green",
+   "label": "QR Settings",
+   "type": "DocType",
+   "link_to": "QR Settings",
+   "doc_view": "List"
+  },
+  {
+   "color": "Green",
+   "label": "Approval Settings",
+   "type": "DocType",
+   "link_to": "Approval Settings",
+   "doc_view": "List"
+  },
+  {
+   "color": "Green",
+   "label": "VMS Notification Settings",
+   "type": "DocType",
+   "link_to": "VMS Notification Settings",
+   "doc_view": "List"
   }
  ],
  "title": "Visitor Management",
