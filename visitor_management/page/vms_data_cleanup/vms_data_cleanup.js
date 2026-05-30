@@ -1,24 +1,25 @@
 frappe.pages["vms-data-cleanup"].on_page_load = function (wrapper) {
 	const page = frappe.ui.make_app_page({
 		parent: wrapper,
-		title: __("Data Cleanup"),
+		title: __("VMS Cleanup Tool"),
 		single_column: true,
 	});
 
-	const state = { records: [], target_doctype: "Visitor" };
+	const state = { records: [], count: 0, target_doctype: "Visitor" };
 	const $body = $(page.body).addClass("vms-cleanup-page");
 	$body.html(`
 		<div class="vms-cleanup-shell">
 			<div class="vms-cleanup-card">
-				<h3>${__("Cleanup Tool")}</h3>
-				<p class="text-muted">${__("Preview records before archiving or deleting. Cleanup history is generated automatically and cannot be manually created.")}</p>
+				<h3>${__("VMS Cleanup Tool")}</h3>
+				<p class="text-muted">${__("Filter by DocType and date, preview counts, run safe dry-runs, delete selected records, or queue all filtered records in the background. Cleanup history is generated automatically and cannot be manually created.")}</p>
 				<div class="vms-cleanup-grid" id="cleanup-filters"></div>
 				<div class="vms-cleanup-actions">
 					<button class="btn btn-primary" id="cleanup-preview">${__("Preview Records")}</button>
 					<button class="btn btn-default" id="cleanup-select-all">${__("Select All")}</button>
-					<button class="btn btn-warning" id="cleanup-archive">${__("Archive Selected")}</button>
+					<button class="btn btn-default" id="cleanup-dry-run">${__("Dry Run Filtered")}</button>
 					<button class="btn btn-danger" id="cleanup-delete-selected">${__("Delete Selected")}</button>
-					<button class="btn btn-danger" id="cleanup-delete-filtered">${__("Delete Filtered")}</button>
+					<button class="btn btn-danger" id="cleanup-delete-filtered">${__("Delete All Filtered")}</button>
+					<button class="btn btn-warning" id="cleanup-background">${__("Queue Filtered Delete")}</button>
 				</div>
 			</div>
 			<div class="vms-cleanup-card">
@@ -52,8 +53,7 @@ frappe.pages["vms-data-cleanup"].on_page_load = function (wrapper) {
 
 	controls.target_doctype.$input.on("change", () => {
 		state.target_doctype = controls.target_doctype.get_value() || "Visitor";
-		update_action_state();
-		render_table([]);
+		render_table([], 0);
 	});
 
 	function get_filters() {
@@ -69,19 +69,16 @@ frappe.pages["vms-data-cleanup"].on_page_load = function (wrapper) {
 		return $body.find(".cleanup-check:checked").map((_, el) => $(el).data("name")).get();
 	}
 
-	function update_action_state() {
-		const is_visitor = (controls.target_doctype.get_value() || "Visitor") === "Visitor";
-		$body.find("#cleanup-archive").prop("disabled", !is_visitor).toggleClass("disabled", !is_visitor);
-	}
 
 	function column_label(column) {
 		return column.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 	}
 
-	function render_table(records) {
+	function render_table(records, total_count) {
 		state.records = records || [];
+		state.count = total_count || state.records.length;
 		const target = controls.target_doctype.get_value() || "Visitor";
-		$body.find("#cleanup-summary").text(__("{0} {1} records ready for review.", [state.records.length, target]));
+		$body.find("#cleanup-summary").text(__("{0} {1} records match filters; showing {2} for review.", [state.count, target, state.records.length]));
 		const columns = target === "Visitor Log"
 			? ["name", "visitor", "action", "status", "gate", "action_time", "modified"]
 			: ["name", "visitor_name", "visitor_company", "status", "check_in_time", "check_out_time", "modified"];
@@ -117,7 +114,7 @@ frappe.pages["vms-data-cleanup"].on_page_load = function (wrapper) {
 			method: "visitor_management.visitor_management.maintenance.preview_cleanup_records",
 			args: { target_doctype: target, filters: get_filters(), limit: 200 },
 			freeze: true,
-			callback: (r) => render_table((r.message && r.message.records) || []),
+			callback: (r) => render_table((r.message && r.message.records) || [], (r.message && r.message.count) || 0),
 		});
 	}
 
@@ -129,7 +126,7 @@ frappe.pages["vms-data-cleanup"].on_page_load = function (wrapper) {
 		});
 	}
 
-	function run(action, use_filtered = false) {
+	function run({ use_filtered = false, dry_run = false, background = false } = {}) {
 		const names = use_filtered ? [] : selected_records();
 		if (!use_filtered && !names.length) {
 			frappe.msgprint(__("Select at least one record from the preview table."));
@@ -137,17 +134,21 @@ frappe.pages["vms-data-cleanup"].on_page_load = function (wrapper) {
 		}
 		const target = controls.target_doctype.get_value() || "Visitor";
 		const label = use_filtered ? __("all records matching current filters") : __("{0} selected records", [names.length]);
+		const method = background
+			? "visitor_management.visitor_management.maintenance.enqueue_cleanup"
+			: "visitor_management.visitor_management.maintenance.run_cleanup";
 		const execute = (values = {}) => {
-			frappe.confirm(__("Run {0} for {1}?", [action, label]), () => {
+			frappe.confirm(__("Run {0} for {1}?", [dry_run ? __("Dry Run") : __("Delete"), label]), () => {
 				frappe.call({
-					method: "visitor_management.visitor_management.maintenance.run_cleanup",
+					method,
 					args: {
 						target_doctype: target,
-						action,
+						action: "Delete",
 						records: names,
 						filters: get_filters(),
 						confirm_text: values.confirm_text,
-						cleanup_method: use_filtered ? "Filtered Records" : "Selected Records",
+						dry_run: dry_run ? 1 : 0,
+						cleanup_method: use_filtered ? "All Filtered Records" : "Selected Records",
 					},
 					freeze: true,
 					callback: (r) => {
@@ -158,7 +159,7 @@ frappe.pages["vms-data-cleanup"].on_page_load = function (wrapper) {
 				});
 			});
 		};
-		if (action === "Delete") {
+		if (!dry_run) {
 			frappe.prompt([{ fieldname: "confirm_text", fieldtype: "Data", label: __("Type DELETE to confirm"), reqd: 1 }], execute, __("Confirm Delete"), __("Delete"));
 		} else {
 			execute();
@@ -167,9 +168,9 @@ frappe.pages["vms-data-cleanup"].on_page_load = function (wrapper) {
 
 	$body.find("#cleanup-preview").on("click", preview);
 	$body.find("#cleanup-select-all").on("click", () => $body.find(".cleanup-check").prop("checked", true));
-	$body.find("#cleanup-archive").on("click", () => run("Archive"));
-	$body.find("#cleanup-delete-selected").on("click", () => run("Delete"));
-	$body.find("#cleanup-delete-filtered").on("click", () => run("Delete", true));
-	update_action_state();
+	$body.find("#cleanup-dry-run").on("click", () => run({ use_filtered: true, dry_run: true }));
+	$body.find("#cleanup-delete-selected").on("click", () => run());
+	$body.find("#cleanup-delete-filtered").on("click", () => run({ use_filtered: true }));
+	$body.find("#cleanup-background").on("click", () => run({ use_filtered: true, background: true }));
 	load_history();
 };

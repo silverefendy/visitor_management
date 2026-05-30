@@ -129,8 +129,8 @@ def _can_manage_visitor(visitor):
     user = frappe.session.user
     roles = frappe.get_roles(user)
 
-    # System Manager dan Visitor Manager bisa kelola semua visitor
-    if "System Manager" in roles or "Visitor Manager" in roles:
+    # System Manager dan VMS Manager bisa kelola semua visitor
+    if "System Manager" in roles or "VMS Manager" in roles:
         return True
 
     # Karyawan hanya bisa kelola visitor yang ditujukan ke dirinya
@@ -466,7 +466,7 @@ def _is_employee_entry_manager(user=None):
     Contoh: tambah "Visitor Approver" jika ada role tersebut.
     """
     roles = frappe.get_roles(user or frappe.session.user)
-    return bool({"System Manager", "HR Manager", "Visitor Manager"} & set(roles))
+    return bool({"System Manager", "HR Manager", "VMS Manager"} & set(roles))
 
 
 def _get_employee_entry_fields():
@@ -757,7 +757,7 @@ def employee_approval_data():
     """
     user      = frappe.session.user
     roles     = frappe.get_roles(user)
-    is_manager = "System Manager" in roles or "Visitor Manager" in roles
+    is_manager = "System Manager" in roles or "VMS Manager" in roles
     employee  = _get_employee_for_user(user)
 
     if not is_manager and not employee:
@@ -1073,7 +1073,7 @@ def bulk_employee_entry_action(entry_ids, action, reason=""):
     """
     if not _is_employee_entry_manager():
         frappe.throw(_(
-            "Hanya HR Manager, Visitor Manager, atau System Manager "
+            "Hanya HR Manager, VMS Manager, atau System Manager "
             "yang dapat melakukan bulk action"
         ))
 

@@ -7,7 +7,7 @@ its own Notification Settings DocType to expose the standard
 rows shadow or remove that field, migration fails with:
 
     AttributeError: 'NotificationSettings' object has no attribute
-    'subscribed_documents'
+    'enabled' or 'subscribed_documents'
 
 This patch does not create or customize Visitor Management notification records.
 It only removes legacy customizations that target Frappe's core Notification
@@ -25,10 +25,19 @@ CORE_NOTIFICATION_DOCTYPES = (
 )
 
 CORE_NOTIFICATION_FIELDS = {
+    "enabled",
+    "subscribed_documents",
     "enable_email_notifications",
+    "enable_email_mention",
+    "enable_email_assignment",
+    "enable_email_threads_on_assigned_document",
+    "enable_email_share",
+    "enable_email_event_reminders",
+    "user",
+    "seen",
+    # v15/older stale names that must not shadow v16 metadata
     "enable_desktop_notifications",
     "enabled_notifications",
-    "subscribed_documents",
 }
 
 
@@ -71,42 +80,44 @@ def _reload_core_notification_doctypes():
             )
 
 
-def _ensure_subscribed_documents_field():
+def _ensure_core_fallback_fields():
     if not frappe.db.table_exists("DocField"):
         return
 
-    exists = frappe.db.exists(
-        "DocField",
+    fallback_fields = (
         {
-            "parent": "Notification Settings",
+            "fieldname": "enabled",
+            "fieldtype": "Check",
+            "label": "Enable System Notification",
+            "default": "1",
+            "idx": 1,
+        },
+        {
             "fieldname": "subscribed_documents",
+            "fieldtype": "Table MultiSelect",
+            "label": "Open Documents",
+            "options": "Notification Subscribed Document",
+            "idx": 2,
         },
     )
-    if exists:
-        return
-
-    # Last-resort compatibility fallback for benches whose installed Frappe app
-    # is missing the DocField row during migrate. The field mirrors Frappe's
-    # standard child table so NotificationSettings documents hydrate safely.
-    docfield = frappe.get_doc(
-        {
-            "doctype": "DocField",
-            "parent": "Notification Settings",
-            "parentfield": "fields",
-            "parenttype": "DocType",
-            "fieldname": "subscribed_documents",
-            "fieldtype": "Table",
-            "label": "Subscribed Documents",
-            "options": "Notification Subscribed Document",
-            "idx": 99,
-        }
-    )
-    docfield.insert(ignore_permissions=True)
+    for field in fallback_fields:
+        if frappe.db.exists("DocField", {"parent": "Notification Settings", "fieldname": field["fieldname"]}):
+            continue
+        docfield = frappe.get_doc(
+            {
+                "doctype": "DocField",
+                "parent": "Notification Settings",
+                "parentfield": "fields",
+                "parenttype": "DocType",
+                **field,
+            }
+        )
+        docfield.insert(ignore_permissions=True)
 
 
 def execute():
     _delete_legacy_custom_fields()
     _delete_legacy_property_setters()
     _reload_core_notification_doctypes()
-    _ensure_subscribed_documents_field()
+    _ensure_core_fallback_fields()
     frappe.clear_cache(doctype="Notification Settings")

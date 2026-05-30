@@ -5,8 +5,8 @@
  "name": "visitor-scanner",
  "page_name": "visitor-scanner",
  "roles": [
-  { "role": "Visitor Security" },
-  { "role": "Visitor Manager" },
+  { "role": "Visitor Security Guard" },
+  { "role": "VMS Manager" },
   { "role": "System Manager" }
  ],
  "standard": "Yes",
