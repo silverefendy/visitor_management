@@ -3,6 +3,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import now_datetime
 
+
 def _create_employee_entry_log(doc, action, notes=""):
 	try:
 		frappe.get_doc({
@@ -20,7 +21,18 @@ def _create_employee_entry_log(doc, action, notes=""):
 		frappe.log_error(message=frappe.get_traceback(), title="Employee Entry Log Insert Error")
 
 
+def _notify(doc, event: str) -> None:
+	try:
+		from visitor_management.visitor_management.services.notification_service import (
+			dispatch_employee_entry_notification,
+		)
+		dispatch_employee_entry_notification(doc, event)
+	except Exception:
+		frappe.log_error(message=frappe.get_traceback(), title=f"VMS Notify Dispatch Error [{event}]")
+
+
 class EmployeeEntryRequest(Document):
+
 	def _save_and_commit(self):
 		self.save(ignore_permissions=True)
 		frappe.db.commit()
@@ -31,8 +43,21 @@ class EmployeeEntryRequest(Document):
 		if not self.check_in_time:
 			self.check_in_time = now_datetime()
 
+		# Auto-detect gate dari IP address request
+		if not getattr(self, "gate", None):
+			try:
+				from visitor_management.visitor_management.services.gate_service import (
+					resolve_gate_for_scan,
+				)
+				detected_gate = resolve_gate_for_scan()
+				if detected_gate:
+					self.gate = detected_gate
+			except Exception:
+				pass
+
 	def after_insert(self):
 		_create_employee_entry_log(self, "Created", "Pengajuan employee entry dibuat")
+		_notify(self, "created")
 
 	def validate(self):
 		if self.employee:
@@ -58,6 +83,7 @@ class EmployeeEntryRequest(Document):
 		self.approved_at = now_datetime()
 		self._save_and_commit()
 		_create_employee_entry_log(self, "Approved", "Pengajuan disetujui")
+		_notify(self, "approved")
 		return {"status": "success", "message": "Karyawan disetujui masuk."}
 
 	@frappe.whitelist()
@@ -70,6 +96,7 @@ class EmployeeEntryRequest(Document):
 		self.approved_at = now_datetime()
 		self._save_and_commit()
 		_create_employee_entry_log(self, "Rejected", reason or "Pengajuan ditolak")
+		_notify(self, "rejected")
 		return {"status": "success", "message": "Pengajuan karyawan ditolak."}
 
 	@frappe.whitelist()
@@ -80,6 +107,7 @@ class EmployeeEntryRequest(Document):
 		self.completed_at = now_datetime()
 		self._save_and_commit()
 		_create_employee_entry_log(self, "Completed", "Kegiatan selesai")
+		_notify(self, "completed")
 		return {"status": "success", "message": "Kegiatan karyawan selesai."}
 
 	@frappe.whitelist()
@@ -90,5 +118,5 @@ class EmployeeEntryRequest(Document):
 		self.check_out_time = now_datetime()
 		self._save_and_commit()
 		_create_employee_entry_log(self, "Checked Out", "Karyawan check-out")
+		_notify(self, "checked_out")
 		return {"status": "success", "message": "Karyawan check-out."}
-
