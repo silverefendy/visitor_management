@@ -34,6 +34,19 @@ def _parse_qr(qr_code):
 	return {"entity_type": "VISITOR", "visitor_id": raw.upper()}
 
 
+@frappe.whitelist(allow_guest=True)
+def health_check():
+	"""Lightweight health check endpoint for mobile app configuration validation.
+	No authentication required - serves as a connectivity test.
+	"""
+	return {
+		"status": "ok",
+		"message": "Server is running",
+		"version": frappe.utils.get_url() and "1.0.0" or None,
+		"site": frappe.local.site,
+	}
+
+
 def _resolve_employee_id(code):
 	if not code:
 		frappe.throw(_("Kode karyawan tidak boleh kosong"))
