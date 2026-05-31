@@ -14,14 +14,13 @@
 # =============================================================================
 
 import frappe
-from frappe import _
 from frappe.utils import today, now_datetime
 
 
 _MANAGER_ROLES = frozenset(["HR Manager", "Visitor Manager", "System Manager"])
 
 
-def _is_manager(user=None) -> bool:
+def _is_manager(user=None):
 	user = user or frappe.session.user
 	return bool(_MANAGER_ROLES & set(frappe.get_roles(user)))
 
@@ -36,7 +35,7 @@ def _get_employee_for_user(user=None):
 # ---------------------------------------------------------------------------
 
 @frappe.whitelist(allow_guest=False)
-def get_my_employee_dashboard() -> dict:
+def get_my_employee_dashboard():
 	"""
 	Dashboard pribadi employee yang sedang login.
 	Semua role bisa akses -- employee hanya lihat miliknya sendiri.
@@ -67,7 +66,7 @@ def get_my_employee_dashboard() -> dict:
 	active_entries = frappe.get_all(
 		"Employee Entry Request",
 		filters={"employee": employee_id, "status": ["in", active_statuses]},
-		fields=["name", "status", "check_in_time", "approved_at", "purpose"],
+		fields=["name", "status", "check_in_time", "approved_at", "purpose", "gate"],
 		order_by="modified desc",
 		limit_page_length=1,
 	)
@@ -86,7 +85,7 @@ def get_my_employee_dashboard() -> dict:
 	recent_entries = frappe.get_all(
 		"Employee Entry Request",
 		filters={"employee": employee_id},
-		fields=["name", "status", "check_in_time", "check_out_time", "purpose", "approved_at"],
+		fields=["name", "status", "check_in_time", "check_out_time", "purpose", "approved_at", "gate"],
 		order_by="check_in_time desc",
 		limit_page_length=20,
 	)
@@ -124,7 +123,7 @@ def get_my_employee_dashboard() -> dict:
 # ---------------------------------------------------------------------------
 
 @frappe.whitelist(allow_guest=False)
-def get_employees_inside() -> dict:
+def get_employees_inside():
 	"""
 	Daftar semua karyawan yang sedang di dalam area.
 	Hanya HR Manager, Visitor Manager, System Manager yang bisa akses.
@@ -145,7 +144,7 @@ def get_employees_inside() -> dict:
 		filters={"status": ["in", active_statuses]},
 		fields=[
 			"name", "employee", "employee_name", "department",
-			"status", "check_in_time", "approved_at", "purpose",
+			"status", "check_in_time", "approved_at", "purpose", "gate",
 		],
 		order_by="check_in_time asc",
 	)
@@ -167,6 +166,7 @@ def get_employees_inside() -> dict:
 			"check_in_time": str(e.check_in_time)[:16] if e.check_in_time else "-",
 			"approved_at": str(e.approved_at)[:16] if e.approved_at else "-",
 			"purpose": e.purpose or "-",
+			"gate": e.gate or "-",
 			"duration_minutes": duration_minutes,
 		})
 
@@ -187,7 +187,7 @@ def get_employees_inside() -> dict:
 # ---------------------------------------------------------------------------
 
 @frappe.whitelist(allow_guest=False)
-def get_employee_dashboard_cards() -> list:
+def get_employee_dashboard_cards():
 	"""
 	Stats cards untuk section Employee di mobile app.
 	Employee biasa: stats diri sendiri.
@@ -217,9 +217,9 @@ def get_employee_dashboard_cards() -> list:
 		)
 		return [
 			{"id": "emp_pending", "title": "Menunggu Approval", "value": str(pending),
-			 "icon_key": "hourglass", "order": 1, "route": "/employee-inside"},
+			 "icon_key": "hourglass", "order": 1, "route": "/employee"},
 			{"id": "emp_inside", "title": "Karyawan di Area", "value": str(inside),
-			 "icon_key": "badge", "order": 2, "route": "/employee-inside"},
+			 "icon_key": "badge", "order": 2, "route": "/employee"},
 			{"id": "emp_today", "title": "Entry Hari Ini", "value": str(today_total),
 			 "icon_key": "today", "order": 3, "route": None},
 			{"id": "emp_checkout", "title": "Keluar Hari Ini", "value": str(checked_out_today),
@@ -242,9 +242,9 @@ def get_employee_dashboard_cards() -> list:
 	return [
 		{"id": "my_status", "title": "Status Saya",
 		 "value": "Di Dalam" if active else "Di Luar",
-		 "icon_key": "badge", "order": 1, "route": "/my-entry"},
+		 "icon_key": "badge", "order": 1, "route": "/employee"},
 		{"id": "my_today", "title": "Entry Hari Ini", "value": str(today_count),
-		 "icon_key": "today", "order": 2, "route": "/my-entry"},
+		 "icon_key": "today", "order": 2, "route": "/employee"},
 	]
 
 
@@ -252,7 +252,7 @@ def get_employee_dashboard_cards() -> list:
 # INTERNAL
 # ---------------------------------------------------------------------------
 
-def _format_entry(entry: dict) -> dict:
+def _format_entry(entry):
 	return {
 		"id": entry.get("name"),
 		"status": entry.get("status"),
@@ -260,4 +260,5 @@ def _format_entry(entry: dict) -> dict:
 		"check_out_time": str(entry["check_out_time"])[:16] if entry.get("check_out_time") else "-",
 		"approved_at": str(entry["approved_at"])[:16] if entry.get("approved_at") else "-",
 		"purpose": entry.get("purpose") or "-",
+		"gate": entry.get("gate") or "-",
 	}

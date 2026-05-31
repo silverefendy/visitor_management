@@ -3,6 +3,7 @@
  "allow_rename": 1,
  "autoname": "format:EER-{YYYY}-{MM}-{#####}",
  "doctype": "DocType",
+ "description": "Employee entry request workflow for security-controlled access.",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
@@ -13,6 +14,7 @@
   "sec_status",
   "status",
   "check_in_time",
+  "gate",
   "approved_by",
   "approved_at",
   "completed_at",
@@ -76,6 +78,15 @@
    "read_only": 1
   },
   {
+   "fieldname": "gate",
+   "fieldtype": "Link",
+   "label": "Gate",
+   "options": "Gate",
+   "read_only": 1,
+   "in_list_view": 0,
+   "description": "Auto-detected from scanner IP address. Set manually if needed."
+  },
+  {
    "fieldname": "approved_by",
    "fieldtype": "Link",
    "label": "Disetujui Oleh",
@@ -131,11 +142,10 @@
    "share": 1
   },
   {
-   "role": "VMS System Admin",
+   "role": "HR Manager",
    "read": 1,
    "write": 1,
    "create": 1,
-   "delete": 1,
    "report": 1,
    "export": 1,
    "print": 1,
@@ -143,26 +153,21 @@
    "share": 1
   },
   {
-   "role": "Visitor Receptionist",
+   "role": "Visitor Manager",
    "read": 1,
    "write": 1,
    "create": 1,
-   "print": 1
-  },
-  {
-   "role": "Visitor Security Guard",
-   "read": 1
-  },
-  {
-   "role": "Visitor Approver",
-   "read": 1,
-   "write": 1
-  },
-  {
-   "role": "VMS Manager",
-   "read": 1,
    "report": 1,
    "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1
+  },
+  {
+   "role": "Visitor Security",
+   "read": 1,
+   "write": 1,
+   "create": 1,
    "print": 1
   },
   {
@@ -173,12 +178,11 @@
    "print": 1
   }
  ],
+ "search_fields": "employee,employee_name,department,status",
+ "show_name_in_global_search": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
  "title_field": "employee_name",
- "track_changes": 1,
- "search_fields": "employee,employee_name,department,status",
- "show_name_in_global_search": 1,
- "description": "Employee entry request workflow for security-controlled access."
+ "track_changes": 1
 }

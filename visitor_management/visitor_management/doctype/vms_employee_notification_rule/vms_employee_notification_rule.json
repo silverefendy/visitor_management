@@ -1,0 +1,137 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "doctype": "DocType",
+ "description": "Custom notification rules: when a specific employee checks in, notify specific users via realtime or email.",
+ "engine": "InnoDB",
+ "field_order": [
+  "employee",
+  "enabled",
+  "sec_trigger",
+  "events",
+  "sec_recipients",
+  "notify_users",
+  "channel",
+  "sec_message",
+  "custom_message",
+  "sec_info",
+  "description"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Karyawan",
+   "options": "Employee",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "description": "Karyawan yang dipantau. Saat karyawan ini check in/out, notifikasi akan dikirim."
+  },
+  {
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Aktif",
+   "default": "1",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "sec_trigger",
+   "fieldtype": "Section Break",
+   "label": "Trigger Event"
+  },
+  {
+   "fieldname": "events",
+   "fieldtype": "Data",
+   "label": "Events (comma-separated)",
+   "reqd": 1,
+   "default": "created,approved",
+   "description": "Event yang memicu notifikasi. Pilihan: created, approved, rejected, completed, checked_out. Contoh: created,approved"
+  },
+  {
+   "fieldname": "sec_recipients",
+   "fieldtype": "Section Break",
+   "label": "Penerima Notifikasi"
+  },
+  {
+   "fieldname": "notify_users",
+   "fieldtype": "Small Text",
+   "label": "Notify Users (email/username, comma-separated)",
+   "reqd": 1,
+   "description": "Daftar user yang akan menerima notifikasi. Pisahkan dengan koma. Contoh: user1@company.com, user2@company.com"
+  },
+  {
+   "fieldname": "channel",
+   "fieldtype": "Select",
+   "label": "Channel",
+   "options": "realtime\nemail\nboth",
+   "default": "realtime",
+   "reqd": 1,
+   "description": "realtime = notifikasi di ERPNext desk saja. email = email saja. both = keduanya."
+  },
+  {
+   "fieldname": "sec_message",
+   "fieldtype": "Section Break",
+   "label": "Pesan Kustom (Opsional)"
+  },
+  {
+   "fieldname": "custom_message",
+   "fieldtype": "Small Text",
+   "label": "Custom Message",
+   "description": "Pesan kustom yang dikirimkan. Kosongkan untuk menggunakan pesan default."
+  },
+  {
+   "fieldname": "sec_info",
+   "fieldtype": "Section Break",
+   "label": "Keterangan"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Catatan / Keterangan",
+   "description": "Contoh: Direktur - notif ke sekretaris dan security chief saat beliau masuk"
+  }
+ ],
+ "module": "Visitor Management",
+ "name": "VMS Employee Notification Rule",
+ "naming_rule": "by fieldname",
+ "autoname": "format:VMS-NR-{employee}-{####}",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1
+  },
+  {
+   "role": "HR Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1
+  },
+  {
+   "role": "Visitor Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1,
+ "title_field": "employee"
+}
