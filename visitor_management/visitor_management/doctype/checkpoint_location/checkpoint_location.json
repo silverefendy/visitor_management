@@ -1,0 +1,104 @@
+{
+  "actions": [],
+  "allow_rename": 1,
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "field_order": [
+    "checkpoint_id",
+    "checkpoint_name",
+    "description",
+    "active",
+    "qr_section",
+    "generate_qr"
+  ],
+  "fields": [
+    {
+      "fieldname": "checkpoint_id",
+      "fieldtype": "Data",
+      "label": "Checkpoint ID",
+      "reqd": 1,
+      "unique": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "description": "Unique identifier for this checkpoint (e.g., GATE1, LOBBY-A)"
+    },
+    {
+      "fieldname": "checkpoint_name",
+      "fieldtype": "Data",
+      "label": "Checkpoint Name",
+      "reqd": 1,
+      "in_list_view": 1,
+      "description": "Human-readable name for the checkpoint"
+    },
+    {
+      "fieldname": "description",
+      "fieldtype": "Small Text",
+      "label": "Description",
+      "description": "Additional details about this checkpoint location"
+    },
+    {
+      "fieldname": "active",
+      "fieldtype": "Check",
+      "label": "Active",
+      "default": "1",
+      "in_list_view": 1,
+      "description": "Enable/disable this checkpoint for scanning"
+    },
+    {
+      "fieldname": "qr_section",
+      "fieldtype": "Section Break",
+      "label": "QR Code"
+    },
+    {
+      "fieldname": "generate_qr",
+      "fieldtype": "Button",
+      "label": "Generate QR",
+      "description": "Click to generate QR code payload for this checkpoint"
+    }
+  ],
+  "links": [],
+  "module": "Visitor Management",
+  "name": "Checkpoint Location",
+  "naming_rule": "By fieldname",
+  "autoname": "field:checkpoint_id",
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1,
+      "email": 1,
+      "share": 1
+    },
+    {
+      "role": "VMS Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Security",
+      "read": 1
+    },
+    {
+      "role": "HR Manager",
+      "read": 1,
+      "report": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "title_field": "checkpoint_name",
+  "track_changes": 1,
+  "search_fields": "checkpoint_id,checkpoint_name,description",
+  "show_name_in_global_search": 1,
+  "description": "Physical checkpoint locations for employee tracking via QR scan",
+  "in_create": 0
+}
